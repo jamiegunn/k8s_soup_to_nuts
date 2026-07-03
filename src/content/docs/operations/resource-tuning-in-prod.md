@@ -49,6 +49,8 @@ rate(container_cpu_cfs_throttled_periods_total{pod=~"payments-.*"}[5m])
   / rate(container_cpu_cfs_periods_total{pod=~"payments-.*"}[5m])
 ```
 
+These two — and the rest of the consumed-vs-requests-vs-limits repertoire — are worked through in detail in [PromQL for CPU and Memory](/observability/promql-for-resources/).
+
 Rules of thumb from the trenches:
 
 - **Memory limit**: p99 working set over a representative window (include batch peaks, month-end, Monday mornings) plus 20–30% headroom. Memory limit breach = OOM kill, so headroom is cheap insurance.

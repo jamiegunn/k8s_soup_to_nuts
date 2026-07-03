@@ -104,6 +104,10 @@ payments-7d9f8b6c4d-9qwlm   payments   198m         441Mi
 
 `kubectl top` is a 30-second gauge — fine for triage, useless for sizing. Size from history in your [metrics stack](/observability/metrics/).
 
+:::tip[The queries, ready to paste]
+Every number this methodology needs — consumed vs requested vs limits, throttle ratio, p99 working set — has a ready-made query in the [PromQL for resources cookbook](/observability/promql-for-resources/).
+:::
+
 ## LimitRanges and ResourceQuotas: the house rules
 
 The platform team can (and usually does) constrain your namespace with two objects. You can't change them, but you can — and should — read them:

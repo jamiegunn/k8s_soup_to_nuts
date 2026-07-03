@@ -39,7 +39,7 @@ rate(container_cpu_cfs_throttled_periods_total{namespace="shop", container="app"
   / rate(container_cpu_cfs_periods_total{namespace="shop", container="app"}[5m])
 ```
 
-Sustained > 0.25 = actively hurting.
+Sustained > 0.25 = actively hurting. This throttle-ratio query, along with the utilization queries used throughout this triage, is unpacked in [PromQL for CPU and Memory](/observability/promql-for-resources/).
 
 **Detect from inside the pod** — no metrics stack needed, just exec:
 

@@ -87,6 +87,8 @@ client ──TLS──> external LB ──> ingress controller pod ──> (Serv
 3. The controller matches host + path, then proxies to a backend. Important detail: ingress-nginx by default proxies **directly to pod IPs from the EndpointSlice**, not through the ClusterIP — so it does its own load balancing and reacts to readiness itself.
 4. Your pod answers. Or doesn't.
 
+If your namespace runs a [service mesh](/networking/service-mesh/), there's an extra hop the diagram hides: the sidecar in front of your pod, whose VirtualServices, retries, and timeouts shape routing on top of everything the ingress decided.
+
 ## TLS termination options
 
 - **Terminate at the ingress** (most common) — the `tls:` block above; the controller decrypts, traffic to your pod is plain HTTP inside the cluster.
@@ -177,5 +179,9 @@ Common root causes, in field-observed order of frequency:
 3. **Pod closes keep-alive connections abruptly** (short app-side idle timeout) → intermittent 502s under load. Make your app's keep-alive timeout *longer* than the controller's upstream keep-alive.
 4. **A NetworkPolicy blocking the controller's namespace** → every request 502s while in-namespace curl works — see [Network policies](/networking/network-policies/) for the allow-from-ingress rule.
 5. **TLS Secret missing/expired** → controller serves its default self-signed cert ("Kubernetes Ingress Controller Fake Certificate" is the tell).
+
+:::note[WebSockets and gRPC time out differently]
+Long-lived streams don't behave like request/response at this hop: an idle WebSocket dies at the proxy's read timeout, and a controller reload or rollout can sever every open stream at once. [Long-lived connections](/networking/long-lived-connections/) covers the timeout and draining behavior in detail.
+:::
 
 If steps 1–3 all pass and the failure only occurs through the ingress, the controller's own logs hold the answer — those are platform-owned, so file a ticket with your timestamps, the exact URL, and the request ID header if your controller injects one.

@@ -63,6 +63,8 @@ You likely can't *grant* anything, but you need the vocabulary to read your own 
 - **RoleBinding** — attaches a Role *or a ClusterRole* to subjects (users/groups/service accounts) **within one namespace**. This is how you probably have access: a RoleBinding in your namespace pointing at a shared ClusterRole like `edit`.
 - **ClusterRoleBinding** — attaches a ClusterRole everywhere. Platform-only territory.
 
+(That's the compressed version — this page is the symptom playbook; the full permission model, rule anatomy and binding resolution included, lives in [RBAC Explained](/start/rbac-explained/).)
+
 Inspect what exists in your namespace (you can usually read these):
 
 ```bash
@@ -91,7 +93,7 @@ kubectl auth can-i list configmaps -n payments \
   --as=system:serviceaccount:payments:api-sa
 ```
 
-Common app-side traps: the pod uses `default` SA (nearly zero permissions) because nobody set `serviceAccountName`; the SA exists but no RoleBinding names it; or the binding lives in a different namespace than the pod. The app needing its own Role + RoleBinding (which you *may* be allowed to create within your namespace — check `can-i create roles`) versus needing a platform grant depends on your cluster's policy.
+Common app-side traps: the pod uses `default` SA (nearly zero permissions) because nobody set `serviceAccountName`; the SA exists but no RoleBinding names it; or the binding lives in a different namespace than the pod. The app needing its own Role + RoleBinding (which you *may* be allowed to create within your namespace — check `can-i create roles`) versus needing a platform grant depends on your cluster's policy. How this identity works end to end — tokens, `serviceAccountName`, and giving an app exactly the permissions it needs — is covered in [ServiceAccounts](/workloads/serviceaccounts/).
 
 ## Common gotchas
 

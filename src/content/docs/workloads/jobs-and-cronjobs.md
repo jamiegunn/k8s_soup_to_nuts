@@ -44,6 +44,10 @@ Field by field:
 Between `backoffLimit`, node failures, and evictions, exactly-once execution does not exist here. Any Job that isn't idempotent — that can't tolerate running twice, or dying halfway and starting over — is a data-corruption ticket in waiting. Migrations need transactional/versioned runners (Flyway, Liquibase, migrate); batch writers need upserts or dedup keys. Design for at-least-once, always.
 :::
 
+:::note[Migrations: Job or pipeline step?]
+Whether a DB migration should run as a Job at all — versus a gated pipeline step, with expand/contract schema changes so old and new code coexist — is a release-design decision. [CI/CD pipeline design](/operations/cicd-pipeline-design/) weighs the two shapes.
+:::
+
 ## restartPolicy interplay
 
 The pod's `restartPolicy` and the Job's `backoffLimit` are two retry loops layered on each other:

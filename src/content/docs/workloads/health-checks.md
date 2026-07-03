@@ -83,7 +83,7 @@ livenessProbe:
 Boot finishes whenever it finishes — 20s or 170s — and the moment the startup probe passes, the tight liveness probe takes over. You get a generous ceiling *and* fast steady-state detection. Any app with variable startup (JVMs especially — class loading and JIT warmup vary wildly with CPU throttling; see [JVM in containers](/java/jvm-in-containers/)) should use a startup probe instead of a padded initialDelay.
 
 :::note[JVM warmup ≠ started]
-A JVM app can pass "started" and still serve its first hundred requests at 10× normal latency while the JIT warms up. If that matters, keep readiness failing until a warmup routine completes (prime caches, exercise hot paths), or accept the slow-start. Related: [resources-and-qos](/workloads/resources-and-qos/) — CPU limits throttle warmup hard.
+A JVM app can pass "started" and still serve its first hundred requests at 10× normal latency while the JIT warms up. If that matters, keep readiness failing until a warmup routine completes (prime caches, exercise hot paths), or accept the slow-start. Spring Boot ships purpose-built liveness/readiness health groups via the actuator for exactly this wiring — see [Spring Boot on Kubernetes](/java/spring-boot/). Related: [resources-and-qos](/workloads/resources-and-qos/) — CPU limits throttle warmup hard.
 :::
 
 ## Footgun #1: liveness probes that kill slow-but-healthy apps

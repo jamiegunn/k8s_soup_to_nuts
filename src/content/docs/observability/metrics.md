@@ -121,6 +121,8 @@ Sustained values above ~0.25 mean your CPU limit is squeezing you even though av
 increase(kube_pod_container_status_restarts_total{namespace="shop"}[1h]) > 0
 ```
 
+These eight get you through most days. When you need the full cookbook — consumed vs requests vs limits, per-namespace rollups, and the right-sizing queries — go deeper with [PromQL for CPU and Memory](/observability/promql-for-resources/).
+
 ## USE and RED, briefly
 
 Two checklists keep dashboards honest:
@@ -140,6 +142,8 @@ One dashboard per service, this layout, roughly top-to-bottom in incident-useful
 4. **Dependencies row** — client-side latency/error rate for each downstream you call (DB, cache, other services).
 
 Template it on namespace and pod so one dashboard serves dev/stage/prod. Resist the 60-panel dashboard; if a panel has never changed a decision, delete it.
+
+Dashboards are for looking; the queries that matter should also wake someone up. [Alerting](/observability/alerting/) covers turning these queries into alerts — and, crucially, what deserves a page versus a ticket.
 
 :::tip
 Your cluster almost certainly already has the standard "Kubernetes / Compute Resources / Namespace (Pods)" dashboards from kube-prometheus-stack. Find them before building your own resource panels — build the RED/app-specific parts yourself and link to the platform's dashboards for the rest.

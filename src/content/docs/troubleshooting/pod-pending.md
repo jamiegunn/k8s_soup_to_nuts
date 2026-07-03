@@ -94,7 +94,7 @@ Also check `podAntiAffinity`: `topologyKey: kubernetes.io/hostname` with `requir
 - The taint names something irrelevant to you (`gpu`, `spot`, control-plane): fine, those nodes were never yours. The problem is whichever *other* line excludes the remaining nodes.
 - Every node in your intended pool is tainted, or a new taint appeared cluster-wide (e.g. `node.kubernetes.io/disk-pressure`): that's node health or a policy change — platform territory, see [Node Problems](/troubleshooting/node-problems/).
 
-Only add a toleration if the platform team tells you that pool is meant for you.
+Only add a toleration if the platform team tells you that pool is meant for you. The full mechanics behind these two exclusion lines — affinity, taints/tolerations, and topology spread — are in [Scheduling](/workloads/scheduling/).
 
 ### 5. Too many pods
 

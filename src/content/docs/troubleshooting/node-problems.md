@@ -111,7 +111,7 @@ tolerations:
     tolerationSeconds: 60
 ```
 
-Don't blanket-tolerate health taints (`operator: Exists` with no key) — that keeps your pods *on* dying nodes.
+Don't blanket-tolerate health taints (`operator: Exists` with no key) — that keeps your pods *on* dying nodes. How taints and tolerations actually interact — effects, operators, and the `node.kubernetes.io/*` family — is covered in [Scheduling](/workloads/scheduling/).
 
 ## You can't fix nodes — you can stop caring about them
 

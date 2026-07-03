@@ -46,7 +46,7 @@ CI runs `helm upgrade payments ./chart -f values-prod.yaml`. Helm renders the te
 - Fields you added that the chart never templates *can* survive Helm's three-way merge — same caveat as style 1, same treachery.
 - `helm rollback` is even harsher: it targets the stored release manifest wholesale.
 
-The operational habit that matters: with Helm, **the fix goes in values, not in the cluster**. If you must fix live, your follow-up PR edits `values-prod.yaml` (or the chart), and until it merges, every `helm upgrade` — including ones triggered by unrelated changes — reverts you.
+The operational habit that matters: with Helm, **the fix goes in values, not in the cluster**. If you must fix live, your follow-up PR edits `values-prod.yaml` (or the chart), and until it merges, every `helm upgrade` — including ones triggered by unrelated changes — reverts you. Why each renderer clobbers exactly the fields it does comes down to their merge semantics — [Helm and Kustomize](/operations/helm-and-kustomize/) walks through how each one renders and merges, and what that means for your edits.
 
 Check what Helm thinks the object should look like, and diff it against reality:
 
@@ -84,6 +84,10 @@ kubectl get deployment payments -o yaml | grep -E 'argocd|flux|kustomize.toolkit
 ```
 
 Also check managedFields: a manager named `argocd-controller` or `kustomize-controller` on your Deployment means a robot owns it. If you see those fingerprints, assume **minutes, not hours**, before any live edit is reverted — and test it: make a harmless annotation edit and see how long it lasts.
+
+:::tip[Living under a reconciler]
+If a robot owns your namespace, this section is only the incident view. [GitOps for Tenants](/operations/gitops-for-tenants/) is the day-to-day driving manual for working under Argo/Flux — reading sync status, safe workflows, and what to ask the platform team for.
+:::
 
 ## The decision matrix: will my emergency edit stick?
 

@@ -60,6 +60,7 @@ Each section stands alone and opens with its own overview:
 | You need to... | Go to |
 |---|---|
 | Learn the core mental model | [How Kubernetes Works](/start/how-kubernetes-works/) |
+| Find the right article for any task | [How Do I…? Solutions Index](/start/solutions-index/) |
 | Understand what happens when you `kubectl apply` | [Life of a Deployment](/start/life-of-a-deployment/) |
 | Find out what you're allowed to do | [Working Without Admin](/start/working-without-admin/) |
 | Understand the permission model itself | [RBAC Explained](/start/rbac-explained/) |

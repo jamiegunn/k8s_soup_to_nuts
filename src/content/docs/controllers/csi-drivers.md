@@ -87,6 +87,8 @@ So: PVC stuck `Pending` → describe the **PVC**. Pod stuck `ContainerCreating` 
 
 ## The failure playbook
 
+What follows is the mechanism-side view; the tenant-side, symptom-first version of the same material — PVC Pending, Multi-Attach, FailedMount, volume full, worked from the error message backwards — is [Volume failures](/troubleshooting/volume-failures/).
+
 ### PVC Pending
 
 ```console

@@ -86,6 +86,8 @@ Auth debugging checklist:
 kubectl get secret regcred -o jsonpath='{.data.\.dockerconfigjson}' | base64 -d
 ```
 
+(Under the hood this is just a Secret of type `kubernetes.io/dockerconfigjson` — its anatomy, and Secrets in general, are covered in [Secrets](/workloads/secrets/).)
+
 :::note[Some clusters pre-authenticate nodes]
 Managed clusters often have node-level access to a "home" registry (ECR via node IAM role, GCR/AR via node identity) — no imagePullSecrets needed for that registry. If pulls from the standard registry suddenly need auth, or a new registry needs node-level trust, that's a platform conversation.
 :::
@@ -135,7 +137,7 @@ image: registry.example.com/team/myapp@sha256:9f8c1e...
 ```
 
 :::caution[Never deploy moving tags to production]
-Unique tag per build (git SHA or semver), set by CI. It makes rollouts deterministic, rollbacks possible, and this entire class of incident extinct. See [Rollouts and Rollbacks](/workloads/rollouts-and-rollbacks/).
+Unique tag per build (git SHA or semver), set by CI. It makes rollouts deterministic, rollbacks possible, and this entire class of incident extinct. See [Rollouts and Rollbacks](/workloads/rollouts-and-rollbacks/). Digest pinning and registry mirrors are also security controls, not just reliability ones — the bigger picture is in [Supply Chain Security](/operations/supply-chain-security/).
 :::
 
 ## Air-gapped and proxy registries

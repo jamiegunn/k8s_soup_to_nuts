@@ -114,6 +114,12 @@ have a ~1.8 GiB non-heap footprint. Is it stable? Fine, that's your budget.
 Growing week over week at flat heap? Start the NMT workflow now, not when
 it 137s.
 
+:::tip
+To do this correlation with history instead of snapshots, plot the JVM
+gauges next to the container's `working_set` and throttle queries from
+[PromQL for CPU and Memory](/observability/promql-for-resources/).
+:::
+
 ## Structured JSON logging
 
 Once logs flow through a collector into a search backend, JSON

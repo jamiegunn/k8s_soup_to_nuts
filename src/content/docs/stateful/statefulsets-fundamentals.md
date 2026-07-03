@@ -94,7 +94,7 @@ spec:
     whenScaled: Retain     # or Delete
 ```
 
-Leave both as `Retain` for anything holding real data. `Retain` here still only protects the PVC — whether the underlying volume survives PVC deletion is the StorageClass's `reclaimPolicy`. See [Storage: PV, PVC, StorageClass](/stateful/storage-pv-pvc/).
+Leave both as `Retain` for anything holding real data. `Retain` here still only protects the PVC — whether the underlying volume survives PVC deletion is the StorageClass's `reclaimPolicy`. See [Storage: PV, PVC, StorageClass](/stateful/storage-pv-pvc/). And when a per-pod PVC misbehaves — stuck Pending, or a zonal volume pinning the replacement pod somewhere it can't schedule — work through [Volume failures](/troubleshooting/volume-failures/).
 
 ## Rolling updates and the partition canary
 

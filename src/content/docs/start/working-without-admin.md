@@ -67,7 +67,7 @@ kubectl auth can-i delete pods -n other-team     # no
 ```
 
 :::tip[Run `auth can-i --list` on day one]
-Save the output. When something fails with `Forbidden` six months from now, you'll know instantly whether your access changed or you're attempting something you never had. The full anatomy of RBAC errors is in [RBAC Denied](/troubleshooting/rbac-denied/).
+Save the output. When something fails with `Forbidden` six months from now, you'll know instantly whether your access changed or you're attempting something you never had. To understand the model that produced that list — Roles, bindings, groups — read [RBAC Explained](/start/rbac-explained/); the full anatomy of RBAC errors is in [RBAC Denied](/troubleshooting/rbac-denied/).
 :::
 
 ## Know your budget: quotas and limit ranges

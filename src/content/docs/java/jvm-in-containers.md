@@ -198,3 +198,9 @@ you must have limits, consider a startup probe with generous
 Deliver these via `JAVA_TOOL_OPTIONS` in the Deployment env (any JVM reads
 that variable and echoes `Picked up JAVA_TOOL_OPTIONS: ...` to stderr at
 startup — check `kubectl logs` to confirm they took effect).
+
+:::note[Running Spring Boot?]
+The framework-level wiring on top of all this — Actuator-backed probes,
+graceful shutdown, and a reference Deployment — is covered in
+[Spring Boot on Kubernetes](/java/spring-boot/).
+:::

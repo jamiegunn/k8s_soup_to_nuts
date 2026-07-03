@@ -36,7 +36,7 @@ When a pod connects to `orders.myteam.svc.cluster.local:80` (resolving to, say, 
 You can't see or fix these rules without node access. What you *can* fully own is everything that feeds them: the Service spec and the endpoints.
 
 :::caution[Long-lived connections don't rebalance]
-DNAT happens once per connection. A gRPC channel or JDBC pool opened to a ClusterIP sticks to one pod until it reconnects. If one replica takes all your traffic, this is why — fix it client-side (connection max-age, client-side LB) or with a headless Service, not by yelling at kube-proxy.
+DNAT happens once per connection. A gRPC channel or JDBC pool opened to a ClusterIP sticks to one pod until it reconnects. If one replica takes all your traffic, this is why — fix it client-side (connection max-age, client-side LB) or with a headless Service, not by yelling at kube-proxy. The full story — gRPC, HTTP/2, WebSockets, and the fixes for each — is in [Long-lived connections](/networking/long-lived-connections/).
 :::
 
 ## Endpoints and EndpointSlices: where readiness bites

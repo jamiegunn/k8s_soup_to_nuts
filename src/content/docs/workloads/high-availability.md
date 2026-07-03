@@ -59,7 +59,7 @@ payments   N/A             1                 1                     12d
 
 ## Spreading pods: anti-affinity and topologySpreadConstraints
 
-The scheduler will happily put all 3 of your replicas on one node if that's where the space is. You have to ask for spread.
+The scheduler will happily put all 3 of your replicas on one node if that's where the space is. You have to ask for spread. This section covers the two tools from the HA angle; the complete mechanics — affinity, taints and tolerations, topology spread in full — live in [Scheduling](/workloads/scheduling/).
 
 **Pod anti-affinity** — "don't put me next to my own kind":
 

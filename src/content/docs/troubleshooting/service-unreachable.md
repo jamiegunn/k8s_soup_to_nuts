@@ -140,6 +140,10 @@ kubectl describe ingress api | grep -A5 "Rules"
 
 The ingress *controller* itself (config, logs, reloads) is platform-owned; escalate with the status code, a timestamped failing request, and proof that in-cluster access works.
 
+:::tip[Two chain-breakers this walkthrough can't see]
+If the namespace is meshed, 503s can originate in the sidecar rather than any hop above — check the Envoy response flags ([Service Mesh](/networking/service-mesh/)). And if only *some* requests fail, or one pod gets all the traffic, suspect gRPC/WebSocket connection-level balancing ([Long-Lived Connections](/networking/long-lived-connections/)).
+:::
+
 ## Copy-paste diagnostic: walk the whole chain
 
 ```bash

@@ -44,7 +44,7 @@ Events:
            rpc error: code = ResourceExhausted desc = aggregate is over capacity
 ```
 
-Provisioning errors like quota exhaustion, a nonexistent `storageClassName` (typo — the PVC waits forever, silently), or backend capacity are all diagnosed from that event stream. Backend errors go to the platform team verbatim.
+Provisioning errors like quota exhaustion, a nonexistent `storageClassName` (typo — the PVC waits forever, silently), or backend capacity are all diagnosed from that event stream. Backend errors go to the platform team verbatim. When you're mid-incident, [Volume failures](/troubleshooting/volume-failures/) is the symptom-first playbook — PVC Pending, Multi-Attach, FailedMount, volume full — that works each of these back from the error message.
 
 ## Access modes: what they really mean
 

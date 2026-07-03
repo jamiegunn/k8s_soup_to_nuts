@@ -52,7 +52,7 @@ kubectl top pods -l app=api
 # max_over_time(container_memory_working_set_bytes{pod=~"api-.*", container="api"}[7d])
 ```
 
-Set the limit to observed peak plus 20–30% headroom, and set `requests` to typical usage so scheduling stays honest. Doubling blindly "to be safe" wastes quota, packs fewer pods per node, and — because requests drive scheduling — can push you into `Pending` territory. See [Resources and QoS](/workloads/resources-and-qos/) and [Resource Tuning in Prod](/operations/resource-tuning-in-prod/).
+Set the limit to observed peak plus 20–30% headroom, and set `requests` to typical usage so scheduling stays honest. Doubling blindly "to be safe" wastes quota, packs fewer pods per node, and — because requests drive scheduling — can push you into `Pending` territory. See [Resources and QoS](/workloads/resources-and-qos/) and [Resource Tuning in Prod](/operations/resource-tuning-in-prod/). The full query cookbook — working set vs limit, distance-to-OOM, and right-sizing queries ready to paste — is in [PromQL for Resources](/observability/promql-for-resources/).
 
 ### 2. The Java special: heap is fine, container dies anyway
 

@@ -96,7 +96,7 @@ Mechanically this copies an old ReplicaSet's template back onto the Deployment a
 
 But understand what you just did: **the cluster no longer matches git.** Your manifest still says 1.42.0; the cluster runs 1.41.2. The next pipeline run — or your GitOps controller within minutes — will happily re-deploy the broken version. I've watched a 3 a.m. rollback get reverted by a 6 a.m. cron-triggered sync, causing the same outage twice.
 
-The durable fix is always: revert in git, let the pipeline roll forward. Use `rollout undo` as a tourniquet, then immediately make git agree. Full treatment in [drift and CI/CD](/operations/drift-and-cicd/).
+The durable fix is always: revert in git, let the pipeline roll forward. Use `rollout undo` as a tourniquet, then immediately make git agree. Full treatment in [drift and CI/CD](/operations/drift-and-cicd/) — and designing the pipeline so roll-forward is fast enough to be the default (git revert as the rollback path, last-known-good tags) is covered in [CI/CD pipeline design](/operations/cicd-pipeline-design/).
 
 :::danger
 If ArgoCD/Flux manages this Deployment with auto-sync, `rollout undo` may be reverted within minutes. Know your sync policy *before* the incident.

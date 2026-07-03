@@ -72,7 +72,7 @@ For spiky workloads I run scale-up aggressive (100%/minute, no window) and scale
 
 ## The classic misconfigurations
 
-**CPU requests set too low → thrash.** The most common one by far. Suppose your pod idles at 180m and you set `requests.cpu: 100m` (because someone "optimized" it): idle utilization is already 180%, target is 70%, so the HPA scales toward maxReplicas *at rest* and pins there. The inverse — requests far above real usage — means utilization never reaches the target and the HPA never scales up until you're already on fire. **Fix the requests first** ([sizing methodology](/workloads/resources-and-qos/)), then tune the HPA.
+**CPU requests set too low → thrash.** The most common one by far. Suppose your pod idles at 180m and you set `requests.cpu: 100m` (because someone "optimized" it): idle utilization is already 180%, target is 70%, so the HPA scales toward maxReplicas *at rest* and pins there. The inverse — requests far above real usage — means utilization never reaches the target and the HPA never scales up until you're already on fire. **Fix the requests first** ([sizing methodology](/workloads/resources-and-qos/)), then tune the HPA. To check the utilization-of-request math against what your pods actually consume, the [PromQL for resources cookbook](/observability/promql-for-resources/) has the exact queries.
 
 **`replicas` in your manifest + HPA = tug of war.** Every CI/CD apply resets replicas to the manifest value; the HPA then corrects it back. On a scaled-up fleet, a deploy suddenly drops you from 10 pods to 3 and users notice. Remove `replicas` from the manifest entirely when an HPA owns the count (kubectl apply leaves the field alone if it's absent). This is a first-class [drift problem](/operations/drift-and-cicd/).
 

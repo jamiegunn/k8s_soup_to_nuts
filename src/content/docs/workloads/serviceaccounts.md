@@ -90,6 +90,8 @@ spec:
   serviceAccountName: sidecar-injector-controller
 ```
 
+If the Role's `apiGroups`/`resources`/`verbs` rules read like incantations, [RBAC Explained](/start/rbac-explained/) covers the full model — rule anatomy, the built-in ClusterRoles, and how to design least-privilege roles.
+
 All three objects are namespaced. Whether *you* can create Roles and RoleBindings depends on your own RBAC — many platforms allow SA creation but reserve Role management. If `kubectl apply` on the Role gets you a Forbidden, the ask to the platform team is precise: "Role `pod-reader` (get/list/watch pods) in `team-orders`, bound to SA `sidecar-injector-controller`" — a five-minute ticket. See [Working Without Admin](/start/working-without-admin/) for framing those requests.
 
 :::caution
