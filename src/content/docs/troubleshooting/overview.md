@@ -91,6 +91,7 @@ Find your symptom, go to the playbook. When in doubt, start with [Triage Methodo
 | Shell into a container with no shell (distroless) | [Debugging Toolbox](/troubleshooting/debugging-toolbox/) |
 | Debug a container that crashes before you can exec | [Debugging Toolbox](/troubleshooting/debugging-toolbox/) (`--copy-to`) |
 | Network tools (curl, dig, tcpdump) next to your pod | [Debugging Toolbox](/troubleshooting/debugging-toolbox/) |
+| PVC Pending / FailedMount / Multi-Attach / volume full | [Volume and Storage Failures](/troubleshooting/volume-failures/) |
 
 ## Reading pod status at a glance
 

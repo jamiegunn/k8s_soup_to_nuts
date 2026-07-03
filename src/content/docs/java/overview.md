@@ -150,6 +150,8 @@ storage — is yours.
   and CPU throttling masquerading as GC trouble.
 - [Memory leaks and OOM](/java/memory-leaks-and-oom/) — OOMKilled vs
   `OutOfMemoryError`, and the workflow for each flavor of leak.
+- [Spring Boot on Kubernetes](/java/spring-boot/) — actuator probes, graceful
+  shutdown, config, and a production-ready reference Deployment.
 - [Java observability](/java/java-observability/) — JFR as an always-on flight
   recorder, Micrometer metrics, structured logs, async-profiler.
 

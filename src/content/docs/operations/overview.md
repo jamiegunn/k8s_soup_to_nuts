@@ -121,6 +121,7 @@ kubectl annotate deployment payments \
 | [GitOps for tenants](/operations/gitops-for-tenants/) | Living with Argo CD or Flux when the platform runs it: the PR-driven workflow, sync mechanics, and emergencies under GitOps |
 | [Image and supply-chain security](/operations/supply-chain-security/) | Base images, digest pinning, CI scanning, SBOMs, and signing — securing what you ship |
 | [API deprecations and cluster upgrades](/operations/api-deprecations/) | Surviving upgrades you don't control: detection with pluto/kubent, the pre-upgrade routine, and behavior changes that bite |
+| [CI/CD pipeline design](/operations/cicd-pipeline-design/) | The reference pipeline: immutable artifacts, promotion, migrations, rollback design, and the anti-patterns ranked |
 
 ## The vocabulary this section uses
 

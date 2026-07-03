@@ -121,6 +121,8 @@ Read in order the first time; after that, jump to the layer that's on fire.
 5. [Network policies](/networking/network-policies/) — default-allow vs default-deny semantics, the forgotten DNS egress rule, testing.
 6. [External load balancing](/networking/external-load-balancing/) — cloud LBs, MetalLB, F5 CIS, client IP preservation.
 7. [Debugging the network](/networking/debugging-network/) — the hop-by-hop playbook with a printable checklist.
+8. [Service mesh for app teams](/networking/service-mesh/) — living with a platform-run Istio/Linkerd: sidecars, mTLS, tenant CRs, and Envoy-flag debugging.
+9. [gRPC, WebSockets, and long-lived connections](/networking/long-lived-connections/) — why connection-level load balancing breaks for HTTP/2 and hours-long connections, and the fixes.
 
 :::note
 Networking failures often masquerade as application failures — "readiness probe failed" is frequently a NetworkPolicy or DNS problem, not your app. If you landed here mid-incident, [Service unreachable](/troubleshooting/service-unreachable/) in the troubleshooting section is the fastest entry point.

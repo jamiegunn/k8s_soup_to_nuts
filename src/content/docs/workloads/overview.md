@@ -64,6 +64,7 @@ DaemonSets typically need node-level privileges and tolerations the platform tea
 12. **[Init and sidecar containers](/workloads/init-and-sidecar-containers/)** — multi-container pods: init semantics, native sidecars, and the patterns that justify them.
 13. **[Pod security](/workloads/pod-security/)** — securityContext, Pod Security Standards, and hardening that doesn't break the app.
 14. **[ServiceAccounts](/workloads/serviceaccounts/)** — workload identity: pods calling the Kubernetes API and cloud services without long-lived keys.
+15. **[Scheduling](/workloads/scheduling/)** — nodeSelector, affinity, taints and tolerations, topology spread, and priority — where pods land and why.
 
 ## Which article do I need?
 
