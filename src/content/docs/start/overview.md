@@ -45,6 +45,7 @@ You should be comfortable with a terminal and have `kubectl` access to at least 
 Each section stands alone and opens with its own overview:
 
 - **Start** (you are here) — the mental model and the daily toolkit. Read [How Kubernetes Works](/start/how-kubernetes-works/) and [Life of a Deployment](/start/life-of-a-deployment/) first; they pay for everything else.
+- **[kubectl Mastery](/kubectl/overview/)** — beyond the survival kit: how kubectl actually talks to the API, output and query wizardry, and the tricks that make you fast.
 - **[Workloads](/workloads/overview/)** — Deployments, rollouts, autoscaling, health checks, resources and QoS, Jobs. The bread and butter.
 - **[Java on Kubernetes](/java/overview/)** — JVM memory in cgroups, thread and heap dumps with a JRE-only image, remote debugging, GC tuning.
 - **[Stateful Workloads](/stateful/overview/)** — StatefulSets, storage, and running (or connecting to) PostgreSQL, Valkey/Redis, Oracle, and message queues.
@@ -62,7 +63,9 @@ Each section stands alone and opens with its own overview:
 | Understand what happens when you `kubectl apply` | [Life of a Deployment](/start/life-of-a-deployment/) |
 | Find out what you're allowed to do | [Working Without Admin](/start/working-without-admin/) |
 | Get the daily kubectl commands | [kubectl Survival Kit](/start/kubectl-survival-kit/) |
+| Go deeper on kubectl | [kubectl Mastery](/kubectl/overview/) |
 | Stop fighting YAML and labels | [YAML, Labels, and Namespaces](/start/yaml-labels-and-namespaces/) |
+| Run Kubernetes on your laptop | [Local Development](/start/local-development/) |
 | Fix a pod that won't start | Troubleshooting section, starting at the triage methodology |
 | Ship a zero-downtime deploy | Workloads: rollouts, health checks, high availability |
 | Pull a heap dump from a locked-down JVM pod | Java section |

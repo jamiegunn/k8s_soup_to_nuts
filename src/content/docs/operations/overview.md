@@ -117,6 +117,8 @@ kubectl annotate deployment payments \
 | [Resource tuning in prod](/operations/resource-tuning-in-prod/) | Changing requests/limits safely: it's a rolling restart, so plan it; evidence-gathering first; in-place resize on newer clusters |
 | [Working with the platform team](/operations/working-with-platform-team/) | The org interface: what's theirs vs yours, writing requests that get fast yeses, RBAC asks, upgrade readiness |
 | [Emergency playbooks](/operations/emergency-playbooks/) | Copy-paste incident cards: bad deploy, traffic spike, poisoned pod, OOM storm, bad config, and a triage snapshot script |
+| [Helm and Kustomize](/operations/helm-and-kustomize/) | Driving the manifest machines your pipeline already uses: overlays, patches, values files, and rendered-manifest debugging |
+| [GitOps for tenants](/operations/gitops-for-tenants/) | Living with Argo CD or Flux when the platform runs it: the PR-driven workflow, sync mechanics, and emergencies under GitOps |
 
 ## The vocabulary this section uses
 

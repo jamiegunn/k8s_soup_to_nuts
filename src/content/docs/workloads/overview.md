@@ -57,7 +57,13 @@ DaemonSets typically need node-level privileges and tolerations the platform tea
 5. **[Health checks](/workloads/health-checks/)** — startup vs readiness vs liveness, precisely, plus the footguns that turn probes into outage generators.
 6. **[Resources and QoS](/workloads/resources-and-qos/)** — requests vs limits, QoS classes, CPU throttling, and how to size honestly.
 7. **[Configuration](/workloads/configuration/)** — ConfigMaps and Secrets, env vs volumes, update propagation, and forcing rollouts on config change.
-8. **[Jobs and CronJobs](/workloads/jobs-and-cronjobs/)** — run-to-completion semantics, retry behavior, schedules, and missed-run gotchas.
+8. **[Environment variables](/workloads/environment-variables/)** — every env source, precedence and collision rules, `$(VAR)` expansion, and JVM flag-injection patterns.
+9. **[Config as files](/workloads/config-files-and-volumes/)** — volume mount mechanics, `subPath` traps, projected volumes, and file permissions.
+10. **[Secrets](/workloads/secrets/)** — types, why files beat env, and keeping secrets out of git (Sealed Secrets, SOPS, External Secrets).
+11. **[Jobs and CronJobs](/workloads/jobs-and-cronjobs/)** — run-to-completion semantics, retry behavior, schedules, and missed-run gotchas.
+12. **[Init and sidecar containers](/workloads/init-and-sidecar-containers/)** — multi-container pods: init semantics, native sidecars, and the patterns that justify them.
+13. **[Pod security](/workloads/pod-security/)** — securityContext, Pod Security Standards, and hardening that doesn't break the app.
+14. **[ServiceAccounts](/workloads/serviceaccounts/)** — workload identity: pods calling the Kubernetes API and cloud services without long-lived keys.
 
 ## Which article do I need?
 
@@ -71,6 +77,9 @@ DaemonSets typically need node-level privileges and tolerations the platform tea
 | "Pods are OOMKilled / CPU-starved / won't schedule" | [Resources and QoS](/workloads/resources-and-qos/) |
 | "I changed a ConfigMap and nothing happened" | [Configuration](/workloads/configuration/) |
 | "My nightly job didn't run / ran twice" | [Jobs and CronJobs](/workloads/jobs-and-cronjobs/) |
+| "Why is this env var not what I set?" | [Environment variables](/workloads/environment-variables/) |
+| "Deployment applied but pods never appear" | [Pod security](/workloads/pod-security/) |
+| "My pod gets 403 calling the API / cloud" | [ServiceAccounts](/workloads/serviceaccounts/) |
 | "Pod is Pending / CrashLoopBackOff right now" | [Troubleshooting section](/troubleshooting/triage-methodology/) |
 
 ## The three objects, one command

@@ -51,6 +51,10 @@ export default defineConfig({
 					items: [{ autogenerate: { directory: 'start' } }],
 				},
 				{
+					label: 'kubectl Mastery',
+					items: [{ autogenerate: { directory: 'kubectl' } }],
+				},
+				{
 					label: 'Workloads & Deployments',
 					items: [{ autogenerate: { directory: 'workloads' } }],
 				},

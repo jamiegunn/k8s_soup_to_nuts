@@ -7,6 +7,10 @@ sidebar:
 
 kubectl has dozens of subcommands and hundreds of flags. You need about fifteen of them, wielded well. This is the set that gets an app team through deploys, debugging, and incidents — every command here works with namespace-scoped access.
 
+:::note[Ready for more?]
+When the survival kit feels small, the [kubectl Mastery section](/kubectl/overview/) goes deep: [how kubectl actually works](/kubectl/how-kubectl-works/) (kubeconfig, auth, the API calls behind every command), [output and queries](/kubectl/output-and-queries/) (JSONPath, custom-columns, jq), and [tips and tricks](/kubectl/tips-and-tricks/) (aliases, plugins, scripting patterns).
+:::
+
 ## Point it at the right place first
 
 More production incidents start with "wrong cluster, wrong namespace" than anyone admits. Know where you're pointed:
