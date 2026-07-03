@@ -150,6 +150,9 @@ storage — is yours.
   and CPU throttling masquerading as GC trouble.
 - [Memory leaks and OOM](/java/memory-leaks-and-oom/) — OOMKilled vs
   `OutOfMemoryError`, and the workflow for each flavor of leak.
+- [Spring Boot Actuator as an Ops Surface](/java/actuator/) — runtime log-level
+  changes, heap and thread dumps over HTTP, and the endpoint hygiene that keeps
+  it from becoming an attack surface.
 - [The JVM–Kubernetes Coupling Map](/java/jvm-kubernetes-coupling/) — the section
   capstone: every point where the JVM and Kubernetes interlock, and the failure
   when they disagree.

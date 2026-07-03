@@ -7,6 +7,10 @@ sidebar:
 
 Spring Boot ships more Kubernetes integration out of the box than any other JVM framework — and most teams wire half of it, wrong. This page is the Spring-specific playbook: what to turn on, what to skip, and the reference Deployment at the bottom that puts it all together. Generic JVM-in-a-container mechanics (heap sizing, container awareness, GC) live in [The JVM in Containers](/java/jvm-in-containers/) — this page assumes them.
 
+:::tip[Actuator is bigger than probes]
+This article wires actuator into probes and metrics. The full operational surface — runtime log-level changes, heap/thread dumps over HTTP, config inspection, endpoint security — has its own deep dive: [Spring Boot Actuator as an Ops Surface](/java/actuator/).
+:::
+
 ## Actuator is your Kubernetes integration surface
 
 Everything Kubernetes needs from your app — probes, metrics, graceful-shutdown signals — flows through Actuator. Two decisions up front:

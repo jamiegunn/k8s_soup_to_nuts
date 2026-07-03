@@ -75,6 +75,7 @@ from the pod spec without touching the image.
 | Why the container died at exit 137 | That's the kernel OOM killer, not the CLR — different workflow | — | [OOMKilled](/troubleshooting/oomkilled/) |
 | Right-size GC heap vs container limit | Understand the 75% default and the non-GC budget first | — | [.NET in containers](/dotnet/dotnet-in-containers/) |
 | Probes, shutdown, config reload for ASP.NET Core | The Spring-Boot-equivalent checklist | — | [ASP.NET Core on K8s](/dotnet/aspnetcore-on-k8s/) |
+- [.NET Operational Endpoints](/dotnet/operational-endpoints/) — the actuator translation table: dotnet-monitor's HTTP API as the ops surface, plus collection rules actuator can't match.
 
 ## Coming from the Java section? The translation table
 

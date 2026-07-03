@@ -72,6 +72,8 @@ kubectl logs <pod-name> --previous
 | Deploy a complete, tested build — stateless golden service, Valkey, PostgreSQL, IBM MQ, RabbitMQ, Kafka, or the cluster front door | [Reference Architectures](/architectures/overview/) |
 | See every point where the JVM and Kubernetes interlock | [The JVM–Kubernetes Coupling Map](/java/jvm-kubernetes-coupling/) |
 | Run .NET on Kubernetes — GC vs limits, dumps from runtime-only images | [.NET on Kubernetes](/dotnet/overview/) |
+| Change log levels or pull a heap dump over HTTP — no redeploy, no JDK | [Actuator as an Ops Surface](/java/actuator/) |
+| Get the actuator-style ops API for .NET (dumps, traces, collection rules) | [.NET Operational Endpoints](/dotnet/operational-endpoints/) |
 | Add a sidecar the right way — log shipper, config reloader, secrets fetcher | [Sidecars](/sidecars/overview/) |
 | Tune probe timings, JVM memory flags, or requests/limits with real numbers | [Knobs & Levers](/tuning/overview/) |
 | Size a new service from zero, step by step | [Sizing Walkthrough](/tuning/sizing-walkthrough/) |
