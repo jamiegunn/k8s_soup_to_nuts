@@ -144,7 +144,7 @@ This schedules a privileged pod on the node with the host filesystem mounted at 
 
 | Image | Size | What's in it | Reach for it when |
 |---|---|---|---|
-| `busybox` | ~2MB | sh, cat, ps, wget (limited), vi | Minimal poking; fastest pull |
+| `busybox` | ~2MB | sh, cat, ps, wget (limited), vi | Minimal poking; fastest pull — full applet tour and the copy-the-static-binary-in trick in [The BusyBox Toolkit](/troubleshooting/busybox/) |
 | `nicolaka/netshoot` | ~300MB | tcpdump, dig, nmap, ss, curl, iperf, conntrack, jq | Any network question — the kitchen sink |
 | `curlimages/curl` | ~15MB | curl + sh | HTTP checks; small enough for strict clusters |
 | `eclipse-temurin:21` (full JDK) | ~450MB | jcmd, jstack, jmap, jfr | JVM debugging against a JRE-only app container |

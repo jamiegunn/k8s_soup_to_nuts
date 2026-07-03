@@ -107,7 +107,7 @@ data:
 EOF
 ```
 
-That `--rm -it --restart=Never` trio is worth memorizing exactly — `--restart=Never` makes it a bare Pod (not a Deployment), `--rm` deletes it when the shell exits. More debug-pod patterns in the [Debugging Toolbox](/troubleshooting/debugging-toolbox/).
+That `--rm -it --restart=Never` trio is worth memorizing exactly — `--restart=Never` makes it a bare Pod (not a Deployment), `--rm` deletes it when the shell exits. More debug-pod patterns in the [Debugging Toolbox](/troubleshooting/debugging-toolbox/); what to actually *do* once you're at that busybox prompt is [The BusyBox Toolkit](/troubleshooting/busybox/).
 
 ## `explain --recursive`: offline API docs
 

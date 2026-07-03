@@ -50,7 +50,7 @@ waiting for postgres...
 postgres is up
 ```
 
-Note the `-w 2` timeout on `nc` — without it a blackholed connection (NetworkPolicy drop, see [Network Policies](/networking/network-policies/)) hangs forever instead of looping visibly.
+Note the `-w 2` timeout on `nc` — without it a blackholed connection (NetworkPolicy drop, see [Network Policies](/networking/network-policies/)) hangs forever instead of looping visibly. Busybox is the de facto standard image for these wait loops — tiny, fast to pull, with everything the loop needs; more wait-loop recipes in [The BusyBox Toolkit](/troubleshooting/busybox/).
 
 ### Classic use 2: schema migration — and why it bites during rollouts
 

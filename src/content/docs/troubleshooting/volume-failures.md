@@ -158,6 +158,8 @@ kubectl exec <pod> -- df -h
 # /dev/nvme2n1     20G   20G  8.0K 100% /data        ← your PVC
 ```
 
+(If the image has no shell — distroless — there's no `df` to exec; inject one with `kubectl debug --image=busybox` and run it from there, per [The BusyBox Toolkit](/troubleshooting/busybox/).)
+
 **If the PVC mount is full** → clean up or expand (below).
 **If `/` (overlay) is full** → that's node ephemeral storage: your app is writing logs/tmp/cache outside the PVC. The fix is an `emptyDir` with a `sizeLimit`, an `ephemeral-storage` resource limit, or pointing the writes at the PVC — expanding the PVC does nothing. Left unfixed, the kubelet will evict you (`The node was low on resource: ephemeral-storage`).
 

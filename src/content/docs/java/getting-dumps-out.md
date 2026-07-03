@@ -115,7 +115,9 @@ gzip /proc/7/root/dumps/java_pid7.hprof
 traverses into the target container's mount namespace — provided the debug
 container runs as root or the same UID.) Then stream the `.gz` out via the
 debug container, which definitely has `cat`. MAT opens `.hprof.gz` directly
-in recent versions; otherwise `gunzip` locally.
+in recent versions; otherwise `gunzip` locally. Busybox earns its keep in
+exactly this situation — the full dd/base64/tar recipe box is in
+[The BusyBox Toolkit](/troubleshooting/busybox/).
 
 ## The distroless end-boss: ephemeral container with tar
 

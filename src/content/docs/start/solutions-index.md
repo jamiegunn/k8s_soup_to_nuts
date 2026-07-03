@@ -79,6 +79,7 @@ kubectl logs <pod-name> --previous
 | Size a new service from zero, step by step | [Sizing Walkthrough](/tuning/sizing-walkthrough/) |
 | Tell whether it's my pod or the node (evictions, `Terminating`, `Unknown`) | [Node Problems](/troubleshooting/node-problems/) |
 | Shell into a distroless container, or debug one that dies before I can exec | [Debugging Toolbox](/troubleshooting/debugging-toolbox/) |
+| Get a full Unix toolkit into a shell-less pod with one tiny image | [The BusyBox Toolkit](/troubleshooting/busybox/) |
 | Find out why my pods never appear even though the Deployment applied | [Pod Security](/workloads/pod-security/) |
 
 ## Debug networking and traffic

@@ -36,6 +36,7 @@ Notes from the field:
 - Ephemeral containers can't be removed without deleting the pod, and they don't survive pod restarts. Fine — they're disposable by nature.
 - For tests where the *source* doesn't matter, a standalone throwaway is faster: `kubectl run net --rm -it --image=nicolaka/netshoot -- bash`. But remember it has default labels — NetworkPolicies will treat it differently than your app pods. When policy is a suspect, always use `kubectl debug` on a real app pod.
 - If ephemeral containers are disabled by cluster policy, ask your platform team; the fallback is a netshoot sidecar in a dev deployment.
+- For a quick first probe, `busybox` (~2MB, with nc/wget/nslookup) pulls in seconds where netshoot's 300MB may not — start there and escalate to netshoot when you need tcpdump or dig; the decision rule lives in [The BusyBox Toolkit](/troubleshooting/busybox/).
 
 :::tip[Meshed namespace? Test as the app, not beside it]
 In a namespace with a [service mesh](/networking/service-mesh/), mTLS makes outside-in curl lie to you — a throwaway pod without a sidecar fails (or succeeds) for reasons your app never sees. Use `kubectl debug --target` so you test from the app container's own network identity, and read the sidecar's logs alongside your app's.
