@@ -7,6 +7,10 @@ sidebar:
 
 Valkey is the Linux Foundation fork of Redis, created in 2024 when Redis moved off open-source licensing. It's drop-in compatible (protocol, commands, `redis-cli` works fine against it), actively developed, and what you should default to for new deployments unless you have a Redis Enterprise contract. Everything below applies to both; we'll say Valkey and mean either.
 
+:::tip[Complete build available]
+Want the finished thing instead of the theory? [Valkey: Two StatefulSets, One MetalLB VIP](/architectures/valkey-shared-vip/) is a copy-paste reference architecture — read/write split over one shared VIP, with verification and failure drills.
+:::
+
 ## First question: is it a cache or a store?
 
 This decides everything about how you deploy it.

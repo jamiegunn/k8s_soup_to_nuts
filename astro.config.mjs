@@ -86,6 +86,10 @@ export default defineConfig({
 					label: 'Day-2 Operations',
 					items: [{ autogenerate: { directory: 'operations' } }],
 				},
+				{
+					label: 'Reference Architectures',
+					items: [{ autogenerate: { directory: 'architectures' } }],
+				},
 			],
 		}),
 	],

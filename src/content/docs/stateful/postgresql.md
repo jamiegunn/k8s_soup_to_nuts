@@ -7,6 +7,10 @@ sidebar:
 
 The short version: **run PostgreSQL on Kubernetes with an operator, period.** Not a Helm chart wrapping a StatefulSet, not hand-rolled manifests. If you remember one thing from this page, that's it. The rest is which operator and how.
 
+:::tip[Complete build available]
+For the full copy-paste build — 3-instance CloudNativePG cluster, PgBouncer, S3 backups, restore drill — see the [PostgreSQL reference architecture](/architectures/postgresql-ha/).
+:::
+
 ## Why raw StatefulSet Postgres HA is a trap
 
 A single-instance Postgres in a StatefulSet with a PVC is fine for dev. The trap is the next step: "let's add a replica for HA." Now you need:

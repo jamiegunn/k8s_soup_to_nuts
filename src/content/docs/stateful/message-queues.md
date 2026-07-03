@@ -7,6 +7,10 @@ sidebar:
 
 Message brokers are stateful twice over: they hold data (persisted messages) *and* identity (a queue manager name, a node ID in a quorum, a broker ID in a cluster). Kubernetes will cheerfully reschedule, restart, and drain them like any other pod — so your job is to make the broker's assumptions and Kubernetes's behavior meet in the middle. The themes repeat across every broker; the specifics differ.
 
+:::tip[Complete build available]
+Running IBM MQ? The [IBM MQ reference architecture](/architectures/ibm-mq/) is the full Native HA build — QueueManager CR, TLS channels, MetalLB VIP, quorum drills — ready to adapt.
+:::
+
 ## The common themes
 
 **Persistence.** Persistent messages live on disk. Every broker below needs PVCs, and the [access mode](/stateful/storage-pv-pvc/) matters — a broker's journal generally wants RWO block storage; some HA modes (IBM MQ multi-instance, Artemis shared-store) instead demand RWX with real POSIX locking, which most NFS-flavored classes only sort of provide. Verify with your platform team, not with hope.
