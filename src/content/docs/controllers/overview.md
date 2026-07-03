@@ -63,6 +63,7 @@ That split — *they operate the controller, you drive it with resources* — is
 | [MetalLB](/controllers/metallb/) | Where your `type: LoadBalancer` external IP actually comes from on bare metal; L2 vs BGP; the `<pending>` Service playbook |
 | [F5 CIS](/controllers/f5-cis/) | The controller that programs BIG-IP from your Ingress/VirtualServer resources — and why people wrongly call it "F5 CSI" |
 | [CSI Drivers](/controllers/csi-drivers/) | The storage extension point: provision → attach → mount, and where each stage fails |
+| [Storage Controllers](/controllers/storage-controllers/) | What's actually behind your StorageClass — Longhorn, Ceph, Harvester, OpenEBS, NFS — and how each one fails differently |
 | [Admission Webhooks](/controllers/admission-webhooks/) | The gatekeepers that mutate or reject your manifests on the way into etcd — and the outage mode where a dead webhook blocks every deploy |
 
 ## Consume vs. operate — know which side you're on

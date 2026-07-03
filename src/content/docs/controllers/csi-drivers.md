@@ -21,6 +21,8 @@ Both halves are platform-installed. You interact with them through PVCs, Storage
 
 ## Discovering what storage your cluster has
 
+This article covers the CSI *machinery* — the plumbing every driver shares. The *backends* behind the drivers (Longhorn, Rook-Ceph, Harvester, OpenEBS, NFS) each behave differently under failure and load; [Storage Controllers](/controllers/storage-controllers/) profiles them one by one.
+
 Three read-only commands map the territory:
 
 ```console

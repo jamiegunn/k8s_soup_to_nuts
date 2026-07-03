@@ -9,7 +9,7 @@ Kubernetes storage is a three-layer indirection, and every layer exists to separ
 
 - **PersistentVolume (PV)** — a piece of actual storage. Cluster-scoped; you generally can't create or even list them without extra RBAC.
 - **PersistentVolumeClaim (PVC)** — your namespaced request: "50Gi, ReadWriteOnce, class `fast-ssd`". This is the object *you* own.
-- **StorageClass** — the menu. Each class maps to a provisioner (a [CSI driver](/controllers/csi-drivers/)) plus parameters. Cluster-scoped, platform-managed.
+- **StorageClass** — the menu. Each class maps to a provisioner (a [CSI driver](/controllers/csi-drivers/)) plus parameters. Cluster-scoped, platform-managed. What that provisioner actually *is* — Longhorn, Ceph, Harvester, NFS — determines replication, RWX support, and how failures look; [Storage Controllers](/controllers/storage-controllers/) profiles each.
 
 With **dynamic provisioning** — the norm on any modern cluster — you create a PVC, the CSI driver creates a matching PV on the fly, and they bind. You never touch PVs directly.
 
