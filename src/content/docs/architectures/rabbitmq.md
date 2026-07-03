@@ -17,6 +17,10 @@ Resource blocks and probe timings below are justified starting points, not gospe
                       off-cluster apps
                             │  AMQPS 5671 (TLS)
                             ▼
+              corporate VIP  rabbitmq.example.internal :5671
+              (network team's F5 / NetScaler appliance)
+                            │  pools to the MetalLB IP
+                            ▼
                   MetalLB VIP 10.20.0.41
                             │
         ┌───────────────────┼─────────────────────────────────┐
@@ -246,7 +250,7 @@ One thing you *don't* need: lazy mode. Classic queues needed `x-queue-mode: lazy
 
 ### 6. External access: AMQPS on the VIP
 
-Off-cluster clients get raw TCP through [MetalLB](/controllers/metallb/) — this is [TCP ingress](/networking/tcp-ingress/), no HTTP anything:
+Off-cluster clients arrive through **two layers**: a corporate VIP on the network team's appliance, pooled to a [MetalLB](/controllers/metallb/) service IP in-cluster — raw [TCP ingress](/networking/tcp-ingress/) at both hops, no HTTP anything. The in-cluster half:
 
 ```yaml
 apiVersion: v1
@@ -261,7 +265,9 @@ metadata:
 spec:
   type: LoadBalancer
   loadBalancerIP: 10.20.0.41     # or let the pool assign; pin it if firewalls care
-  externalTrafficPolicy: Local   # real client IPs in broker logs and ipBlock rules
+  externalTrafficPolicy: Local   # the source IP that survives is the corporate
+                                 # appliance's SNAT address (see below) — still
+                                 # useful: it pins 5671 to the appliance
   selector:
     app.kubernetes.io/name: rmq  # all 3 ready pods — any node accepts connections;
                                  # the cluster routes to queue leaders internally
@@ -271,7 +277,18 @@ spec:
     # port-forward for humans, never expose it.
 ```
 
-Client URIs carry the heartbeat and TLS explicitly; automatic recovery is a **client-library setting**, not a server one — turn it on:
+**The corporate VIP in front.** Clients never dial `10.20.0.41` — they dial `rabbitmq.example.internal`, a corporate VIP on the network team's load-balancer appliance (F5 BIG-IP, NetScaler), which pools to the MetalLB IP. Chain: client → corporate VIP (appliance) → MetalLB IP `:5671` → any ready broker. Ownership split: the **network team** owns the appliance, the VIP, and DNS; the **platform team** owns MetalLB and its pools; **you** own the Service and the brokers. The general topology is [External Load Balancing](/networking/external-load-balancing/). The RabbitMQ-specific details:
+
+- **The pool member is the MetalLB IP `:5671`** — not NodePorts, not pod IPs. The appliance health-checks that address; ask for a plain **TCP monitor** (an AMQP-aware monitor opens and abandons a handshake every probe interval, which shows up as connection churn in broker logs — the TCP readiness probes behind the Service already gate which brokers answer).
+- **TLS: passthrough.** The AMQPS certificate lives in `rmq-server-tls` with the broker — that's why its SANs cover `rabbitmq.example.internal`, the name clients actually verify. Terminating or re-encrypting at the appliance buys nothing and splits certificate ownership. If the network team runs BIG-IP with [F5 CIS](/controllers/f5-cis/), the VIP, pool, and monitor can be declared from cluster manifests instead of by ticket.
+- **The appliance SNATs**, so broker logs and the management UI show the appliance's self-IP for every external connection. RabbitMQ is one of the few stateful services that *can* recover real client IPs via PROXY protocol (`proxy_protocol = true`) — but only if the appliance sends it, and the setting is global to the AMQP listeners, so your in-cluster 5672 clients would have to send the header too. Both ends agree or neither; most shops just accept losing external client IPs.
+- **The appliance idle timeout is the strictest timer on the path.** The `heartbeat = 30` in the CR and the matching client setting must stay below it (and below conntrack) — [Long-Lived Connections](/networking/long-lived-connections/) is the full story.
+
+The ticket that stands all of this up:
+
+> **To the network team:** please create VIP `rabbitmq.example.internal`, TCP **5671**, pool = **one member: 10.20.0.41:5671** (our cluster's MetalLB service IP). Monitor: **TCP** on 5671 against that address. Idle timeout: ≥ 90 s and tell us the configured value — AMQP heartbeats flow every 30 s and dead-peer detection takes ~60 s, both must clear it. Persistence: none needed (single member). TLS: **passthrough** — the AMQPS certificate lives with the broker; no termination or re-encryption.
+
+Client URIs use the **corporate VIP's DNS name** and carry the heartbeat and TLS explicitly; automatic recovery is a **client-library setting**, not a server one — turn it on:
 
 ```text
 amqps://orders-app:s3cret@rabbitmq.example.internal:5671/%2f?heartbeat=30
@@ -285,7 +302,7 @@ factory.setNetworkRecoveryInterval(5000);    // add jitter in your own wrapper
 factory.setRequestedHeartbeat(30);           // match the server; below LB idle timeout
 ```
 
-Heartbeat 30 means dead peers are detected in ~60s (two missed intervals) and the connection never looks idle to a middlebox with the usual 300s+ timeout. The physics of why: [Long-Lived Connections](/networking/long-lived-connections/).
+Heartbeat 30 means dead peers are detected in ~60s (two missed intervals) and the connection never looks idle to any middlebox on the path — the corporate appliance included, whose timer is usually the one that bites first. The physics of why: [Long-Lived Connections](/networking/long-lived-connections/).
 
 ### 7. NetworkPolicy
 
@@ -323,7 +340,7 @@ spec:
         - { port: 15692, protocol: TCP }
 ```
 
-Note what's absent: no rule for 15672 at all — management UI access is `kubectl port-forward svc/rmq 15672` for the humans who need it. Whether `ipBlock` sees real client IPs depends on `externalTrafficPolicy` and your CNI — verify, don't assume: [Network Policies](/networking/network-policies/).
+Note what's absent: no rule for 15672 at all — management UI access is `kubectl port-forward svc/rmq 15672` for the humans who need it. Whether `ipBlock` sees real client IPs depends on `externalTrafficPolicy` and your CNI — and behind the corporate appliance, external connections arrive from the appliance's SNAT self-IPs, so the block can often be tightened to just that range. Verify, don't assume: [Network Policies](/networking/network-policies/).
 
 ### 8. Monitoring and the alerts that matter
 

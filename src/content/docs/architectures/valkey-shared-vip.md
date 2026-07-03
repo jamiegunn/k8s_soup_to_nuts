@@ -5,7 +5,7 @@ sidebar:
   order: 2
 ---
 
-This is a full reference build: a Valkey **primary** StatefulSet (writes) and a **read replica** StatefulSet (async replication), each fronted by its own `LoadBalancer` Service — but both Services claim the **same MetalLB VIP** via `metallb.io/allow-shared-ip`, separated by port. Clients hit `VIP:6379` for read-write and `VIP:6380` for read-only. Every manifest below is complete and applies in order.
+This is a full reference build: a Valkey **primary** StatefulSet (writes) and a **read replica** StatefulSet (async replication), each fronted by its own `LoadBalancer` Service — but both Services claim the **same MetalLB VIP** via `metallb.io/allow-shared-ip`, separated by port. Clients dial the **corporate VIP** (`valkey.example.internal`) on `:6379` for read-write and `:6380` for read-only; the network team's load-balancer appliance pools both ports to the same MetalLB IP inside the cluster. Every manifest below is complete and applies in order.
 
 :::note[Tuning the numbers]
 The resource blocks and probe timings in this build are starting points. Derive your own from measurements with [Requests & Limits Knobs](/tuning/requests-limits-knobs/) and [Health Check Knobs](/tuning/health-check-knobs/); the method is the [Sizing Walkthrough](/tuning/sizing-walkthrough/).
@@ -14,15 +14,33 @@ The resource blocks and probe timings in this build are starting points. Derive 
 ## 1. Architecture overview
 
 ```text
-                ┌───────────────────────────┐
-  clients ─────►│ VIP 10.40.0.50:6379 (rw)  │──► valkey-primary-0 ◄──┐ replication via
-                │   Service: valkey-rw      │                        │ headless DNS:
-                │ VIP 10.40.0.50:6380 (ro)  │                        │ valkey-primary-0.
-  clients ─────►│   Service: valkey-ro      │──► valkey-replica-0 ───┘ valkey-primary-headless
-                └───────────────────────────┘     (6380 → containerPort 6379)
+  clients ──────► CORPORATE VIP :6379 / :6380  (valkey.example.internal)
+                  network team's F5 / NetScaler appliance — OUTSIDE the cluster
+                         │
+                         │ pools BOTH ports to MetalLB IP 10.40.0.50, same
+                         │ port numbers; its health monitors probe that IP too
+                         ▼
+                 ┌─ KUBERNETES CLUSTER ────────────────────────────────────────┐
+                 │                                                             │
+                 │  MetalLB runs IN-CLUSTER: controller pod + speaker pods     │
+                 │  (DaemonSet on nodes). A speaker makes one NODE answer      │
+                 │  for 10.40.0.50 — the pool member the appliance targets,    │
+                 │  not the address clients dial.                              │
+                 │                                                             │
+                 │ :6379 ────── Service valkey-rw ──► valkey-primary-0 ◄────┐  │
+                 │                                                          │  │
+                 │ :6380 ────── Service valkey-ro ──► valkey-replica-0 ────┘  │
+                 │              (6380 → containerPort 6379)     replication   │
+                 │                                              via headless  │
+                 │                                              DNS           │
+                 └─────────────────────────────────────────────────────────────┘
 ```
 
-**Why one VIP with two ports beats two IPs:** MetalLB pools on bare metal are usually small and platform-owned — every IP you burn is a ticket to the platform team. One VIP means **one DNS record** (`valkey.example.internal`), **one firewall rule** at the corporate edge, and clients that differ only by port number. Read-write vs read-only becomes a connection-string detail, not a DNS migration.
+:::note[The two VIP layers]
+There are two "VIPs" in this picture, owned by different teams, and only one of them is an appliance. The **corporate VIP** is what clients and DNS see: `valkey.example.internal` resolves to an address on the network team's external load balancer (F5 BIG-IP, NetScaler, whatever your site runs) in front of the cluster. The **MetalLB IP** (`10.40.0.50`) is not an appliance at all — it's an IP that a **cluster node** answers for, because the in-cluster MetalLB speaker announced it (ARP in L2 mode, BGP route in BGP mode). To the appliance, that MetalLB IP is just an ordinary pool member: it forwards client connections there and points its health monitors at it. Full chain: client → corporate VIP (appliance) → MetalLB IP (a cluster node) → kube-proxy → Service → pod. Announcement mechanics in [MetalLB](/controllers/metallb/); how the two layers cooperate in [External Load Balancing](/networking/external-load-balancing/).
+:::
+
+**Why one VIP with two ports beats two IPs:** MetalLB pools on bare metal are usually small and platform-owned — every IP you burn is a ticket to the platform team. One MetalLB IP means **one pool member** on the network team's appliance, **one DNS record** (`valkey.example.internal`, pointing at the corporate VIP), **one firewall rule** at the corporate edge, and clients that differ only by port number. Read-write vs read-only becomes a connection-string detail, not a DNS migration.
 
 **Why it beats NodePort:** NodePorts land in the 30000–32767 range (no `:6379` for your Redis-protocol clients), they couple clients to node IPs that change when the platform team recycles nodes, and they announce on *every* node. A MetalLB VIP gives you stable, conventional port numbers on a stable address, with `externalTrafficPolicy` as a real choice rather than an afterthought.
 
@@ -32,9 +50,22 @@ This design has **manual failover**. If the primary pod dies, the StatefulSet re
 
 ## 2. Prerequisites and the platform ask
 
-You own the namespace; the platform team owns MetalLB. Before applying anything, send them this request:
+Three parties own pieces of this build: you own the namespace, Services, and pods; the **platform team** owns MetalLB and its address pools; the **network team** owns the appliance, the corporate VIP, and the DNS record. That means two tickets before applying anything. First, the platform team:
 
 > We need **one IP** from the MetalLB pool assigned to namespace `valkey`, pinned if possible (we'll reference it via `metallb.io/loadBalancerIPs`). We will create **two** `LoadBalancer` Services **sharing that one IP** using `metallb.io/allow-shared-ip: "valkey-vip"` on non-overlapping ports (6379, 6380). Please confirm: (a) IP sharing is not blocked by policy, (b) which pool/IP to use, (c) whether announcements are L2 or BGP.
+
+Then, once the MetalLB IP is known, the network team:
+
+> Please create a VIP for `valkey.example.internal` on the external load balancer, listening on **TCP 6379 and 6380**. Each port forwards to a **single-member pool: 10.40.0.50 on the same port** (6379 → 6379, 6380 → 6380) — that address is our cluster's MetalLB service IP, not a node IP or NodePort. **Monitor:** a plain **TCP check** per port against 10.40.0.50 (a Redis-protocol `PING` monitor would need credentials; our in-cluster readiness probes already gate what answers on that IP). **Idle timeout:** please tell us the configured value — our keepalives must sit below it. **Persistence:** none needed (single pool member). **TLS:** none today; if we add it, it will be passthrough, not terminated on the appliance.
+
+The port mapping is worth spelling out: the appliance exposes `:6379` and `:6380` on the corporate VIP and maps each to the **same port** on the MetalLB IP, so the shared-IP-two-ports design survives both layers — read-write vs read-only stays a port-number detail all the way from the client to the pod.
+
+Two consequences of the appliance hop:
+
+- **Idle timeout.** The appliance's idle timeout is usually the strictest on the whole path — stricter than conntrack or anything kube-side. Valkey's default `tcp-keepalive` is 300 seconds; if the appliance idles out at 300 or lower, set it below that (e.g. `tcp-keepalive 60` in both ConfigMaps) and have clients enable socket keepalives too. The physics of why idle connections die: [Long-Lived Connections](/networking/long-lived-connections/).
+- **Client IPs.** The appliance SNATs, so the cluster sees the appliance's self-IP, never the real client — `CLIENT LIST` shows one address for every external connection. PROXY protocol could carry the original IP, but only if *both* ends speak it, and Valkey doesn't. Accept the loss; that's the norm for stateful protocols behind a corporate appliance.
+
+If the network team runs BIG-IP with [F5 CIS](/controllers/f5-cis/), the VIP, pool, and monitor above can be programmed *from* the cluster by manifests instead of by ticket — same topology, different workflow.
 
 The `allow-shared-ip` contract, restated precisely — MetalLB colocates two Services on one IP only if **all three** hold:
 
@@ -45,7 +76,7 @@ The `allow-shared-ip` contract, restated precisely — MetalLB colocates two Ser
 That third clause decides the ETP question for us. `Local` preserves client source IPs and, for a single-pod backend, is genuinely clean — MetalLB announces from the node that has the pod, so there's no extra hop. But our two Services select **different** pods (primary vs replica), which may sit on different nodes, and one IP can only be announced from one place. MetalLB therefore refuses to share an IP between `Local` Services with different pod sets.
 
 :::danger[Use `externalTrafficPolicy: Cluster` — it is not optional here]
-With `Local` on these two Services, the second one sits in `<pending>` forever and the events say only that the IP can't be shared. `Cluster` costs you client source IPs (kube-proxy SNATs to a node IP — this matters for your [NetworkPolicy](#3f-networkpolicy) and for `CLIENT LIST` debugging) and adds a possible extra node hop, but it's the only configuration that satisfies the sharing contract with distinct backends. Details in [MetalLB](/controllers/metallb/).
+With `Local` on these two Services, the second one sits in `<pending>` forever and the events say only that the IP can't be shared. `Cluster` costs you client source IPs (kube-proxy SNATs to a node IP — this matters for your [NetworkPolicy](#3f-networkpolicy) and for `CLIENT LIST` debugging; for external traffic the appliance's SNAT had already erased them anyway) and adds a possible extra node hop, but it's the only configuration that satisfies the sharing contract with distinct backends. Details in [MetalLB](/controllers/metallb/).
 :::
 
 Everything below assumes namespace `valkey` exists (`kubectl create namespace valkey`) and your CI/CD applies manifests in the order shown.
@@ -358,7 +389,7 @@ spec:
     - { port: 6379, protocol: TCP }
 ```
 
-**Why:** default-deny plus three explicit paths. Note the policy sees **container** ports only — 6380 doesn't exist at the pod, so one rule on 6379 covers both Services. And because ETP is `Cluster`, VIP traffic is SNAT'd to **node IPs** before it reaches the pod — your `ipBlock` must include the node CIDR or you'll block your own VIP while `kubectl exec` tests keep working. Patterns in [NetworkPolicies](/networking/network-policies/).
+**Why:** default-deny plus three explicit paths. Note the policy sees **container** ports only — 6380 doesn't exist at the pod, so one rule on 6379 covers both Services. And because ETP is `Cluster`, VIP traffic is SNAT'd to **node IPs** before it reaches the pod — your `ipBlock` must include the node CIDR or you'll block your own VIP while `kubectl exec` tests keep working. (External connections are SNAT'd twice: once by the corporate appliance, once by kube-proxy — by the time the pod sees them, the source is a node IP.) Patterns in [NetworkPolicies](/networking/network-policies/).
 
 ### 3g. PodDisruptionBudgets
 
@@ -421,6 +452,8 @@ valkey-cli -h 10.40.0.50 -p 6380 -a "$PASS" INFO replication | grep -E 'role|mas
 # master_link_status:up
 ```
 
+Steps 2–3 deliberately target the MetalLB IP — that isolates the in-cluster hop. Once they pass, repeat step 2 through `valkey.example.internal` to add the appliance hop: if the MetalLB IP answers and the corporate VIP doesn't, the problem is the appliance's pool, monitor, or DNS — a network-team ticket, not a kubectl session.
+
 **4. Failover drill (do this before production, on purpose):**
 
 ```bash
@@ -441,6 +474,7 @@ Expect: writes to `:6379` fail with connection errors for roughly 15–45s (pod 
 | `:6380` serving stale data | Readiness probe missing/edited — link is down but pod still Ready | Restore the `master_link_status:up` probe; this is the guardrail |
 | Writes to `:6380` rejected (`READONLY`) | By design: `replica-read-only yes` | Point writers at `:6379`; do not "fix" this |
 | Entire VIP dark for ~10s, both ports | L2 mode: announcing node died; MetalLB memberlist failover re-announces from another node (GARP) | Expected blip; if it persists, check speaker pods and ARP caches upstream |
+| MetalLB IP answers, corporate VIP doesn't | Appliance layer: pool member wrong or disabled, monitor marking 10.40.0.50 down, or DNS not pointing at the corporate VIP | `dig valkey.example.internal`; ask the network team for pool-member and monitor status — nothing in the cluster fixes this |
 | Pod OOMKilled or evicted during AOF rewrite / full sync | `maxmemory` too close to limit (fork COW overshoot), or QoS no longer Guaranteed after a requests/limits edit | Keep limit ≥ 1.5× `maxmemory`; check `last_terminated: OOMKilled` and `.status.qosClass` |
 
 ## 6. Operations notes

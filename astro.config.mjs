@@ -63,6 +63,10 @@ export default defineConfig({
 					items: [{ autogenerate: { directory: 'java' } }],
 				},
 				{
+					label: '.NET on Kubernetes',
+					items: [{ autogenerate: { directory: 'dotnet' } }],
+				},
+				{
 					label: 'Sidecars',
 					items: [{ autogenerate: { directory: 'sidecars' } }],
 				},

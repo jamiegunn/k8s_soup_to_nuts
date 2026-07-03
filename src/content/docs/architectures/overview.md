@@ -22,6 +22,9 @@ The rest of this site explains *how things work*. This section is different: eac
 | [PostgreSQL: Production Reference Architecture](/architectures/postgresql-ha/) | A 3-instance CloudNativePG cluster with quorum-synchronous replication, PgBouncer pooling, continuous S3 backup, and a restore drill |
 | [IBM MQ: Production Reference Architecture](/architectures/ibm-mq/) | A Native HA queue manager (3 pods, Raft-replicated logs, no shared storage), TLS channels, external clients via a MetalLB VIP, and quorum-loss behavior |
 | [RabbitMQ: Production Reference Architecture](/architectures/rabbitmq/) | A 3-node cluster with quorum queues, the memory-watermark-vs-container-limit handshake, AMQPS via MetalLB, and partition/alarm drills |
+| [The Golden Service](/architectures/golden-service/) | The stateless flagship: a production Spring Boot service with every default consciously set — HPA, PDB, spread, probes, NetworkPolicy — numbers traceable to the Sizing Walkthrough |
+| [Kafka: Production Reference Architecture (Strimzi)](/architectures/kafka-strimzi/) | A 3-broker KRaft cluster with the acks/min-ISR durability contract, rack awareness, per-broker external listeners, and the advertised-listener decoder |
+| [The Bare-Metal Front Door](/architectures/front-door/) | The platform-side edge: MetalLB + ingress-nginx + cert-manager as one build — how HTTP traffic actually enters, end to end |
 
 ## The conventions every build follows
 
@@ -30,6 +33,7 @@ The rest of this site explains *how things work*. This section is different: eac
 - **Spread across failure domains** with anti-affinity or topology spread ([High Availability](/workloads/high-availability/)).
 - **PDBs that match quorum reality** — never `maxUnavailable: 0`.
 - **NetworkPolicies included** — stateful services are default-locked to their consumers ([Network Policies](/networking/network-policies/)).
+- **External clients enter through a corporate VIP** on a network-team load-balancer appliance (F5, NetScaler), pooled to an in-cluster [MetalLB](/controllers/metallb/) service IP — every build shows both layers and the ticket that wires them together ([External Load Balancing](/networking/external-load-balancing/)).
 - **Everything ships through your pipeline.** These manifests belong in git, not in a terminal history ([Drift and CI/CD](/operations/drift-and-cicd/)).
 
 :::tip[Want another build?]

@@ -69,7 +69,9 @@ kubectl logs <pod-name> --previous
 | Work out why my pod was killed with exit code 137 | [OOMKilled](/troubleshooting/oomkilled/) |
 | Diagnose a pod stuck on a mount, or a PVC that won't attach | [Volume Failures](/troubleshooting/volume-failures/) |
 | Find out what's behind my StorageClass (Longhorn, Ceph, Harvester…) | [Storage Controllers](/controllers/storage-controllers/) |
-| Deploy a complete, tested build — Valkey, PostgreSQL, IBM MQ, or RabbitMQ | [Reference Architectures](/architectures/overview/) |
+| Deploy a complete, tested build — stateless golden service, Valkey, PostgreSQL, IBM MQ, RabbitMQ, Kafka, or the cluster front door | [Reference Architectures](/architectures/overview/) |
+| See every point where the JVM and Kubernetes interlock | [The JVM–Kubernetes Coupling Map](/java/jvm-kubernetes-coupling/) |
+| Run .NET on Kubernetes — GC vs limits, dumps from runtime-only images | [.NET on Kubernetes](/dotnet/overview/) |
 | Add a sidecar the right way — log shipper, config reloader, secrets fetcher | [Sidecars](/sidecars/overview/) |
 | Tune probe timings, JVM memory flags, or requests/limits with real numbers | [Knobs & Levers](/tuning/overview/) |
 | Size a new service from zero, step by step | [Sizing Walkthrough](/tuning/sizing-walkthrough/) |

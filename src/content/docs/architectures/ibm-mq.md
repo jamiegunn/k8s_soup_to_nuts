@@ -17,6 +17,10 @@ The resource blocks and probe timings in this build are starting points. Derive 
                      off-cluster apps
                            │  TCP 1414 (TLS on channel)
                            ▼
+             corporate VIP  mq.example.internal :1414
+             (network team's F5 / NetScaler appliance)
+                           │  pools to the MetalLB IP
+                           ▼
                  MetalLB VIP 10.20.0.40
                            │
         ┌──────────────────┼──────────────────────────────┐
@@ -116,8 +120,9 @@ data:
     * not terminated at the LB. SSLCAUTH(REQUIRED) = mutual TLS.
     * MAXINST/MAXINSTC: cap total and per-client connections so one leaking
     * app can't exhaust the channel table for everyone.
-    * HBINT(30): flow a heartbeat every 30s — BELOW any LB/firewall idle
-    * timeout on the 1414 path, or idle channels get silently severed.
+    * HBINT(30): flow a heartbeat every 30s — BELOW the corporate
+    * appliance's idle timeout AND any conntrack/firewall timeout on the
+    * 1414 path, or idle channels get silently severed.
     DEFINE CHANNEL('APP.SVRCONN') CHLTYPE(SVRCONN) TRPTYPE(TCP) +
            SSLCIPH('ANY_TLS12_OR_HIGHER') SSLCAUTH(REQUIRED) +
            MCAUSER('nobody') MAXINST(50) MAXINSTC(10) HBINT(30) REPLACE
@@ -143,7 +148,7 @@ data:
       MaxActiveChannels=300
 ```
 
-Why HBINT matters this much: an MQ channel is one long-lived TCP connection, exactly the species that idle-timeout middleboxes love to kill. Heartbeats below the timeout keep the conntrack/LB entry warm; get it wrong and quiet-period apps throw `MQRC 2009` at 3 a.m. Full treatment: [Long-Lived Connections](/networking/long-lived-connections/).
+Why HBINT matters this much: an MQ channel is one long-lived TCP connection, exactly the species that idle-timeout middleboxes love to kill. On this build's external path the strictest middlebox is usually the **corporate appliance itself** — get its idle timeout in writing (it's a line in the network-team request below) and keep HBINT under it *and* under any conntrack/firewall timer. Heartbeats below every timeout on the path keep the state entries warm; get it wrong and quiet-period apps throw `MQRC 2009` at 3 a.m. Full treatment: [Long-Lived Connections](/networking/long-lived-connections/).
 
 ### 3. The QueueManager CR
 
@@ -235,7 +240,7 @@ More on why drains are the real enemy of quorum systems: [High Availability](/wo
 
 The operator creates a ClusterIP Service `qm1-ibm-mq` (1414 traffic, 9443 console, 9157 metrics) and a headless Service for 9414 replication. Crucially, **the 1414 Service selects only the active pod** — the operator manages readiness so replicas never receive client traffic. In-cluster apps just use `qm1-ibm-mq.mq-prod.svc:1414`.
 
-Off-cluster clients need a [MetalLB](/controllers/metallb/) VIP — this is plain [TCP ingress](/networking/tcp-ingress/), no HTTP anything:
+Off-cluster clients reach the queue manager through **two layers**: a corporate VIP on the network team's appliance, pooled to a [MetalLB](/controllers/metallb/) service IP inside the cluster — plain [TCP ingress](/networking/tcp-ingress/) at both hops, no HTTP anything. The in-cluster half first:
 
 ```yaml
 apiVersion: v1
@@ -250,8 +255,9 @@ metadata:
 spec:
   type: LoadBalancer
   loadBalancerIP: 10.20.0.40      # or let the pool assign; pin it if firewalls care
-  externalTrafficPolicy: Local     # preserve client IPs => CHLAUTH ADDRESS rules
-                                   # and channel-status IPs stay meaningful
+  externalTrafficPolicy: Local     # the source IP that survives is the corporate
+                                   # appliance's SNAT address (see below) — still
+                                   # useful: it pins 1414 to the appliance
   selector:
     app.kubernetes.io/instance: qm1   # all 3 pods match, but ONLY the active
                                       # instance passes readiness, so the
@@ -261,6 +267,17 @@ spec:
 ```
 
 Never pin `statefulset.kubernetes.io/pod-name` in this selector "for stability" — that defeats failover; readiness-based selection *is* the failover mechanism (sanity-check your selector against the operator's own `qm1-ibm-mq` Service). Expose **only 1414**: the 9443 console and 9157 metrics never go on the VIP.
+
+**The corporate VIP in front.** Clients never dial `10.20.0.40` — they dial `mq.example.internal`, a corporate VIP on the network team's load-balancer appliance (F5 BIG-IP, NetScaler), which pools to the MetalLB IP. Chain: client → corporate VIP (appliance) → MetalLB IP `:1414` → the active pod. Ownership split: the **network team** owns the appliance, VIP, and DNS; the **platform team** owns MetalLB and its pools; **you** own the Service, the QueueManager CR, and the channels. General topology: [External Load Balancing](/networking/external-load-balancing/). What matters at that layer for MQ specifically:
+
+- **The pool member is the MetalLB IP `:1414`** — never NodePorts or pod IPs. The appliance health-checks that address; ask for a plain **TCP monitor**. A protocol-aware monitor sounds nicer but a half-open MQ handshake writes an `AMQ9xxx` error to the QM log every probe interval — the readiness gating already ensures the MetalLB IP only answers when the active instance can serve, so TCP is both quiet and truthful.
+- **TLS must be passthrough.** This build uses mutual TLS on the channel with `SSLPEERMAP` mapping client-cert DNs to identities — terminate at the appliance and that authentication model is dead. End-to-end TLS, cert lives with the queue manager; the appliance forwards bytes. (If your network team runs BIG-IP with [F5 CIS](/controllers/f5-cis/), the VIP, pool, and monitor can be declared from cluster manifests instead of a ticket — same passthrough topology.)
+- **The appliance SNATs**, so the queue manager sees the appliance's self-IP for every external client — channel status `CONNAME` and any CHLAUTH `TYPE(ADDRESS)` rule become useless for distinguishing external clients. That's exactly why this build authenticates on certificate DN, which survives SNAT. MQ doesn't speak PROXY protocol; accept the lost client IPs.
+- **The appliance idle timeout joins the HBINT math.** It's usually the strictest timer on the path — HBINT(30) and the CCDT's `heartbeatInterval` must stay below it (and below conntrack); see [Long-Lived Connections](/networking/long-lived-connections/).
+
+The request that makes all of it real:
+
+> **To the network team:** please create VIP `mq.example.internal`, TCP **1414**, pool = **one member: 10.20.0.40:1414** (our cluster's MetalLB service IP). Monitor: **TCP** on 1414 — no protocol-aware monitor, it spams the queue manager's error log. Idle timeout: ≥ 90 s and tell us the configured value — our channels heartbeat every 30 s and must stay below it. Persistence: none needed (single member). TLS: **passthrough** — the channel does mutual TLS end-to-end; do not decrypt.
 
 Clients get a JSON CCDT with automatic reconnect, mirroring the channel's `DEFRECON` posture:
 
@@ -281,6 +298,8 @@ Clients get a JSON CCDT with automatic reconnect, mirroring the channel's `DEFRE
   }]
 }
 ```
+
+The `host` is the **corporate VIP's DNS name**, owned by the network team — clients never learn the MetalLB IP. If the appliance moves or the pool member changes, the CCDT stays valid.
 
 Reconnect is a *pair* of settings: the client asks (CCDT `reconnect`, or `MQCNO_RECONNECT`), and the channel permits (`DEFRECON(YES)` on the channel if you want it without client changes). With both in place, a failover looks to the app like a 5–15 second stall inside the MQ client library, not an exception. Without them, every failover is a `2009` surfacing into application code that probably doesn't handle it.
 
@@ -314,7 +333,7 @@ spec:
       ports: [{ port: 9157, protocol: TCP }]
 ```
 
-Note what's absent: no external rule for 9443. Console access is `kubectl port-forward` for the few humans who need it. Whether the `ipBlock` sees real client IPs depends on `externalTrafficPolicy` and your CNI — verify, don't assume: [Network Policies](/networking/network-policies/).
+Note what's absent: no external rule for 9443. Console access is `kubectl port-forward` for the few humans who need it. Whether the `ipBlock` sees real client IPs depends on `externalTrafficPolicy` and your CNI — and behind the corporate appliance, "real" means the appliance's SNAT self-IPs, so the block can often be tightened to just that range. Verify, don't assume: [Network Policies](/networking/network-policies/).
 
 ### 7. Monitoring and the alerts that matter
 
@@ -362,7 +381,7 @@ $ amqsgetc APP.ORDERS QM1
 message <hello-persistent>
 ```
 
-This one round trip proves: VIP routing, TLS handshake, CHLAUTH mapping, and OAM authority — the four things that fail independently.
+This one round trip proves: VIP routing (both layers — the appliance's pool and MetalLB's announcement), TLS handshake, CHLAUTH mapping, and OAM authority — the things that fail independently.
 
 **3. Failover drill.** Start `amqsgetc` in a loop, then `kubectl delete pod qm1-ibm-mq-0`. Watch `dspmq -o nativeha` on another pod: a replica is elected active typically **within about 10 seconds**. The reconnecting client stalls, then resumes — no error surfaces. The deleted pod returns as a replica and resyncs (`INSYNC(yes)` again within a minute for a quiet QM).
 
@@ -381,7 +400,7 @@ This one round trip proves: VIP routing, TLS handshake, CHLAUTH mapping, and OAM
 | Two instances lost | Active stops serving; QM unavailable | No quorum = no writes, by design. Recovery: get any second instance running and in-sync; service resumes automatically. Never "recover" by force-starting a lone instance |
 | Recovery-log disk full | Persistent puts fail (`MQRC 2102 RESOURCE_PROBLEM`); QM may end | Expand the PVC (needs `allowVolumeExpansion`). The 80% alert above exists so you never read this row in anger |
 | Channel refuses to start | Client: `AMQ4036`/`MQRC 2035` = CHLAUTH mapping or AUTHREC gap (check QM's AMQERR01.LOG for the matching AMQ9776/9777). `AMQ9643`/TLS errors = cipher or cert mismatch — check SSLCIPH both ends, cert DN vs SSLPEERMAP, CA in trust | Read the *queue manager side* error log; the client-side message is deliberately vague |
-| Idle channels dying overnight | Apps throw `MQRC 2009 CONNECTION_BROKEN` at quiet times, fine under load | Classic LB/firewall idle timeout above HBINT. Fix HBINT (both channel and CCDT) below the timeout — don't fix it by adding retry loops in every app |
+| Idle channels dying overnight | Apps throw `MQRC 2009 CONNECTION_BROKEN` at quiet times, fine under load | Classic idle timeout above HBINT — check the corporate appliance's timer first, it's usually the strictest hop. Fix HBINT (both channel and CCDT) below the timeout — don't fix it by adding retry loops in every app |
 
 ## Sizing and day-2
 

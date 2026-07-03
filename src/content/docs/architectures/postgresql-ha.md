@@ -14,8 +14,12 @@ The resource blocks and probe timings in this build are starting points. Derive 
 ## Architecture
 
 ```text
+  external clients ────▶ corporate VIP :5432 (network team's F5/NetScaler)
+                                            │
+                                            │ pools to the MetalLB IP
+                                            ▼
                          ┌─────────────────────────────────────────────┐
-  external clients ────▶ │ LoadBalancer VIP (optional, MetalLB)        │
+                         │ LoadBalancer VIP (optional, MetalLB)        │
                          └──────────────────┬──────────────────────────┘
                                             │
   in-cluster apps ──────────────────────────┤
@@ -43,7 +47,7 @@ The choices, and why:
 - **Quorum synchronous replication, `ANY 1`.** The trade-off stated plainly: fully **async** means a primary that dies mid-write loses committed transactions (RPO > 0 on failover). Requiring **both** replicas sync means one slow or dead replica stalls every commit. `ANY 1` — a commit waits for *either* replica to acknowledge — is the sweet spot: zero data loss on single-node failure, and one replica can vanish without freezing writes. You pay one intra-cluster network round-trip per commit (typically sub-millisecond on a LAN). Take that deal.
 - **PgBouncer in front, transaction mode.** Postgres connections are expensive processes; app connection churn kills it. The pooler absorbs thousands of client connections into ~20 server connections, and it follows the primary across failovers so apps reconnect to a stable name.
 - **Continuous backup to S3-compatible object storage.** Base backups nightly, WAL archived continuously — your RPO for full-cluster disasters is roughly the WAL archive interval (≤ 5 minutes), and you get point-in-time recovery.
-- **Optional external VIP** via a LoadBalancer Service from [MetalLB](/controllers/metallb/), because Postgres is raw TCP — HTTP Ingress doesn't apply; see [TCP ingress](/networking/tcp-ingress/).
+- **Optional external VIP** via a LoadBalancer Service from [MetalLB](/controllers/metallb/), because Postgres is raw TCP — HTTP Ingress doesn't apply; see [TCP ingress](/networking/tcp-ingress/). Off-cluster clients don't dial that MetalLB IP directly: they hit a **corporate VIP** on the network team's appliance, which pools to it — both layers are wired up in section 5.
 
 ## Prerequisites: what to ask the platform team for
 
@@ -263,8 +267,20 @@ spec:
 ```
 
 :::caution[Idle TCP connections through an L4 VIP]
-Long-lived idle Postgres connections through any L4 path get silently dropped by conntrack/firewall idle timeouts, and the client finds out on its next query with a hung socket. Set client-side keepalives (`keepalives_idle=60` in the DSN) or PgBouncer's `server_check_delay`. The full story is in [TCP ingress](/networking/tcp-ingress/).
+Long-lived idle Postgres connections through any L4 path get silently dropped by idle timeouts, and the client finds out on its next query with a hung socket. With the corporate appliance in the path there are now *two* timers — the appliance's idle timeout (usually the strictest on the whole chain) and conntrack/firewall timers — and your keepalives must sit below **both**. Set client-side keepalives (`keepalives_idle=60` in the DSN) or PgBouncer's `server_check_delay`. The full story is in [TCP ingress](/networking/tcp-ingress/) and [Long-Lived Connections](/networking/long-lived-connections/).
 :::
+
+**The corporate VIP in front.** Off-cluster clients don't dial `10.20.30.44` — they dial `appdb.example.internal`, a corporate VIP on the network team's load-balancer appliance (F5 BIG-IP, NetScaler, whatever your site runs), and the appliance pools to the MetalLB IP. The full chain: client → corporate VIP (appliance) → MetalLB IP `:5432` → kube-proxy → PgBouncer → Postgres. The ownership split matters when something breaks: the **network team** owns the appliance, the corporate VIP, and DNS; the **platform team** owns MetalLB and its pools; **you** own the Service and everything behind it. The appliance layer in general: [External Load Balancing](/networking/external-load-balancing/).
+
+Three things to get right at that layer:
+
+- **The pool member is the MetalLB IP `:5432`** — not NodePorts, not pod IPs. The appliance health-checks that same address; a plain **TCP monitor** on 5432 is the right ask (a protocol-aware Postgres monitor needs credentials and logs a failed connection attempt every probe interval — readiness gating behind the Service already decides what answers on the MetalLB IP).
+- **TLS: passthrough.** The server certificate lives with the workload (CNPG manages it), and Postgres negotiates TLS *inside* the connection via `SSLRequest` — terminating at a generic appliance splits the trust chain for no gain. Ask for passthrough. If the network team runs BIG-IP with [F5 CIS](/controllers/f5-cis/), the VIP, pool, and monitor can be programmed *from* cluster manifests instead of by ticket.
+- **Client IPs are gone.** The appliance SNATs, so `pg_stat_activity.client_addr` shows the appliance's self-IP for every external connection. PROXY protocol would preserve them, but only if both ends speak it — Postgres doesn't. Accept the loss and lean on application-level identity.
+
+And the ticket itself:
+
+> **To the network team:** please create VIP `appdb.example.internal`, TCP **5432**, pool = **one member: 10.20.30.44:5432** (our cluster's MetalLB service IP). Monitor: **TCP** on 5432 against that address. Idle timeout: ≥ 600 s, and tell us the configured value — our clients set `keepalives_idle` below it. Persistence: none needed (single member). TLS: **passthrough**, no termination or re-encryption.
 
 ### 6. NetworkPolicy — who may reach 5432
 
