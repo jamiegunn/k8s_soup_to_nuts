@@ -7,6 +7,10 @@ sidebar:
 
 Requests and limits are four small numbers that decide where your pods run, who gets killed under pressure, and whether your p99 latency has a mysterious sawtooth. Most teams set them once by copy-paste and never revisit. Let's do better.
 
+:::tip[Looking for the dials?]
+This article explains what requests and limits mean; the knob-by-knob reference — exact semantics, CFS math, archetype resource blocks, sizing workflow — lives in [Requests & Limits Knobs](/tuning/requests-limits-knobs/).
+:::
+
 ## Requests vs limits: two different machines
 
 ```yaml

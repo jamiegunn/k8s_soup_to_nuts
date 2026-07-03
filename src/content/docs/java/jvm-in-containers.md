@@ -10,6 +10,10 @@ quota, and a filesystem. Modern JVMs read those limits and size themselves
 accordingly — mostly. The gap between "mostly" and "always" is where OOMKills
 and mystery throttling live.
 
+:::tip[Looking for the dials?]
+This article explains how the JVM sees the container; the flag-by-flag reference — heap percentages, Metaspace, direct memory, the RSS budget formula, ready-made flag strings — lives in [JVM Memory Knobs](/tuning/jvm-memory-knobs/).
+:::
+
 ## Container awareness: what the JVM detects
 
 Since JDK 10 (backported to 8u191), HotSpot has `-XX:+UseContainerSupport`,

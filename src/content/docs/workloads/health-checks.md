@@ -7,6 +7,10 @@ sidebar:
 
 Probes are the only channel your app has to tell Kubernetes how it's doing, and Kubernetes acts on them with total literal-mindedness. A wrong probe isn't neutral — it's an automated operator that kills healthy pods or routes traffic to broken ones, at machine speed, around the clock. Get the semantics exactly right.
 
+:::tip[Looking for the dials?]
+This article explains how probes behave; the consolidated knob table — every field, default, the restart math, and per-archetype recipes — lives in [Health Check Knobs](/tuning/health-check-knobs/).
+:::
+
 ## The three probes, precisely
 
 | Probe | Question it answers | On failure (past threshold) | Runs |

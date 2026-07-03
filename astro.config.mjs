@@ -90,6 +90,10 @@ export default defineConfig({
 					label: 'Reference Architectures',
 					items: [{ autogenerate: { directory: 'architectures' } }],
 				},
+				{
+					label: 'Knobs & Levers',
+					items: [{ autogenerate: { directory: 'tuning' } }],
+				},
 			],
 		}),
 	],

@@ -70,6 +70,8 @@ kubectl logs <pod-name> --previous
 | Diagnose a pod stuck on a mount, or a PVC that won't attach | [Volume Failures](/troubleshooting/volume-failures/) |
 | Find out what's behind my StorageClass (Longhorn, Ceph, Harvester…) | [Storage Controllers](/controllers/storage-controllers/) |
 | Deploy a complete, tested build — Valkey, PostgreSQL, or IBM MQ | [Reference Architectures](/architectures/overview/) |
+| Tune probe timings, JVM memory flags, or requests/limits with real numbers | [Knobs & Levers](/tuning/overview/) |
+| Size a new service from zero, step by step | [Sizing Walkthrough](/tuning/sizing-walkthrough/) |
 | Tell whether it's my pod or the node (evictions, `Terminating`, `Unknown`) | [Node Problems](/troubleshooting/node-problems/) |
 | Shell into a distroless container, or debug one that dies before I can exec | [Debugging Toolbox](/troubleshooting/debugging-toolbox/) |
 | Find out why my pods never appear even though the Deployment applied | [Pod Security](/workloads/pod-security/) |

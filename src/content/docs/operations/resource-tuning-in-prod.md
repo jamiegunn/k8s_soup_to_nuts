@@ -7,6 +7,10 @@ sidebar:
 
 Requests and limits are the fields you'll retune most often over a service's life — and they're uniquely easy to get wrong live, because a resource change looks like a metadata tweak but behaves like a deploy. This article is the safe procedure.
 
+:::tip[Sizing from scratch?]
+This article covers changing resources on a LIVE workload safely. For deriving the numbers in the first place, work through the [Sizing Walkthrough](/tuning/sizing-walkthrough/) and the [Knobs & Levers references](/tuning/overview/).
+:::
+
 ## First fact: it's a rolling restart
 
 `resources` lives inside the pod template. Change it — by `kubectl edit`, `kubectl patch`, or `kubectl set resources` — and the Deployment controller performs a full rolling update:
