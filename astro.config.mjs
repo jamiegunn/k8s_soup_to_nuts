@@ -63,6 +63,10 @@ export default defineConfig({
 					items: [{ autogenerate: { directory: 'java' } }],
 				},
 				{
+					label: 'Sidecars',
+					items: [{ autogenerate: { directory: 'sidecars' } }],
+				},
+				{
 					label: 'Stateful Apps',
 					items: [{ autogenerate: { directory: 'stateful' } }],
 				},

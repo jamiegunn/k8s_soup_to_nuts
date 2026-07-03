@@ -36,7 +36,7 @@ The probe *handler* is a knob too — you choose what "healthy" is measured by:
 | `grpc` | `port` (number only), `service` (name passed to the standard `grpc.health.v1.Health` check) | `SERVING` response | One gRPC health RPC | gRPC servers implementing the health protocol (stable since v1.27). Distinct `service` names let readiness and liveness ask different questions on one port. |
 
 :::note[exec probes are the expensive ones]
-An `exec` probe is a `fork()`+`exec()` in your container's cgroup every `periodSeconds` — for *each* probe that uses it. Three exec probes at `periodSeconds: 5` is 36 process spawns a minute, billed against your CPU limit. And if the command is `java -jar healthcheck.jar`, you're paying a JVM startup per probe. Use a file-touch check or a tiny shell test, and stretch the period to 30–60s.
+An `exec` probe is a [`fork()`](https://man7.org/linux/man-pages/man2/fork.2.html)+[`execve()`](https://man7.org/linux/man-pages/man2/execve.2.html) in your container's cgroup every `periodSeconds` — a whole new process whose CPU and memory are charged against your limits — for *each* probe that uses it. Three exec probes at `periodSeconds: 5` is 36 process spawns a minute, billed against your CPU limit. And if the command is `java -jar healthcheck.jar`, you're paying a JVM startup per probe. Use a file-touch check or a tiny shell test, and stretch the period to 30–60s.
 :::
 
 ## Which knobs matter per probe type
@@ -62,6 +62,8 @@ kill signal sent:  ~30–45s after the hang begins, then SIGTERM → grace perio
 ```
 
 Rule of thumb: **liveness kill time ≈ `failureThreshold × periodSeconds`, plus up to one period of jitter.** Your app must be able to be unresponsive for *less* than this during normal operation (GC, cache rebuild, burst load), or liveness becomes a random pod-killer.
+
+The kill itself is plain Unix [signal semantics](https://man7.org/linux/man-pages/man7/signal.7.html): the kubelet sends SIGTERM, which the process may catch to shut down cleanly, then after the grace period SIGKILL, which cannot be caught, blocked, or ignored. A truly wedged process that never handles the SIGTERM just spends the whole grace period dying slowly — which is exactly the case the probe-level `terminationGracePeriodSeconds` above exists to shortcut.
 
 **Time-to-traffic (readiness, fresh pod).** `initialDelaySeconds + (attempts-to-first-success × periodSeconds) + endpoint propagation`. With `initialDelay: 0`, `period: 5`, and an app that's actually ready at t=12s:
 
@@ -134,7 +136,7 @@ Nothing was ever wrong except the probe config. Defenses: `timeoutSeconds ≥ 5`
 
 ### Liveness timeout × CPU throttling
 
-A pod at its CPU limit gets throttled in 100ms enforcement windows — and the thread answering `/healthz` waits in line with everything else. An app that's merely *busy* starts missing a 1s timeout, liveness kills it, and the survivors inherit its traffic and throttle harder. If restarts correlate with traffic peaks and `container_cpu_cfs_throttled_periods_total` is climbing, this is your loop. Raise `timeoutSeconds` first, then fix the CPU limit.
+A pod at its CPU limit gets throttled in 100ms enforcement windows: under [CFS bandwidth control](https://docs.kernel.org/scheduler/sched-bwc.html), the container cgroup's runtime quota refills at the start of each period, and once a burst of work burns it, the kernel dequeues *every* thread in the container until the next refill. The thread answering `/healthz` isn't waiting in a slow queue — it's frozen along with everything else, for up to the rest of the period, period after period. An app that's merely *busy* starts missing a 1s timeout, liveness kills it, and the survivors inherit its traffic and throttle harder. If restarts correlate with traffic peaks and `container_cpu_cfs_throttled_periods_total` is climbing, this is your loop. Raise `timeoutSeconds` first, then fix the CPU limit.
 
 ### Readiness × dependency checks
 

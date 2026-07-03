@@ -54,7 +54,7 @@ spec:
 
 Where each guess comes from:
 
-- **1 CPU request, no CPU limit.** A whole core reserves real scheduler capacity, and the missing limit means a slow start or a traffic spike burns spare node CPU instead of hitting the CFS throttle. The full argument for limitless CPU lives in [Requests & Limits Knobs](/tuning/requests-limits-knobs/).
+- **1 CPU request, no CPU limit.** A whole core reserves real scheduler capacity, and the missing limit means a slow start or a traffic spike burns spare node CPU instead of hitting the CFS throttle — with a limit, the kernel's [CFS bandwidth control](https://docs.kernel.org/scheduler/sched-bwc.html) grants the container a fixed runtime quota per 100ms period and freezes *every* thread once it's spent, even on an otherwise idle node, which is the last thing a cold JVM mid-JIT-warmup needs. The full argument for limitless CPU lives in [Requests & Limits Knobs](/tuning/requests-limits-knobs/).
 - **1.5Gi request = limit.** Memory is incompressible; request == limit means the scheduler reserved exactly what the OOM killer will enforce — no surprises from overcommit. `MaxRAMPercentage=65` gives the heap ~1000Mi of that and leaves ~500Mi for metaspace, threads, and off-heap — the standard opening bid from [JVM Memory Knobs](/tuning/jvm-memory-knobs/).
 - **A three-minute startup budget.** The startup probe holds liveness and readiness off until the app is truly up, so a cold JVM can't be killed mid-boot. Way too generous — we'll shrink it with data in Phase 2. The archetype recipes are in [Health Check Knobs](/tuning/health-check-knobs/).
 - **2 replicas + a PDB**, because a "new" service still gets caught in node drains:
@@ -135,6 +135,10 @@ max_over_time(container_memory_working_set_bytes{pod=~"orders-api-.*",container=
 rate(container_cpu_cfs_throttled_periods_total{pod=~"orders-api-.*"}[5m])
   / rate(container_cpu_cfs_periods_total{pod=~"orders-api-.*"}[5m])
 ```
+
+:::note[Why working_set is the number]
+`container_memory_working_set_bytes` is the container's cgroup memory usage minus the cold, reclaimable page cache (`inactive_file`) — that is, the memory the kernel *can't* simply free. At the limit, the kernel reclaims that cache first; only if it still can't satisfy the allocation does the [cgroup OOM killer](https://docs.kernel.org/admin-guide/cgroup-v2.html#memory) fire and kill the container (exit 137). Raw "memory used" includes cache the kernel would happily give back — size from working set, or you're budgeting for an illusion.
+:::
 
 Plus startup time (`kubectl describe pod` shows when the startup probe first succeeded — or watch `kube_pod_status_ready`), and GC behavior from `-Xlog:gc*` (reading those logs is covered in [GC and Performance](/java/gc-and-performance/)).
 

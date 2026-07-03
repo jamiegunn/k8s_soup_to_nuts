@@ -43,6 +43,10 @@ Two asymmetries to internalize, because everything downstream follows from them:
 - **CPU is compressible.** Starving a container of CPU makes it slow. So CPU requests are a soft guarantee (weight under contention) and CPU limits are an *optional* hard cap you usually don't want.
 - **Memory is incompressible.** You can't make a process "use memory slower." So memory limits are enforced by killing, and memory requests are a promise the scheduler takes literally when placing you.
 
+:::note[Under the hood: cgroup v2 is the enforcer]
+Every value in the `resources` block ends up as a file in the container's [cgroup v2](https://docs.kernel.org/admin-guide/cgroup-v2.html) directory. The kubelet turns `requests.cpu` into `cpu.weight` (millicores become the legacy v1 `cpu.shares` value of `milliCPU × 1024 / 1000`, then get mapped onto v2's 1–10000 weight scale), writes `limits.cpu` as a quota/period pair into `cpu.max`, and writes `limits.memory` into `memory.max`. Two consequences fall straight out of the kernel semantics. First, `cpu.weight` is *proportional*: per the [CFS scheduler design](https://docs.kernel.org/scheduler/sched-design-CFS.html), weights only arbitrate when runnable tasks outnumber CPUs — on an uncontended node your weight is irrelevant and you can burn every idle cycle. Second, `cpu.max` and `memory.max` are *absolute*: the kernel enforces them regardless of how bored the rest of the node is.
+:::
+
 ### Units, and the classic unit bugs
 
 CPU is measured in cores; `1000m` (millicores) = `1` core. Memory is measured in bytes with binary (`Ki`, `Mi`, `Gi`) or decimal (`K`, `M`, `G`) suffixes.
@@ -86,6 +90,10 @@ Three practical consequences people miss:
 ### Memory: request = limit
 
 Set `requests.memory == limits.memory`. The argument: memory is incompressible, so overcommitting it is a bet that pods on the same node won't peak together. When the bet loses, the kubelet evicts pods using more than their request — which, if your request is below your limit, can be *you*, behaving normally, within your limit. Request = limit means the scheduler reserved everything you're allowed to use; there is no "the node ran out but I was under my limit" failure mode. The cost is bin-packing efficiency, and that cost is the platform team's to optimize, not yours to donate unreliability for.
+
+:::note[Under the hood: what "OOM-killed" actually means]
+`limits.memory` is the cgroup's `memory.max`. When a process in the container faults in a page and the kernel can't charge it to the cgroup without crossing that line, the kernel first tries to reclaim — dropping the cgroup's page cache, swapping if allowed. Only when reclaim can't free enough does the [cgroup-scoped OOM killer](https://docs.kernel.org/admin-guide/cgroup-v2.html#memory) fire, pick a victim *inside* the cgroup, and SIGKILL it — that's the exit code 137, and it's why there's no grace period: the process never gets a signal it can handle. Victim selection is biased by each process's `oom_score_adj` (see [proc(5)](https://man7.org/linux/man-pages/man5/proc.5.html)), which the kubelet sets per QoS class — Guaranteed pods get −997, Burstable pods a value scaled by how far usage exceeds request — so when the *node* itself runs out, lower-QoS neighbors die first. The ground truth for "was I OOM-killed?" is the `oom_kill` counter in the cgroup's `memory.events` file; the `OOMKilled` reason in `kubectl describe pod` is downstream of that counter.
+:::
 
 ### CPU: honest request, no limit
 
@@ -147,6 +155,10 @@ Stall:                87.5ms — every thread frozen until the next period
 
 Any request in flight when the freeze hits eats up to 87.5ms of pure stall — often across *multiple consecutive periods* for anything non-trivial. Meanwhile your CPU usage graph shows 50ms used per 100ms period at worst, and the burst was brief, so the 5-minute average reads a comfortable **40%**. Average utilization is innocent; p99 latency is a crime scene. This is the single most common "we have latency spikes but CPU looks fine" root cause.
 
+:::note[Under the hood: how the quota actually drains]
+[CFS bandwidth control](https://docs.kernel.org/scheduler/sched-bwc.html) keeps a global runtime pool per cgroup, refilled to the full quota at the start of each period. As your threads run, each CPU's runqueue draws runtime from that pool in slices (5ms by default) — which is why four concurrent threads drain a 50ms quota four times faster than the wall clock: every running thread burns quota simultaneously. When the pool and the local slices are gone, the whole task group is dequeued — *throttled* — and nothing in the container runs until the period timer refills the pool. The kernel does have a `burst` setting that lets a cgroup bank unused quota from previous periods to absorb exactly this kind of spike, but Kubernetes doesn't expose it through the `resources` API, so on a stock cluster the math above is the math you live with.
+:::
+
 You can't see throttling in usage metrics. You see it here:
 
 ```promql
@@ -161,7 +173,7 @@ sum by (namespace, pod, container) (
 )
 ```
 
-More resource queries, including throttled-seconds and working-set variants, live in [PromQL for resources](/observability/promql-for-resources/).
+More resource queries, including throttled-seconds and working-set variants, live in [PromQL for resources](/observability/promql-for-resources/). If you have node access, the kernel offers a second opinion: the cgroup's `cpu.pressure` file — [pressure stall information (PSI)](https://docs.kernel.org/accounting/psi.html) — reports the share of wall-clock time the container's tasks spent stalled waiting for CPU, which is the throttle ratio's question answered from the scheduler's side.
 
 ## Second-order knobs
 
@@ -249,6 +261,10 @@ The full narrative walkthrough is [Sizing walkthrough](/tuning/sizing-walkthroug
 3. **Memory request = memory limit.** (Argued above.)
 4. **CPU request ≈ p95 usage,** rounded up to a clean value. No CPU limit unless you're in the batch/fairness/benchmark cases.
 5. **Deploy, wait a full traffic cycle, re-measure.** One knob per change. Rollout mechanics, canary-first ordering, and rollback discipline: [Resource tuning in prod](/operations/resource-tuning-in-prod/).
+
+:::note[Under the hood: working set vs. "memory used"]
+The raw cgroup counter, `memory.current`, charges every page the container touches — anonymous memory (heap, stacks) *and* file-backed page cache from every file it reads or writes. Cache is reclaimable: under pressure the kernel drops it rather than OOM-killing anyone. That's why a service with a 400Mi heap can show 1.9Gi "used" after streaming a few large files — most of it is cache the kernel would hand back on demand, not memory the process needs. `container_memory_working_set_bytes` is usage minus the `inactive_file` portion (cache the kernel considers cold and readily reclaimable), which is why it — not raw usage — is the number that correlates with real OOM risk and the one to size limits from.
+:::
 
 Worked example — `payments-api`, 7 days of data:
 

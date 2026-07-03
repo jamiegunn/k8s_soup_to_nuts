@@ -8,8 +8,16 @@ sidebar:
 The JVM has one memory number everyone tunes (`-Xmx`) and half a dozen it
 spends behind your back. In Kubernetes, the container limit is a hard wall:
 the moment total RSS crosses it, the kernel OOM-kills the process — no
-`OutOfMemoryError`, no heap dump, exit code 137. So every knob on this page
-is really a line item in one budget:
+`OutOfMemoryError`, no heap dump, exit code 137. Mechanically: the limit is
+the container cgroup's `memory.max`; when an allocation can't be charged
+under it and the kernel can't reclaim enough page cache to make room, the
+[cgroup-scoped OOM killer](https://docs.kernel.org/admin-guide/cgroup-v2.html#memory)
+picks a victim inside the container and delivers
+[SIGKILL](https://man7.org/linux/man-pages/man7/signal.7.html) — a signal
+that cannot be caught or handled, which is why no shutdown hook, no
+`-XX:+HeapDumpOnOutOfMemoryError`, and no graceful anything ever runs
+(137 = 128 + 9, the SIGKILL signal number). So every knob on this page is
+really a line item in one budget:
 
 ```text
 container_limit ≥ heap + metaspace + code cache + (threads × stack)
@@ -70,6 +78,10 @@ with. For that you need `jcmd` (JDK images) or the startup
 | `-XX:SoftMaxHeapSize=<size>` | = max heap | Soft target the GC tries to stay under, uncommitting above it (ZGC; manageable at runtime) | Cache-heavy ZGC services: cap normal footprint while allowing spikes to `-Xmx` | RSS settles near the soft max |
 | `-XX:+UseContainerSupport` | **On** since 8u191 / JDK 10 | Makes the JVM read cgroup limits instead of node RAM | Never turn off. But know when it *silently fails*: cgroup **v2** needs 8u372+ / 11.0.16+ / 15+ | A 25% heap of the 64Gi *node* is the failure signature |
 
+:::note[Under the hood: what "container support" actually reads]
+Container awareness is nothing more magical than the JVM parsing the container's cgroup interface files at startup: on cgroup v2, `/sys/fs/cgroup/memory.max` for the memory limit and `/sys/fs/cgroup/cpu.max` for the CPU quota/period pair (on legacy v1, `memory.limit_in_bytes` and `cpu.cfs_quota_us` / `cpu.cfs_period_us`) — the same files the kubelet writes your `resources` block into, documented in the [cgroup v2 admin guide](https://docs.kernel.org/admin-guide/cgroup-v2.html). `MaxRAMPercentage` is computed against that `memory.max` value; the default `ActiveProcessorCount` (and with it GC and JIT thread counts) comes from `cpu.max`. The silent-failure mode in the table row above is exactly this read going wrong: a JDK that predates cgroup v2 parsing finds no v1 files on a v2 node, falls back to `/proc/meminfo`, and cheerfully sizes a 25% heap off 64Gi of node RAM.
+:::
+
 ### Why Xms = Xmx (and AlwaysPreTouch)
 
 On bare metal, growing the heap lazily saves memory for other processes.
@@ -115,7 +127,7 @@ OOMKill.
 | `-XX:MaxDirectMemorySize=<size>` | **≈ `-Xmx`** | Cap on `ByteBuffer.allocateDirect` off-heap memory. Defaulting to heap size means your worst case is *2×* heap | Any Netty/NIO/gRPC/Kafka-client app: set it explicitly (often 64–512Mi) and budget it | NMT `Other`/`Internal`; Netty `PlatformDependent` metrics |
 | `-Xss<size>` / `-XX:ThreadStackSize` | 1M (64-bit Linux) | Stack *reserved* per thread; committed as used. 300 threads × 1MiB = 300Mi of budget | Thread-pool-heavy apps: count your threads first (`jcmd 1 Thread.print \| grep -c tid`); 512k is often safe | `StackOverflowError` in deep stacks (JSON mappers, recursion) |
 | `-XX:NativeMemoryTracking=summary` | off | The **measurement** knob: makes `jcmd 1 VM.native_memory summary` itemize every category above | Turn on when building your budget; costs ~5–10% CPU and a bit of memory, so not a permanent prod default | The whole budget, itemized |
-| `MALLOC_ARENA_MAX=2` (env var) | glibc: 8 × CPUs | glibc creates per-CPU malloc arenas; on many-core nodes this fragments into hundreds of MiB of RSS that's *allocator overhead*, not leak | Any glibc-based image with mysterious slow RSS growth; Alpine/musl images don't need it | RSS growth curve flattens |
+| `MALLOC_ARENA_MAX=2` (env var) | glibc: 8 × CPUs | glibc creates up to `8 × cores` independent malloc arenas to cut lock contention between threads — the `M_ARENA_MAX` knob in [mallopt(3)](https://man7.org/linux/man-pages/man3/mallopt.3.html). Each arena holds its own free lists, so on many-core nodes freed memory fragments across dozens of arenas into hundreds of MiB of RSS that's *allocator overhead*, not leak — and note the arena count follows the *node's* core count, not your CPU limit | Any glibc-based image with mysterious slow RSS growth; Alpine/musl images don't need it | RSS growth curve flattens |
 
 ```bash
 # The itemized bill, once NMT is enabled (needs jcmd — JDK image or sidecar)
@@ -150,7 +162,10 @@ use 40–50%), the app is direct-memory-heavy (Kafka, Netty proxies — budget
 direct like a second heap), or thread counts are large and unbounded.
 
 Validate against reality, not the spreadsheet: watch
-`container_memory_working_set_bytes` — the number the OOM killer acts on —
+`container_memory_working_set_bytes` — cgroup memory usage minus the
+reclaimable `inactive_file` page cache, i.e. the memory the kernel *can't*
+just free when the container hits `memory.max`, and therefore the number
+that tracks real OOM risk. Heap is only one tenant of it. Watch it
 for a full day/traffic cycle. Queries in
 [PromQL for Resources](/observability/promql-for-resources/); what it
 looks like when you got it wrong in [OOMKilled](/troubleshooting/oomkilled/).

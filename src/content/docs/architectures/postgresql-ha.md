@@ -7,6 +7,10 @@ sidebar:
 
 This is the build. The argument for *why* an operator, and why CloudNativePG (CNPG) specifically, lives in [PostgreSQL on Kubernetes](/stateful/postgresql/) — read that first if you're not sold. Here we deploy the whole thing: a 3-instance cluster with quorum synchronous replication, PgBouncer in front, continuous backup to S3, network policy, alerts, and the drills that prove it actually fails over.
 
+:::note[Tuning the numbers]
+The resource blocks and probe timings in this build are starting points. Derive your own from measurements with [Requests & Limits Knobs](/tuning/requests-limits-knobs/) and [Health Check Knobs](/tuning/health-check-knobs/); the method is the [Sizing Walkthrough](/tuning/sizing-walkthrough/).
+:::
+
 ## Architecture
 
 ```text

@@ -21,16 +21,17 @@ The rest of this site explains *how things work*. This section is different: eac
 | [Valkey: Two StatefulSets, One MetalLB VIP](/architectures/valkey-shared-vip/) | Read/write splitting over a single shared VIP separated by port (`metallb.io/allow-shared-ip`), StatefulSet replication, and honest single-replica failover trade-offs |
 | [PostgreSQL: Production Reference Architecture](/architectures/postgresql-ha/) | A 3-instance CloudNativePG cluster with quorum-synchronous replication, PgBouncer pooling, continuous S3 backup, and a restore drill |
 | [IBM MQ: Production Reference Architecture](/architectures/ibm-mq/) | A Native HA queue manager (3 pods, Raft-replicated logs, no shared storage), TLS channels, external clients via a MetalLB VIP, and quorum-loss behavior |
+| [RabbitMQ: Production Reference Architecture](/architectures/rabbitmq/) | A 3-node cluster with quorum queues, the memory-watermark-vs-container-limit handshake, AMQPS via MetalLB, and partition/alarm drills |
 
 ## The conventions every build follows
 
 - **Images pinned** (tag at minimum, digest preferred) — see the [supply-chain article](/operations/supply-chain-security/) for why.
-- **Guaranteed QoS** for stateful pods: requests = limits ([Resources and QoS](/workloads/resources-and-qos/)).
+- **Guaranteed QoS** for stateful pods: requests = limits ([Resources and QoS](/workloads/resources-and-qos/)) — and every number is a measured starting point, tunable via [Knobs & Levers](/tuning/overview/).
 - **Spread across failure domains** with anti-affinity or topology spread ([High Availability](/workloads/high-availability/)).
 - **PDBs that match quorum reality** — never `maxUnavailable: 0`.
 - **NetworkPolicies included** — stateful services are default-locked to their consumers ([Network Policies](/networking/network-policies/)).
 - **Everything ships through your pipeline.** These manifests belong in git, not in a terminal history ([Drift and CI/CD](/operations/drift-and-cicd/)).
 
 :::tip[Want another build?]
-These three cover the stateful patterns this site's audience asks about most. The same skeleton — overview, platform asks, annotated manifests, verification plan, failure modes — works for anything; steal it for your own team's runbooks.
+These builds cover the stateful patterns this site's audience asks about most. The same skeleton — overview, platform asks, annotated manifests, verification plan, failure modes — works for anything; steal it for your own team's runbooks.
 :::

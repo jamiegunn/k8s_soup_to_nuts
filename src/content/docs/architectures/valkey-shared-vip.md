@@ -7,6 +7,10 @@ sidebar:
 
 This is a full reference build: a Valkey **primary** StatefulSet (writes) and a **read replica** StatefulSet (async replication), each fronted by its own `LoadBalancer` Service — but both Services claim the **same MetalLB VIP** via `metallb.io/allow-shared-ip`, separated by port. Clients hit `VIP:6379` for read-write and `VIP:6380` for read-only. Every manifest below is complete and applies in order.
 
+:::note[Tuning the numbers]
+The resource blocks and probe timings in this build are starting points. Derive your own from measurements with [Requests & Limits Knobs](/tuning/requests-limits-knobs/) and [Health Check Knobs](/tuning/health-check-knobs/); the method is the [Sizing Walkthrough](/tuning/sizing-walkthrough/).
+:::
+
 ## 1. Architecture overview
 
 ```text

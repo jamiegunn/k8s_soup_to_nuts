@@ -7,6 +7,10 @@ sidebar:
 
 A pod is not "a container". It's a group of containers that share a network namespace, an IP, and optionally volumes and a process namespace. Most pods only need one container, and that's fine. But when you genuinely need helpers — wait for a dependency, ship logs, terminate TLS, reload config — Kubernetes gives you two distinct mechanisms with very different semantics: **init containers** (run before, in order, to completion) and **sidecars** (run alongside, for the pod's whole life). Mixing up which one you need is how you end up with Jobs that never finish and rollouts that run database migrations twice.
 
+:::tip[There's a whole section on this]
+This article covers the fundamentals. The [Sidecars section](/sidecars/overview/) goes deeper: [lifecycle and ordering mechanics](/sidecars/lifecycle-and-ordering/) (native sidecars, shutdown ordering, the shared grace-period budget) and [production-ready recipes](/sidecars/recipes/) (log shipper, config reloader, secrets fetcher, and more).
+:::
+
 ## Init containers: sequential, run-to-completion
 
 Init containers live in `spec.initContainers` and run **one at a time, in the order listed, each to successful completion**, before any container in `spec.containers` starts. If one fails, the kubelet retries it according to the pod's `restartPolicy` (for a Deployment that's `Always`, so it retries forever with backoff). The app containers do not start until every init container has exited 0.
