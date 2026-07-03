@@ -7,7 +7,7 @@ import { rehypeBaseLinks } from './src/plugins/rehype-base-links.mjs';
 // GitHub Pages: SITE is your GitHub Pages origin, BASE is the repo name.
 // If you rename the repo or move to a custom domain, update these two lines.
 // (Hero action links in src/content/docs/index.mdx hardcode BASE — update there too.)
-const SITE = 'https://gunn-gsd.github.io';
+const SITE = 'https://jamiegunn.github.io';
 const BASE = '/k8s_soup_to_nuts';
 
 // https://astro.build/config
@@ -26,7 +26,7 @@ export default defineConfig({
 				{
 					icon: 'github',
 					label: 'GitHub',
-					href: 'https://github.com/gunn-gsd/k8s_soup_to_nuts',
+					href: 'https://github.com/jamiegunn/k8s_soup_to_nuts',
 				},
 			],
 			customCss: ['./src/styles/custom.css'],
