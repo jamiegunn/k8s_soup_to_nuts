@@ -119,6 +119,8 @@ kubectl annotate deployment payments \
 | [Emergency playbooks](/operations/emergency-playbooks/) | Copy-paste incident cards: bad deploy, traffic spike, poisoned pod, OOM storm, bad config, and a triage snapshot script |
 | [Helm and Kustomize](/operations/helm-and-kustomize/) | Driving the manifest machines your pipeline already uses: overlays, patches, values files, and rendered-manifest debugging |
 | [GitOps for tenants](/operations/gitops-for-tenants/) | Living with Argo CD or Flux when the platform runs it: the PR-driven workflow, sync mechanics, and emergencies under GitOps |
+| [Image and supply-chain security](/operations/supply-chain-security/) | Base images, digest pinning, CI scanning, SBOMs, and signing — securing what you ship |
+| [API deprecations and cluster upgrades](/operations/api-deprecations/) | Surviving upgrades you don't control: detection with pluto/kubent, the pre-upgrade routine, and behavior changes that bite |
 
 ## The vocabulary this section uses
 

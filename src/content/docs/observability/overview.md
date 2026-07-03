@@ -69,6 +69,8 @@ Work through these in order the first time; after that they're reference materia
 - **[Events](/observability/events/)** — the cluster's audit trail, the greatest-hits event reasons, and capturing them before they expire.
 - **[Tracing](/observability/tracing/)** — OpenTelemetry, the Java agent, sampling, and log/trace correlation.
 - **[Performance Analysis](/observability/performance-analysis/)** — a layered triage methodology for "it's slow," starring CPU throttling.
+- **[PromQL for CPU and Memory](/observability/promql-for-resources/)** — the query cookbook for consumed vs requests vs limits: throttling, distance-to-OOM, right-sizing percentiles.
+- **[Alerting](/observability/alerting/)** — page on symptoms, ticket on causes: burn-rate alerts, pre-OOM warnings, PrometheusRule anatomy, and a starter rule pack.
 
 :::note
 This section pairs tightly with [Troubleshooting](/troubleshooting/overview/). Observability is how you gather evidence; troubleshooting is how you act on it.

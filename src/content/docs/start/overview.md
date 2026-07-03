@@ -62,6 +62,7 @@ Each section stands alone and opens with its own overview:
 | Learn the core mental model | [How Kubernetes Works](/start/how-kubernetes-works/) |
 | Understand what happens when you `kubectl apply` | [Life of a Deployment](/start/life-of-a-deployment/) |
 | Find out what you're allowed to do | [Working Without Admin](/start/working-without-admin/) |
+| Understand the permission model itself | [RBAC Explained](/start/rbac-explained/) |
 | Get the daily kubectl commands | [kubectl Survival Kit](/start/kubectl-survival-kit/) |
 | Go deeper on kubectl | [kubectl Mastery](/kubectl/overview/) |
 | Stop fighting YAML and labels | [YAML, Labels, and Namespaces](/start/yaml-labels-and-namespaces/) |
