@@ -7,6 +7,10 @@ sidebar:
 
 Configuration bugs have a special quality: the app is fine, the cluster is fine, and yet production is wrong because a pod is reading last week's values. Almost all of that pain comes from not knowing exactly *when* config updates reach running containers. That's the core of this article.
 
+:::note[This is the overview]
+Three deep dives build on this page: [Environment Variables](/workloads/environment-variables/) (every env source, precedence, expansion, JVM patterns), [Config as Files](/workloads/config-files-and-volumes/) (volume mechanics, subPath, projected volumes, permissions), and [Secrets](/workloads/secrets/) (types, hygiene, keeping them out of git).
+:::
+
 ## ConfigMaps and Secrets, quickly
 
 ```yaml

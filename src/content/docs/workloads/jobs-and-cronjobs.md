@@ -2,7 +2,7 @@
 title: Jobs and CronJobs
 description: Run-to-completion workloads — Job retry and parallelism semantics, CronJob scheduling and missed-run behavior, and debugging jobs that failed at 3 a.m.
 sidebar:
-  order: 9
+  order: 12
 ---
 
 Deployments answer "keep this running forever." Jobs answer the other question: "run this until it succeeds, then stop." Migrations, batch imports, report generation, cleanup tasks. The semantics look simple and hide a surprising number of sharp edges — mostly around retries and schedules.
