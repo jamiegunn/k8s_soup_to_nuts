@@ -81,6 +81,8 @@ kubectl logs <pod-name> --previous
 | Fix `no such host` and other DNS lookup failures | [DNS](/networking/dns/) |
 | Understand Services, endpoints, and why my selector matches nothing | [Services Deep Dive](/networking/services-deep-dive/) |
 | Expose my app on a hostname and path (and debug the Ingress when it 404s) | [Ingress and Routing](/networking/ingress-and-routing/) |
+| Tune ingress-nginx — timeouts, body size, gRPC, canary releases | [ingress-nginx in Practice](/networking/ingress-nginx/) |
+| Expose a database, queue, or other raw TCP/UDP service outside the cluster | [TCP and Non-HTTP Ingress](/networking/tcp-ingress/) |
 | Work out why pod A can reach a service but pod B can't | [Network Policies](/networking/network-policies/) |
 | Get traffic in from outside the cluster (LoadBalancer, NodePort) | [External Load Balancing](/networking/external-load-balancing/) |
 | Find out why only one gRPC pod is hot while its siblings idle | [Long-Lived Connections](/networking/long-lived-connections/) |

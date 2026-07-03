@@ -41,6 +41,8 @@ A PDB blocks *voluntary* evictions — node drains, descheduling. It does nothin
 - **Handle redelivery.** Most brokers guarantee at-least-once; messages in flight during a failover *will* be delivered again. Consumers must be idempotent — dedup keys, upserts, or transactional outbox patterns on the consuming side.
 - **Fail sends loudly.** A publisher that silently drops messages during the 10-second failover window creates the worst kind of bug: no error, no message, discovered weeks later.
 
+If clients connect from *outside* the cluster, the door they come through is its own problem — LB idle timeouts vs protocol heartbeats, client IP preservation, one-VIP-per-broker trade-offs — covered in [TCP and non-HTTP ingress](/networking/tcp-ingress/).
+
 Test all four by killing broker pods in staging while load runs. It's the cheapest chaos experiment with the highest yield, and it converts "we think the client reconnects" into a measured recovery time.
 
 ## IBM MQ

@@ -105,6 +105,8 @@ If your platform team already operates one of these, use that one. Operator fami
 
 ## Connection pooling: PgBouncer is not optional
 
+For clients outside the cluster, see [TCP and non-HTTP ingress](/networking/tcp-ingress/) — Postgres through an L4 load balancer has its own sharp edges (idle timeouts vs long-lived connections, client IPs).
+
 Every Postgres connection is a backend process; `max_connections: 2000` is how you turn a database into a fork bomb. Kubernetes makes this worse: 30 app replicas × a 20-connection pool each = 600 connections doing nothing.
 
 Put PgBouncer in front, in transaction pooling mode. CNPG ships it as a CR:

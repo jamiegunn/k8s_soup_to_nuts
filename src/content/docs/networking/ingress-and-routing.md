@@ -67,7 +67,11 @@ metadata:
     nginx.ingress.kubernetes.io/affinity: "cookie"
 ```
 
-Traefik, HAProxy, and cloud controllers each have entirely different annotation sets. Two consequences: (1) find out which controller your cluster runs *before* copy-pasting annotations from Stack Overflow — wrong-dialect annotations are silently ignored, no error, no effect; (2) your manifests aren't portable across clusters with different controllers. This annotation sprawl is a big part of why Gateway API exists (below).
+Traefik, HAProxy, and cloud controllers each have entirely different annotation sets. Two consequences: (1) find out which controller your cluster runs *before* copy-pasting annotations from Stack Overflow — wrong-dialect annotations are silently ignored, no error, no effect; (2) your manifests aren't portable across clusters with different controllers. This annotation sprawl is a big part of why Gateway API exists (below). If your cluster runs the most common controller, [ingress-nginx in practice](/networking/ingress-nginx/) covers its annotation toolbox — timeouts, body size, gRPC, canaries — in working detail.
+
+:::note[Ingress is HTTP-only]
+The Ingress API routes HTTP(S) and nothing else. Postgres, MQ, MQTT, LDAP — anything speaking raw TCP or UDP needs a different door into the cluster: [TCP and non-HTTP ingress](/networking/tcp-ingress/) walks the full option ladder.
+:::
 
 :::caution[Silently ignored is the theme]
 Wrong `ingressClassName`: ignored. Wrong annotation prefix: ignored. Backend Service name typo: accepted, routes to nothing. Always verify with `kubectl describe ingress orders` — a healthy one lists your backends *with pod endpoints resolved*, e.g. `orders:http (10.244.1.5:8080,10.244.2.7:8080)`. If it shows `<error: endpoints "orders" not found>` or no address, stop and fix that first.
