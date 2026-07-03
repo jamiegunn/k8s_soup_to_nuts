@@ -1,0 +1,101 @@
+/* ===== K8s Soup to Nuts — theme ===== */
+
+/* Accent palette: Kubernetes-inspired indigo/cyan, tuned for contrast. */
+:root {
+	--sl-color-accent-low: #1c2a5e;
+	--sl-color-accent: #4f6ee5;
+	--sl-color-accent-high: #b3c4ff;
+	--sl-color-white: #ffffff;
+	--sl-color-gray-1: #eceef4;
+	--sl-color-gray-2: #c0c4cf;
+	--sl-color-gray-3: #888ea3;
+	--sl-color-gray-4: #545a70;
+	--sl-color-gray-5: #353a4d;
+	--sl-color-gray-6: #24283a;
+	--sl-color-black: #17192a;
+}
+
+:root[data-theme='light'] {
+	--sl-color-accent-low: #dbe3ff;
+	--sl-color-accent: #3451c7;
+	--sl-color-accent-high: #1c2a72;
+	--sl-color-white: #17192a;
+	--sl-color-gray-1: #24283a;
+	--sl-color-gray-2: #353a4d;
+	--sl-color-gray-3: #545a70;
+	--sl-color-gray-4: #888ea3;
+	--sl-color-gray-5: #c0c4cf;
+	--sl-color-gray-6: #eceef4;
+	--sl-color-gray-7: #f5f6fa;
+	--sl-color-black: #ffffff;
+}
+
+/* Gradient title on the splash hero. */
+[data-has-hero] .hero h1 {
+	background: linear-gradient(90deg, #6d8dff 0%, #37c8e8 55%, #4ade80 100%);
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+	font-weight: 800;
+}
+
+[data-has-hero] .hero .tagline {
+	font-size: var(--sl-text-xl);
+	line-height: 1.6;
+}
+
+/* Cards: lift on hover, accent border sweep. */
+.card {
+	border-radius: 0.75rem;
+	transition:
+		transform 160ms ease,
+		border-color 160ms ease,
+		box-shadow 160ms ease;
+}
+
+.card:hover {
+	transform: translateY(-3px);
+	border-color: var(--sl-color-accent);
+	box-shadow: 0 8px 24px rgb(0 0 0 / 0.18);
+}
+
+.card .title {
+	font-size: var(--sl-text-lg);
+}
+
+/* Softer, roomier code blocks. */
+.expressive-code .frame {
+	border-radius: 0.6rem;
+}
+
+/* Inline code stands out just a little. */
+:not(pre) > code {
+	border-radius: 0.35rem;
+	padding-inline: 0.35em;
+}
+
+/* Sidebar: tighten group headings. */
+#starlight__sidebar .top-level > li > details > summary .group-label span {
+	font-weight: 700;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+	font-size: var(--sl-text-xs);
+	color: var(--sl-color-gray-2);
+}
+
+/* Tables read better with row striping. */
+.sl-markdown-content table tbody tr:nth-child(even) {
+	background-color: color-mix(in srgb, var(--sl-color-gray-6) 55%, transparent);
+}
+
+/* Blog post cards on the Field Notes index. */
+article.preview {
+	border: 1px solid var(--sl-color-gray-5);
+	border-radius: 0.75rem;
+	padding: 1rem 1.25rem;
+	transition: border-color 160ms ease;
+}
+
+article.preview:hover {
+	border-color: var(--sl-color-accent);
+}

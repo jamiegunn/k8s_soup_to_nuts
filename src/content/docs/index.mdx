@@ -1,0 +1,79 @@
+---
+title: K8s Soup to Nuts
+description: A field guide to running, debugging, and surviving Kubernetes when you own the apps but not the cluster.
+template: splash
+hero:
+  title: Kubernetes, soup to nuts.
+  tagline: >-
+    The field guide for teams who own the apps but not the cluster. Deploy,
+    scale, debug, and keep stateful things alive — with the access you actually
+    have, not the access the tutorials assume.
+  actions:
+    - text: Start Here
+      link: /k8s_soup_to_nuts/start/overview/
+      icon: right-arrow
+    - text: Troubleshooting
+      link: /k8s_soup_to_nuts/troubleshooting/triage-methodology/
+      icon: magnifier
+      variant: minimal
+    - text: Field Notes
+      link: /k8s_soup_to_nuts/blog/
+      icon: pencil
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## Find your problem
+
+<CardGrid stagger>
+	<Card title="Workloads & Deployments" icon="rocket">
+		Deployments, rollouts and rollbacks, high availability, autoscaling,
+		health checks, and resource limits that don't get you OOMKilled.
+		[Browse the section →](/workloads/overview/)
+	</Card>
+	<Card title="Java on Kubernetes" icon="seti:java">
+		Heap dumps and thread dumps with only a JRE in the image, JVM memory in
+		containers, GC tuning, and getting evidence out of a running pod.
+		[Browse the section →](/java/overview/)
+	</Card>
+	<Card title="Stateful Apps" icon="seti:db">
+		StatefulSets, storage, and real-world patterns for Valkey, PostgreSQL,
+		Oracle, and message queues — plus backups that actually restore.
+		[Browse the section →](/stateful/overview/)
+	</Card>
+	<Card title="Networking & Routing" icon="setting">
+		How a packet actually reaches your pod: Services, DNS, Ingress,
+		NetworkPolicy, and a debugging playbook for when it doesn't.
+		[Browse the section →](/networking/overview/)
+	</Card>
+	<Card title="Controllers, CRDs & Operators" icon="puzzle">
+		Reconciliation loops, custom resources, operators, MetalLB, and F5
+		Container Ingress Services — the machinery behind the magic.
+		[Browse the section →](/controllers/overview/)
+	</Card>
+	<Card title="Logging & Observability" icon="magnifier">
+		Logs, metrics, events, and traces: what the cluster already gives you
+		and how to read it under pressure.
+		[Browse the section →](/observability/overview/)
+	</Card>
+	<Card title="Troubleshooting" icon="warning">
+		CrashLoopBackOff, Pending, ImagePullBackOff, OOMKilled — symptom-first
+		playbooks with a systematic triage method.
+		[Browse the section →](/troubleshooting/triage-methodology/)
+	</Card>
+	<Card title="Day-2 Operations" icon="approve-check">
+		Live patching without wrecking the next CI/CD deploy, config rotation,
+		safe restarts, and working effectively with your platform team.
+		[Browse the section →](/operations/overview/)
+	</Card>
+</CardGrid>
+
+## Why this site exists
+
+Most Kubernetes material assumes you administer the cluster. In many
+organizations you don't: a platform team owns the nodes, the CNI, the
+ingress controllers, and the RBAC — and you own everything that happens
+inside your namespace. This guide is written for that reality. Every article
+assumes namespace-level access, `kubectl exec` into your own pods, and a
+paved-road CI/CD pipeline you must not fight.
