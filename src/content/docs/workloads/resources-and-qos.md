@@ -11,6 +11,10 @@ Requests and limits are four small numbers that decide where your pods run, who 
 This article explains what requests and limits mean; the knob-by-knob reference — exact semantics, CFS math, archetype resource blocks, sizing workflow — lives in [Requests & Limits Knobs](/tuning/requests-limits-knobs/).
 :::
 
+:::note[The resources family]
+These pages share this territory, each with one job: [Requests & Limits Knobs](/tuning/requests-limits-knobs/) (the dials), [Sizing Walkthrough](/tuning/sizing-walkthrough/) (greenfield) and [Running Fleet](/tuning/brownfield-resources/) (brownfield), [Resource Tuning in Prod](/operations/resource-tuning-in-prod/) (changing live workloads safely), and [Cost and Rightsizing](/operations/cost-and-rightsizing/) (the money lens). Version-sensitive claims (in-place resize: beta 1.33, stable 1.35) are owned by the knobs page.
+:::
+
 ## Requests vs limits: two different machines
 
 ```yaml

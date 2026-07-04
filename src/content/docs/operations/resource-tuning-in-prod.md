@@ -11,6 +11,10 @@ Requests and limits are the fields you'll retune most often over a service's lif
 This article covers changing resources on a LIVE workload safely. For deriving the numbers in the first place, work through the [Sizing Walkthrough](/tuning/sizing-walkthrough/) and the [Knobs & Levers references](/tuning/overview/).
 :::
 
+:::note[The resources family]
+These pages share this territory, each with one job: [Resources and QoS](/workloads/resources-and-qos/) (concepts), [Requests & Limits Knobs](/tuning/requests-limits-knobs/) (the dials), [Sizing Walkthrough](/tuning/sizing-walkthrough/) (greenfield) and [Running Fleet](/tuning/brownfield-resources/) (brownfield), [Cost and Rightsizing](/operations/cost-and-rightsizing/) (the money lens). Version-sensitive claims (in-place resize: beta 1.33, stable 1.35) are owned by the knobs page.
+:::
+
 ## First fact: it's a rolling restart
 
 `resources` lives inside the pod template. Change it — by `kubectl edit`, `kubectl patch`, or `kubectl set resources` — and the Deployment controller performs a full rolling update:

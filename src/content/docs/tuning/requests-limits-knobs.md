@@ -7,6 +7,10 @@ sidebar:
 
 Requests and limits look like four numbers in a YAML block. They are actually four different control systems wearing one API: a scheduler filter, a proportional-share weight, a hard CPU throttle, and an OOM kill line. Tune them as if they were one thing and you get pods that are simultaneously over-provisioned and getting killed. This is the dial-by-dial reference; for the conceptual grounding, start at [Resources and QoS](/workloads/resources-and-qos/).
 
+:::note[The resources family]
+These pages share this territory, each with one job: [Resources and QoS](/workloads/resources-and-qos/) (concepts), [Sizing Walkthrough](/tuning/sizing-walkthrough/) (greenfield) and [Running Fleet](/tuning/brownfield-resources/) (brownfield), [Resource Tuning in Prod](/operations/resource-tuning-in-prod/) (changing live workloads safely), and [Cost and Rightsizing](/operations/cost-and-rightsizing/) (the money lens). Version-sensitive claims (in-place resize: beta 1.33, stable 1.35) are owned by the knobs page.
+:::
+
 ## The four primary knobs
 
 | Knob | Default | What it actually does | When to turn it | What to watch after |
@@ -183,11 +187,11 @@ More resource queries, including throttled-seconds and working-set variants, liv
 | Sidecar (restartable init) resources | none | Counted in the *sum* alongside app containers for the pod's whole life — and an unsized sidecar demotes pod QoS | Every injected mesh/log sidecar; give it a small honest block | Pod QoS class, per-container working set |
 | `requests/limits.ephemeral-storage` | none | Caps writable-layer + `emptyDir` + log usage. Exceed the limit → pod **evicted** (not restarted in place). The forgotten eviction trigger | Anything writing scratch files, unbounded logs, on-disk caches | `Evicted` pods with `ephemeral-storage` in the message |
 | `limits.hugepages-<size>` | none | Pre-reserved huge pages (must equal request; needs app support and node config) | Databases/DPDK-class workloads only, coordinated with the platform team | Hugepage allocation on target nodes |
-| `resizePolicy` + in-place resize | resize stable in 1.33+; policy `PreferNoRestart` | `kubectl patch ... --subresource=resize` changes CPU/memory without pod recreation. CPU resizes apply live; memory *decreases* and any container with `resizePolicy: RestartContainer` restart the container. QoS class can't change | Iterative tuning without rollout churn — huge for memory-limit experiments | `pod.status.resize`, container restart count |
+| `resizePolicy` + in-place resize | beta and on by default in 1.33, stable in 1.35; policy `NotRequired` (default) or `RestartContainer` | `kubectl patch ... --subresource=resize` changes CPU/memory without pod recreation. CPU resizes apply live; memory *decreases* and any container with `resizePolicy: RestartContainer` restart the container. QoS class can't change | Iterative tuning without rollout churn — huge for memory-limit experiments | `pod.status.resize`, container restart count |
 | LimitRange (platform-owned) | cluster-specific | Silently stamps default requests/limits onto containers that omit them, and rejects pods outside min/max. Your "no CPU limit" decision may not survive admission | You don't turn it — you *read* it: `kubectl describe limitrange -n <ns>` before trusting any omitted field | Actual values on running pods vs your manifest |
 | ResourceQuota (platform-owned) | cluster-specific | Caps the namespace's **sum of requests/limits**. Headroom math: `per-pod request × (replicas + maxSurge)` must fit, or rollouts wedge with Pending pods | Read it before scaling up or raising requests: `kubectl describe quota -n <ns>` | `kubectl get events` for `exceeded quota`; see [Pod Pending](/troubleshooting/pod-pending/) |
 
-### In-place resize in practice (1.33+)
+### In-place resize in practice (beta 1.33, stable 1.35)
 
 Worth its own snippet, because it changes the tuning loop from "every experiment is a rollout" to "every experiment is a patch":
 

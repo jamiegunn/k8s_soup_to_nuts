@@ -17,6 +17,10 @@ Even if your org doesn't do chargeback in dollars, your namespace ResourceQuota 
 
 Once you internalize requests-are-the-bill, everything below is mechanical: find where requests exceed reality, close the gap safely, and stop recreating it.
 
+:::note[The resources family]
+These pages share this territory, each with one job: [Resources and QoS](/workloads/resources-and-qos/) (concepts), [Requests & Limits Knobs](/tuning/requests-limits-knobs/) (the dials), [Sizing Walkthrough](/tuning/sizing-walkthrough/) (greenfield) and [Running Fleet](/tuning/brownfield-resources/) (brownfield), [Resource Tuning in Prod](/operations/resource-tuning-in-prod/) (changing live workloads safely). Version-sensitive claims (in-place resize: beta 1.33, stable 1.35) are owned by the knobs page.
+:::
+
 ## The waste taxonomy
 
 Five patterns account for nearly all tenant-side waste. Each has a detection query — the query patterns are explained in depth in [PromQL for resources](/observability/promql-for-resources/); here they're aimed at money.
