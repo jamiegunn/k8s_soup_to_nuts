@@ -38,6 +38,8 @@ That second bullet sounds like a safety feature. It's actually the most treacher
 Pipelines using `kubectl apply --server-side` merge based on managedFields ownership instead of the annotation. Your `kubectl edit` transfers field ownership to `kubectl-edit`; the pipeline's next apply then hits a **conflict** on that field and — if it runs with `--force-conflicts`, which most pipelines do to avoid getting stuck — takes the field back and overwrites you. Net effect for shared fields: same clobber, but at least `kubectl get -o yaml --show-managed-fields` shows the whole custody battle.
 :::
 
+One more gap in plain-apply pipelines, at the object level rather than the field level: **deleting a manifest from the repo deletes nothing from the cluster.** Apply only creates and updates; the orphaned object keeps running — and drifting — until someone notices. You may see `kubectl apply --prune` suggested as the fix, and it does delete objects that match a selector but aren't in the applied file set — but it has sat in alpha for years precisely because a slightly-too-broad selector deletes things you never meant it to own, and its designated successor (ApplySet) is still alpha too. Treat both as *not yet*: handle deletes as explicit pipeline steps, or use tooling that genuinely tracks ownership — Helm and the GitOps reconcilers below both remove what leaves the source (in Argo CD it's the opt-in `prune` sync option).
+
 ### 2. `kubectl replace` pipelines
 
 Rare, but they exist (often in older Jenkins jobs): `kubectl replace -f` or `kubectl apply --force`. There is no merge. The entire object is swapped for the file in git. **Every live change is gone**, added fields included. At least it's honest.

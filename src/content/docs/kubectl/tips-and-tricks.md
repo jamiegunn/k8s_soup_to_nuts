@@ -1,6 +1,6 @@
 ---
 title: Tips and Tricks
-description: Shell setup, krew plugins, manifest scaffolding, kubectl wait, and the safety habits that keep prod incidents from starting at your keyboard.
+description: Shell setup, krew plugins, manifest scaffolding, the export–edit–reapply round trip, kubectl wait, and the safety habits that keep prod incidents from starting at your keyboard.
 sidebar:
   order: 4
 ---
@@ -51,6 +51,23 @@ PROMPT='$(kube_ps1_color)$(kube_ps1)%f%b $ '
 
 A red prompt has stopped more wrong-cluster deletes than any policy document. If you do nothing else from this article, do this.
 
+### Color and a picker
+
+Two more quality-of-life installs that pay off within the hour:
+
+```bash
+brew install kubecolor fzf     # or your package manager
+alias k=kubecolor              # drop-in wrapper: same flags, same output, same exit codes
+compdef kubecolor=kubectl      # completion keeps working
+```
+
+[kubecolor](https://kubecolor.github.io/) colorizes `get`/`describe`/`logs` output — Running green, CrashLoopBackOff red — which sounds cosmetic until you're scanning 40 pods for the one bad one. And `fzf` turns "copy-paste the pod name suffix" into an interactive pick:
+
+```bash
+kubectl get pods -o name | fzf | xargs kubectl describe     # describe whichever you pick
+kubectl exec -it $(kubectl get pods -o name | fzf) -- sh    # shell into a chosen pod
+```
+
 ## krew: plugins for people without cluster admin
 
 [krew](https://krew.sigs.k8s.io/) is kubectl's plugin manager. Key fact for this guide's audience: **plugins are client-side binaries** — installing one touches nothing in the cluster and needs no approval from anyone. They speak the same API with your same credentials, so RBAC still bounds what they can *see*, but installation is entirely your business.
@@ -65,10 +82,13 @@ Worth having:
 | `neat` | Strip `managedFields`, `status`, defaulted noise from `-o yaml` — turns 300 lines into the 40 you wrote. |
 | `view-secret` | Decode secret keys without the `base64 -d` dance. (Needs `get` on secrets — you may or may not have it.) |
 | `access-matrix` | Table of what your identity can do per resource. The self-service answer to "what am I allowed to touch?" |
+| `get-all` | The `kubectl get all` that actually means it — every listable resource in the namespace, including the ConfigMaps, Secrets, Ingresses, and PDBs that `get all` silently skips. |
+| `df-pv` | `df` for your PVCs: actual disk usage against capacity, before the volume fills and takes the app with it (see [volume failures](/troubleshooting/volume-failures/)). Reads kubelet stats, so it needs `nodes/proxy` access — locked-down namespaces often don't grant it. |
+| `outdated` | Report which running images have newer tags in their registry. A cheap staleness audit before it becomes a security finding. |
 | `sniff` | Packet capture from a pod. Powerful, but needs privileged pod creation — in most locked-down setups this is platform-team territory. Know it exists; don't expect it to run. |
 
 ```bash
-kubectl krew install ctx ns stern tree neat view-secret access-matrix
+kubectl krew install ctx ns stern tree neat view-secret access-matrix get-all df-pv outdated
 kubectl neat get pod web-6d4cf56db6-x8rjp -o yaml   # readable YAML, finally
 ```
 
@@ -145,6 +165,34 @@ $ kubectl diff -f deploy.yaml
 
 Exit code 0 = no changes, 1 = differences, >1 = error — scriptable as a CI gate. `diff` runs the server's merge logic against live state, so it also exposes **drift**: if the diff shows changes you didn't make, someone has been live-editing what CI owns ([Drift and CI/CD](/operations/drift-and-cicd/)). Applying without diffing is how "deploy the new image" quietly also reverts last week's hotfix.
 
+The differ itself is pluggable — kubectl hands the live and merged versions to whatever `KUBECTL_EXTERNAL_DIFF` names:
+
+```bash
+KUBECTL_EXTERNAL_DIFF="colordiff -N -u" kubectl diff -f deploy.yaml                     # same diff, in color
+KUBECTL_EXTERNAL_DIFF="dyff between --omit-header --set-exit-code" kubectl diff -f deploy.yaml
+```
+
+[dyff](https://github.com/homeport/dyff) understands YAML structure, so instead of context-free `+`/`-` lines you get "spec.template.spec.containers.web.image changed from 1.42.0 to 1.43.0" — worth it the first time a one-line change produces forty diff lines because a list got reordered. The `--set-exit-code` flag preserves the 0/1 exit-code contract, so CI gates keep working. Export the variable in your shell profile and every `kubectl diff` gets it.
+
+## The round trip: export, edit, re-apply
+
+Sometimes a change has to start from the live object rather than a repo: you're exploring, the manifest lives somewhere you can't touch quickly, or the object came from a generator and never had a clean file of its own. The four-step form that keeps you out of trouble:
+
+```bash
+kubectl neat get deploy web -o yaml > web.yaml    # 1. export — neat'd, not raw
+$EDITOR web.yaml                                  # 2. edit the file, not the cluster
+kubectl diff -f web.yaml                          # 3. see exactly what will change
+kubectl apply -f web.yaml                         # 4. ship it
+```
+
+Why `neat` instead of a raw `-o yaml`? The raw export drags along everything the server added: `status`, `resourceVersion`, `uid`, `creationTimestamp`, `generation`, `managedFields`, and every defaulted field. It will still apply — the server ignores most of it — but all that noise lands in the `last-applied-configuration` annotation, claiming fields you never chose and making every future three-way merge murkier ([Drift and CI/CD](/operations/drift-and-cicd/) explains why that annotation matters). Take a *raw* export too as your rollback file (the backup-before-mutate habit below); edit the neat one.
+
+Step 3 is the payoff over `kubectl edit`: you get a reviewable diff *before* anything is live, a file you can paste into the incident channel, and a second chance to notice the probe line you accidentally deleted. And `apply` is the right verb in step 4 even though the object already exists — `kubectl replace -f` swaps the whole object with no merge, and fails on any concurrent change if a `resourceVersion` is still in the file.
+
+:::caution[This is still drift — just drift with a paper trail]
+If a pipeline or GitOps controller owns this object, your re-applied file is a live edit like any other: the next sync can clobber it ([drift and CI/CD](/operations/drift-and-cicd/)). Make the same change in git immediately after. And remember [what triggers a rollout](/workloads/rollout-triggers/) — if your edit touched `spec.template`, step 4 rolls every pod.
+:::
+
 ## `kubectl wait`: kill your sleeps
 
 Every `sleep 30 && kubectl ...` in a script is a race condition with a lucky streak. `wait` blocks on actual state:
@@ -156,7 +204,11 @@ kubectl wait --for=delete pod/tmp-debug --timeout=60s
 kubectl wait --for=condition=Complete job/nightly-manual-1 --timeout=15m
 # arbitrary field, not just conditions:
 kubectl wait --for=jsonpath='{.status.readyReplicas}'=3 deployment/web --timeout=120s
+# kubectl ≥1.31: wait for the object to exist at all
+kubectl wait --for=create pod/tmp-debug --timeout=60s
 ```
+
+That last one closes an old race: `wait --for=condition=...` errors out if the object hasn't been *created* yet — a script that applies a manifest and immediately waits can lose that race. On kubectl ≥1.31, `--for=create` first, then the condition wait.
 
 Non-zero exit on timeout, so `&&` chains and CI steps fail correctly. For deployments specifically, prefer the purpose-built version — it follows the rollout and reports *why* it's stuck:
 
@@ -225,6 +277,25 @@ kubectl get deploy web -o yaml > /tmp/web.$(date +%s).yaml
 
 Two seconds of typing buys you a guaranteed rollback path even when `rollout undo` can't help (it won't restore labels, annotations, or things that aren't Deployments). This habit is load-bearing for everything in [Live Patching](/operations/live-patching/).
 
+**`kubectl auth whoami` when anything feels off.** The definitive answer to "who does the API server think I am" (kubectl ≥1.28):
+
+```console
+$ kubectl auth whoami
+ATTRIBUTE   VALUE
+Username    jg@example.com
+Groups      [team-a-devs system:authenticated]
+```
+
+It catches the expired token that silently fell back to a different auth method, the wrong SSO account, and — when testing with `--as` impersonation — shows the effective identity rather than your own. It answers *who you are*; `kubectl auth can-i --list` answers *what that identity may do* ([RBAC Denied](/troubleshooting/rbac-denied/) uses both).
+
+**Test-and-set scaling.** `kubectl scale` has a compare-and-swap mode:
+
+```bash
+kubectl scale deploy/web --current-replicas=3 --replicas=6
+```
+
+If replicas isn't 3 anymore — a teammate got there first, or an HPA moved it — the command refuses with a non-zero exit instead of stomping the newer value. For capacity changes made from an incident channel, where two people are often typing at once, make this the reflex form.
+
 :::danger[The three-question pre-flight]
 Before any mutating command in prod: **Which context?** (it's in the prompt — you set that up, right?) **What will it match?** (run the `get` form of the same selector first.) **How do I undo it?** (if the answer is "uh", stop and take the `-o yaml` backup.) Thirty seconds, every time, forever.
 :::
@@ -242,6 +313,6 @@ Ten commands to practice until your fingers know them. If any requires a search 
 7. `kubectl rollout status deployment/web --watch` and `kubectl rollout undo deployment/web` — the deploy pair.
 8. `kubectl wait --for=condition=Ready pod -l app=web --timeout=120s` — delete a sleep from a script today.
 9. `kubectl get events -w --field-selector=type=Warning` — the deploy-day side terminal.
-10. `kubectl auth can-i --list` — know your own permissions before you hit the wall ([RBAC Denied](/troubleshooting/rbac-denied/)).
+10. `kubectl auth whoami` → `kubectl auth can-i --list` — who you are, then what you may do, before you hit the wall ([RBAC Denied](/troubleshooting/rbac-denied/)).
 
 Run the drill list once a week for a month. After that, it's just how you type.

@@ -60,6 +60,8 @@ Opens the live object in `$EDITOR`; save-and-quit submits it. Good when you need
 `kubectl edit` on a resource with a conflict (someone else changed it while your editor was open) fails with `the object has been modified`. Re-open and re-apply your change — don't paste your whole stale buffer over theirs.
 :::
 
+When you have more than thirty seconds, prefer the calmer variant: export the object to a file, edit the file, `kubectl diff` it, then apply — the [export → edit → re-apply round trip](/kubectl/tips-and-tricks/#the-round-trip-export-edit-re-apply). Same drift consequences, but you see a reviewable diff *before* anything goes live, and you're left with a file to paste into the incident channel instead of an unrecorded edit.
+
 ### kubectl patch — surgical and scriptable
 
 Three flavors. Knowing which to reach for is the difference between a clean patch and a mangled object.

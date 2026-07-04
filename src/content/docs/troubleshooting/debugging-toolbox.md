@@ -107,6 +107,8 @@ kubectl port-forward deploy/api 5005:5005         # first ready pod of the deplo
 
 Perfect for hitting admin endpoints, actuator pages, or attaching a debugger ([Remote Debugging](/java/remote-debugging/)) without exposing anything. Two caveats: it bypasses Ingress and NetworkPolicy enforcement points, so "works over port-forward" does **not** prove the in-cluster path works ([Service Unreachable](/troubleshooting/service-unreachable/) tests that); and the tunnel dies with your terminal or an idle timeout — it's for humans, never for wiring systems together.
 
+One flag to know and use sparingly: the tunnel binds `127.0.0.1` by default, and `--address 0.0.0.0` makes it listen on every interface — occasionally right for showing a teammate on the LAN, but be clear about what you built: anyone who can reach your laptop now reaches that pod with *your* credentials' access and no authentication in between. Keep the default unless you have a reason, and kill the tunnel when the reason is over.
+
 ## `kubectl cp` — and its tar problem
 
 ```bash
