@@ -200,7 +200,7 @@ spec:
       kind: Service
 ```
 
-The direction trips everyone up: the grant is written by the namespace being *pointed at*, granting the pointing namespace permission. If both namespaces are yours, ship the grant alongside the backend's manifests. If the target belongs to another team, this is a deliberate consent handshake — which is the point.
+The `v1beta1` is not a typo: ReferenceGrant is the one resource here that hasn't graduated to `v1` alongside Gateway, HTTPRoute, and GRPCRoute. The direction trips everyone up: the grant is written by the namespace being *pointed at*, granting the pointing namespace permission. If both namespaces are yours, ship the grant alongside the backend's manifests. If the target belongs to another team, this is a deliberate consent handshake — which is the point.
 
 ## What you don't get from Ingress land (yet)
 

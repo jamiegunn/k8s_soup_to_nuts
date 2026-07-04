@@ -83,8 +83,8 @@ External-facing traffic gets marked for masquerade *before* the endpoint choice,
 - **Cost:** the pod sees `node A's IP` as the client — real client identity is destroyed *again*, even if the appliance didn't SNAT. Plus an extra node hop and two nodes' worth of conntrack state.
 - **Avoidable?** Yes, cleanly: `externalTrafficPolicy: Local`. This is the most avoidable rewrite in the census.
 
-:::note[IPVS mode doesn't opt out]
-Clusters running kube-proxy in IPVS mode still perform every rewrite in this census — IPVS does the DNAT, and the same masquerade rules cover (d) and (f). The NAT census is mode-independent; only the mechanism differs.
+:::note[IPVS and nftables modes don't opt out]
+Clusters running kube-proxy in IPVS mode still perform every rewrite in this census — IPVS does the DNAT, and the same masquerade rules cover (d) and (f). The same holds for kube-proxy's **nftables mode**, now GA in recent Kubernetes: identical NAT semantics, but the rules no longer live where `iptables-save` looks — on an nftables-mode node it shows nothing, and `nft list ruleset` is the new window. Before trusting any `iptables-save` evidence in this article, check which mode your cluster runs — it's in the kube-proxy ConfigMap (`kubectl -n kube-system get cm kube-proxy -o yaml | grep mode:`), or ask the platform team. The NAT census is mode-independent; only the mechanism differs.
 :::
 
 ### (e) Pod-egress masquerade — pod IP to node IP
@@ -141,14 +141,25 @@ $ cat /proc/sys/net/netfilter/nf_conntrack_count /proc/sys/net/netfilter/nf_conn
 
 At 95% you are one traffic spike from silent drops. NAT-heavy nodes — busy ingress nodes, egress choke points — hit this first, which is why "one node in the pool is flaky" is a classic conntrack-exhaustion presentation.
 
-**Port exhaustion under heavy SNAT.** SNAT must give each flow a unique 5-tuple. When many pods on one node all talk to the same external `dst_ip:dst_port` through the node's single masquerade IP, the only free variable is the source port:
+**Port exhaustion under heavy SNAT.** Every flow needs a unique 5-tuple, and there are two distinct ways to run out of source ports — with different observables, routinely confused:
+
+*Locally-originated sockets* — a process on the node itself, or a `hostNetwork` pod, calling out. The kernel allocates the source port at `connect()` time from the local ephemeral range:
 
 ```console
 $ cat /proc/sys/net/ipv4/ip_local_port_range
 32768	60999
 ```
 
-≈ 28,000 ports. So one node supports at most ~28k *concurrent* flows to any single destination endpoint — and in practice less, because `TIME_WAIT` entries hold ports for tens of seconds after close. A connection-churning workload doing 1,000 short connections/second to one database VIP burns the entire range in under 30 seconds of `TIME_WAIT` lifetime. Symptoms: intermittent `EADDRNOTAVAIL` or silent SYN drops from insertion failures, only on the busiest node, only toward the hottest destination.
+≈ 28,000 ports — less in practice, because `TIME_WAIT` entries hold ports for tens of seconds after close. A connection-churning workload doing 1,000 short connections/second to one database VIP burns the entire range in under 30 seconds of `TIME_WAIT` lifetime. Exhaustion here is loud: `connect()` fails with `EADDRNOTAVAIL`, right in the application's error log.
+
+*Forwarded, masqueraded traffic* — the common pod-egress case — is a different phenomenon. The pod already chose its own source port; it's conntrack, while applying `MASQUERADE`, that must pick a source port making the node's rewritten tuple unique per `{protocol, dst_ip, dst_port}`. When many pods on one node funnel to the same external `dst_ip:dst_port` through the node's single masquerade IP, that per-destination port pool runs dry *silently*: the NAT allocation fails, the packet is dropped at conntrack insertion, and the application never sees `EADDRNOTAVAIL` — just a SYN with no answer, then a retry. The observable lives on the node:
+
+```console
+$ conntrack -S | grep -v 'insert_failed=0'
+cpu=3  found=88213 invalid=12 insert=0 insert_failed=1274 drop=1274 early_drop=0 ...
+```
+
+A climbing `insert_failed` — only on the busiest node, only toward the hottest destination — is the signature. (The `--random-fully` on the masquerade rule in the census evidence exists precisely to spread port selection and soften these collisions.)
 
 **Timeout stacking.** Every NAT hop has its own idle timer — appliance connection table, node conntrack (`nf_conntrack_tcp_timeout_established`), sometimes an egress firewall. The *shortest* timer in the chain silently kills idle long-lived connections, and each layer's un-NAT memory dies with it, so the eventual application packet is un-translatable garbage. The full pathology and keepalive arithmetic are in [Long-Lived Connections](/networking/long-lived-connections/).
 
@@ -178,7 +189,7 @@ spec:
 ```
 
 - **Gain:** the cross-node MASQUERADE never fires; the pod sees whatever source arrived at the node (the real client, if the appliance also isn't SNATing). Also removes the extra hop.
-- **Cost:** only nodes with a *local* endpoint may receive traffic. Kubernetes allocates a `healthCheckNodePort` that MetalLB and external balancers use to steer around endpoint-less nodes — if the upstream health checks aren't wired to it, you black-hole a fraction of traffic. Verify both halves:
+- **Cost:** only nodes with a *local* endpoint may receive traffic, and two different mechanisms are supposed to enforce that. MetalLB handles its half itself: speakers watch EndpointSlices directly and simply stop announcing the LB IP from nodes with no local endpoint. External balancers (a cloud LB, the F5) can't see EndpointSlices — for them Kubernetes allocates a `healthCheckNodePort` they must be configured to probe, so endpoint-less nodes fail the health check and get steered around. If the upstream health checks aren't wired to it, you black-hole a fraction of traffic. Verify both halves:
 
 ```console
 $ kubectl -n myteam get svc orders-ingress \
@@ -286,15 +297,15 @@ Same SYN (matching sequence number), all four address fields different: destinat
 
 ### Reading a conntrack entry
 
-On the node doing rewrite (c) (requires node access — usually a platform-team ask):
+On node A — the node doing rewrites (c) and (d), whose own IP here is `10.20.40.11` (requires node access — usually a platform-team ask):
 
 ```console
 $ conntrack -L -d 10.96.44.10 -p tcp
-tcp  6 86392 ESTABLISHED src=10.20.30.200 dst=10.96.44.10  sport=31044 dport=443 \
-                         src=10.244.3.17  dst=10.20.30.200 sport=8443 dport=31044 [ASSURED] use=1
+tcp  6 86392 ESTABLISHED src=10.20.30.200 dst=10.96.44.10 sport=31044 dport=443 \
+                         src=10.244.3.17  dst=10.20.40.11 sport=8443 dport=42117 [ASSURED] use=1
 ```
 
-Anatomy: the **first tuple** is the original packet as it arrived (client-as-seen → Service VIP). The **second tuple** is the *expected reply* — and it's where the NAT verdict is written: replies will come *from* `10.244.3.17:8443` (revealing the DNAT target) *to* `10.20.30.200` (no un-SNAT needed here; the source was already the appliance's). If the second tuple's `dst` were a node IP instead, rewrite (d) fired too. `86392` is the remaining `nf_conntrack_tcp_timeout_established` seconds; `[ASSURED]` means the entry survives table pressure — both defined in the [conntrack sysctl docs](https://docs.kernel.org/networking/nf_conntrack-sysctl.html). The rules that created this entry are readable via `iptables-save -t nat` — syntax in [iptables(8)](https://man7.org/linux/man-pages/man8/iptables.8.html).
+Anatomy: the **first tuple** is the original packet as it arrived (client-as-seen → Service VIP). The **second tuple** is the *expected reply* — and both NAT verdicts are written into it. The reply's *source*, `10.244.3.17:8443`, is the **DNAT** element: it reveals the real endpoint the VIP was rewritten to. The reply's *destination*, `10.20.40.11:42117`, is the **SNAT** element: node A's own IP plus a masquerade-allocated port (the `--random-fully` in the census evidence is why it isn't `31044`), because rewrite (d) masqueraded the source before forwarding to the remote pod — exactly the triangle in the census diagram. The pod answers *the node*, not the client; node A's conntrack matches this entry, un-SNATs and un-DNATs, and only then does `10.20.30.200` see a packet from `10.96.44.10:443`. If the second tuple's `dst` were still `10.20.30.200`, no SNAT fired — the path was `externalTrafficPolicy: Local`, or in-cluster traffic that never got marked. `86392` is the remaining `nf_conntrack_tcp_timeout_established` seconds; `[ASSURED]` means the entry survives table pressure — both defined in the [conntrack sysctl docs](https://docs.kernel.org/networking/nf_conntrack-sysctl.html). The rules that created this entry are readable via `iptables-save -t nat` — syntax in [iptables(8)](https://man7.org/linux/man-pages/man8/iptables.8.html).
 
 ### "Which SNAT hit me?"
 

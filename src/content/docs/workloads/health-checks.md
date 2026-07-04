@@ -111,6 +111,8 @@ Better model:
 - Handle downstream failure **in the request path**: fail fast, return a 503 with a Retry-After, trip a circuit breaker. Callers coping with an unhealthy response beats callers coping with no endpoints.
 - Exception worth knowing: checking a *hard-local* dependency (e.g., a sidecar the pod can't function without) is fine — its failure domain is the pod itself.
 
+To be precise, the rule is never check dependencies **naively**. A disciplined version — hard dependencies only, flap-damped with hysteresis, per-dependency timeout budgets — is legitimate, and [Health Check Design](/tuning/health-check-design/) is the canonical treatment of when and how. Until you're doing that discipline, the local-only model above is the safe default.
+
 If your service mysteriously vanishes from its Service during dependency incidents, this footgun is almost always why — the [service-unreachable runbook](/troubleshooting/service-unreachable/) has the diagnosis path.
 
 ## Debugging probe failures

@@ -358,6 +358,10 @@ Egress default-deny is where NetworkPolicies earn their keep and where they bite
 
 Every derived number decays; each alert fires when one goes stale, *before* it fails. Routing, severities, and runbook-link discipline are in [Alerting](/observability/alerting/).
 
+:::caution[This one manifest can fail `kubectl apply` outright]
+`PrometheusRule` is a custom resource from the prometheus-operator — the only one of the nine that isn't a stock Kubernetes kind. If the CRDs aren't installed, the apply fails with `no matches for kind "PrometheusRule"`. Check first: `kubectl api-resources | grep monitoring.coreos.com`. If that comes back empty, this is a platform ask — the operator install is cluster-scoped and not yours to do — and your pipeline should apply this manifest conditionally or keep it in a separate overlay so the other eight still ship while the ticket is open.
+:::
+
 ```yaml
 apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
@@ -439,7 +443,9 @@ p99 must stay under 250ms the whole time and the error rate flat at zero — a b
 
 ## Shipping it
 
-**Repo layout.** All nine manifests live with the application, not in a platform repo — the team that owns the p99 owns the probe numbers:
+**Repo layout.** All nine manifests live with the application, not in a platform repo — the team that owns the p99 owns the probe numbers. Two equally valid shapes for the same content; orgs standardize on one, and this site's labs and CI sections use Helm:
+
+As a Kustomize base with overlays:
 
 ```text
 orders-api/deploy/
@@ -453,6 +459,19 @@ orders-api/deploy/
     ├── staging/   # host, HPA 2–4, softer alert thresholds
     └── prod/      # this article
 ```
+
+As a Helm chart — the same nine manifests become templates, and the overlays become values files:
+
+```text
+orders-api/charts/orders-api/
+├── Chart.yaml
+├── templates/            # the nine manifests, parameterized
+├── values.yaml           # defaults
+├── values-staging.yaml   # host, HPA 2–4, softer alert thresholds
+└── values-prod.yaml      # this article
+```
+
+The template mechanics are in [Chart Anatomy](/helm/chart-anatomy/); publishing the packaged chart from CI is in [Artifactory](/ci/artifactory/). Either way, the environment-specific numbers — hosts, HPA bounds, alert thresholds — live in the per-environment layer, and the golden invariants live in the base/templates where an environment can't quietly unset them.
 
 **Pipeline gates**, per [CI/CD Pipeline Design](/operations/cicd-pipeline-design/): schema-validate every manifest (kubeconform), policy-check the invariants this article established (digest-pinned image, no CPU limit *added*, automount still false, PDB present), inject the config checksum and the image digest as the only CI-written fields, then gate promotion on `kubectl rollout status` and a post-deploy smoke hit through the Ingress. The rollout-status gate is what turns the quota-blocked-surge row above from a mystery into a red pipeline.
 

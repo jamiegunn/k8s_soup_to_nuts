@@ -5,7 +5,7 @@ sidebar:
   order: 2
 ---
 
-Every subsequent lab deploys onto the cluster you build here, so this lab is pure foundation: install three CLIs, start a Linux VM that runs Docker, start a second Linux VM that runs Kubernetes, and prove the whole stack works end to end. No application code yet — that starts in Lab 1.
+Every subsequent lab deploys onto the cluster you build here, so this lab is pure foundation: install the CLI tools, start a Linux VM that runs Docker, start a second Linux VM that runs Kubernetes, and prove the whole stack works end to end. No application code yet — that starts in Lab 1.
 
 **What you'll have at the end:** a single-node k3s cluster running in a Lima VM named `k3s`, a second Lima VM named `docker` whose daemon builds your images, `kubectl` and `helm` wired to the cluster through `KUBECONFIG`, a `labs` namespace set as your context default, and a passing smoke test for docker, kubectl, and helm.
 
@@ -36,17 +36,18 @@ Why this stack instead of Docker Desktop or minikube? See [Local Development](/s
 ## Step 1: Install the CLIs
 
 ```bash
-brew install docker kubectl helm
+brew install docker docker-buildx kubectl helm
 ```
 
 ```console
 ==> Installing docker
+==> Installing docker-buildx
 ==> Installing kubectl
 ==> Installing helm
 🍺  ...
 ```
 
-One line here deserves attention: `brew install docker` installs the **Docker CLI only** — the `docker` command, a client program. It does *not* install a Docker daemon, because the daemon (`dockerd`) needs a Linux kernel and your Mac doesn't have one. The daemon is Step 2's job. The other two are also plain clients: `kubectl` and `helm` talk to a Kubernetes API server — Step 4 starts the VM that runs one. Nothing installed in this step runs anything by itself.
+One line here deserves attention: `brew install docker` installs the **Docker CLI only** — the `docker` command, a client program. It does *not* install a Docker daemon, because the daemon (`dockerd`) needs a Linux kernel and your Mac doesn't have one. The daemon is Step 2's job. `docker-buildx` is the CLI's modern build engine, packaged as a plugin — without it, `docker build` falls back to the deprecated legacy builder, which prints different output than these labs show and is being removed upstream. The other two are plain clients as well: `kubectl` and `helm` talk to a Kubernetes API server — Step 4 starts the VM that runs one. Nothing installed in this step runs anything by itself.
 
 Verify the versions (yours may be newer; same major version is fine):
 
@@ -58,6 +59,34 @@ docker --version && kubectl version --client && helm version --short
 Docker version 27.4.0, build bde2b89
 Client Version: v1.32.3
 v3.17.2+gcc0f318
+```
+
+One wrinkle: Homebrew puts the buildx plugin where the `docker` CLI doesn't look by default, so tell it where. Create the Docker config directory and edit `~/.docker/config.json`:
+
+```bash
+mkdir -p ~/.docker
+```
+
+Make `~/.docker/config.json` contain (create the file if it doesn't exist):
+
+```json
+{
+  "cliPluginsExtraDirs": ["/opt/homebrew/lib/docker/cli-plugins"]
+}
+```
+
+:::note[Intel Macs]
+Homebrew lives under `/usr/local` on Intel Macs — use `"/usr/local/lib/docker/cli-plugins"` there instead.
+:::
+
+Verify the CLI now finds the plugin:
+
+```bash
+docker buildx version
+```
+
+```console
+github.com/docker/buildx v0.20.1 5b03bb1
 ```
 
 ## Step 2: Start the Docker VM with Lima
@@ -293,6 +322,8 @@ An empty list is the correct answer — `helm list` reads Release records from t
 
 :::caution[When output doesn't match]
 **`Cannot connect to the Docker daemon at unix:///var/run/docker.sock`** — `DOCKER_HOST` isn't set in this shell. The CLI fell back to the default socket path, which doesn't exist on your Mac. Run the `export` from Step 3, and confirm it's in `~/.zshrc` for future shells (`echo $DOCKER_HOST` should print the Lima socket path).
+
+**`docker: 'buildx' is not a docker command`** — the plugin directory isn't configured. Homebrew installs buildx to `/opt/homebrew/lib/docker/cli-plugins` (Intel Macs: `/usr/local/lib/docker/cli-plugins`), but the CLI only searches there if `~/.docker/config.json` lists that path under `cliPluginsExtraDirs`. Revisit Step 1, then confirm with `docker buildx version`.
 
 **`Cannot connect to the Docker daemon at unix:///Users/you/.lima/docker/sock/docker.sock`** — `DOCKER_HOST` is set, but the `docker` VM is stopped (common after a reboot). Check `limactl list`; if `STATUS Stopped`, run `limactl start docker`. Your images and build cache come back with it.
 

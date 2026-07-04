@@ -64,8 +64,10 @@ quantile_over_time(0.95,
 )
 
 # OOM kills over 30d (any nonzero = under-provisioned, full stop)
-sum by (namespace, pod) (
-  increase(kube_pod_container_status_last_terminated_reason{reason="OOMKilled"}[30d])
+sum by (namespace, pod, container) (
+  increase(kube_pod_container_status_restarts_total[30d])
+  * on (namespace, pod, container) group_left
+  kube_pod_container_status_last_terminated_reason{reason="OOMKilled"}
 )
 
 # CPU throttling ratio — hidden latency tax from too-tight limits
@@ -73,6 +75,8 @@ sum by (namespace, pod) (increase(container_cpu_cfs_throttled_periods_total[30d]
 /
 sum by (namespace, pod) (increase(container_cpu_cfs_periods_total[30d]))
 ```
+
+A word on the OOM query, because the tempting one-liner — `increase(kube_pod_container_status_last_terminated_reason{reason="OOMKilled"}[30d])` — is a lie: that metric is a 0-or-1 **gauge**, not a counter, so `increase()` over a pod chronically parked at 1 returns ~0 and your worst OOM offenders score clean. (It looks diligent in review, which is exactly the problem.) The join above counts actual restarts and keeps only the ones whose last termination was an OOM. One honest caveat on the honest version: `last_terminated_reason` reflects only the *most recent* termination, so a pod restarting for mixed reasons undercounts its OOMs — directionally right, not exact.
 
 Join the two (a 60-line Python script against the Prometheus HTTP API, or a Grafana table panel — the join key is `namespace/pod` collapsed to the workload name) and you get the fleet table. This is the artifact everything else in the article consumes; here's what a real one looks like:
 
@@ -223,7 +227,7 @@ Every wave gets a written watch window (24h minimum for memory changes; one full
 
 | Signal | Query sketch | Abort threshold |
 |---|---|---|
-| OOM kills | `increase(...last_terminated_reason{reason="OOMKilled"}[1h])` | **Any**, on a workload you just shrank |
+| OOM kills | `increase(...restarts_total[1h]) * on (...) group_left ...last_terminated_reason{reason="OOMKilled"}` — the audit-kit join, `[1h]` window | **Any**, on a workload you just shrank |
 | Restart rate | `increase(kube_pod_container_status_restarts_total[1h])` | > baseline + 2 |
 | Throttle ratio | throttled/total CFS periods | > 5% where it was ~0 (CPU wave) |
 | p99 latency | your service SLI | > SLO, or > 20% over the pre-wave baseline |

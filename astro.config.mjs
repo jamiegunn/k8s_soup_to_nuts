@@ -30,6 +30,9 @@ export default defineConfig({
 				},
 			],
 			customCss: ['./src/styles/custom.css'],
+			editLink: {
+				baseUrl: 'https://github.com/jamiegunn/k8s_soup_to_nuts/edit/main/',
+			},
 			lastUpdated: true,
 			pagination: true,
 			plugins: [
@@ -55,12 +58,28 @@ export default defineConfig({
 					link: '/learning-paths/',
 				},
 				{
+					// Deliberately high in the sidebar: this is the section
+					// people arrive needing, often mid-incident.
+					label: 'Troubleshooting',
+					items: [
+						{ autogenerate: { directory: 'troubleshooting' } },
+						{ label: 'Emergency Playbooks ↗', link: '/operations/emergency-playbooks/' },
+					],
+				},
+				{
 					label: 'kubectl Mastery',
 					items: [{ autogenerate: { directory: 'kubectl' } }],
 				},
 				{
 					label: 'Workloads & Deployments',
-					items: [{ autogenerate: { directory: 'workloads' } }],
+					items: [
+						{ autogenerate: { directory: 'workloads' } },
+						{
+							label: 'Sidecars',
+							collapsed: true,
+							items: [{ autogenerate: { directory: 'sidecars' } }],
+						},
+					],
 				},
 				{
 					label: 'Java on Kubernetes',
@@ -71,20 +90,19 @@ export default defineConfig({
 					items: [{ autogenerate: { directory: 'dotnet' } }],
 				},
 				{
-					label: 'Sidecars',
-					items: [{ autogenerate: { directory: 'sidecars' } }],
-				},
-				{
 					label: 'Stateful Apps',
 					items: [{ autogenerate: { directory: 'stateful' } }],
 				},
 				{
 					label: 'Networking & Routing',
-					items: [{ autogenerate: { directory: 'networking' } }],
-				},
-				{
-					label: 'Routing & DNS Deep Dive',
-					items: [{ autogenerate: { directory: 'routing' } }],
+					items: [
+						{ autogenerate: { directory: 'networking' } },
+						{
+							label: 'Under the Hood: Routing & DNS',
+							collapsed: true,
+							items: [{ autogenerate: { directory: 'routing' } }],
+						},
+					],
 				},
 				{
 					label: 'Controllers, CRDs & Operators',
@@ -93,10 +111,6 @@ export default defineConfig({
 				{
 					label: 'Logging & Observability',
 					items: [{ autogenerate: { directory: 'observability' } }],
-				},
-				{
-					label: 'Troubleshooting',
-					items: [{ autogenerate: { directory: 'troubleshooting' } }],
 				},
 				{
 					label: 'Day-2 Operations',
@@ -121,6 +135,10 @@ export default defineConfig({
 				{
 					label: 'Knobs & Levers',
 					items: [{ autogenerate: { directory: 'tuning' } }],
+				},
+				{
+					label: 'About & Methodology',
+					link: '/about/',
 				},
 			],
 		}),

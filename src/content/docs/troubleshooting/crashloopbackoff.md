@@ -58,7 +58,7 @@ kubectl get secret <name> -o jsonpath='{.data}' | tr ',' '\n'
 
 This one *masquerades* as a crash and burns hours. The app is healthy but starts slower than the liveness probe allows; the kubelet kills it; repeat forever. Tell-tale signs:
 
-- Exit code **143** (SIGTERM) rather than 1.
+- Exit code **143** or **137** rather than 1. 143 means the app handled the SIGTERM; 137 means it ignored or mishandled it and got SIGKILLed after the grace period — common when the process is wedged, which is exactly why liveness fired ([Triage Methodology](/troubleshooting/triage-methodology/)).
 - Lifetime ≈ `initialDelaySeconds + failureThreshold × periodSeconds`.
 - Events say so explicitly:
 
@@ -132,14 +132,18 @@ Distroless images have no `sh`, so the exec above fails. Use `--copy-to` togethe
 :::
 
 :::tip[Buy yourself log time during a loop]
-Racing the backoff to run `kubectl logs` on the brief `Running` window is miserable. Don't — `--previous` always has the last full crash, and `kubectl logs -f <pod>` started during the backoff will attach the moment the next attempt begins and stream the whole (short) life of the container.
+Racing the backoff to run `kubectl logs` on the brief `Running` window is miserable. Don't — `--previous` always has the last full crash, and that's the reliable tool. Note that `kubectl logs -f` started during the backoff does **not** carry over into the next attempt: the stream ends at the end of the current (dead) container's log. To watch successive attempts, re-run `kubectl logs -f` after each restart, use a tool like `stern` that re-attaches for you, or loop it honestly:
+
+```bash
+while true; do kubectl logs -f <pod> || sleep 1; done
+```
 :::
 
 ## Decision path
 
 1. `kubectl logs <pod> --previous` — explicit fatal error? → fix config/dependency/code (cause 1, 4, 5).
 2. `kubectl describe pod` → `Reason: OOMKilled`? → [OOMKilled](/troubleshooting/oomkilled/).
-3. Exit 143 + `Unhealthy`/`Killing` events? → liveness probe (cause 2).
+3. Exit 143 *or* 137 + `Unhealthy`/`Killing` events? → liveness probe (cause 2). (137 without those events and `Reason: OOMKilled` is step 2 — the events are the discriminator.)
 4. `Init:` prefix in status? → debug the init container (cause 6).
 5. Logs empty, dies instantly? → entrypoint/permission problem; reproduce with `--copy-to` (cause 4, 5).
 

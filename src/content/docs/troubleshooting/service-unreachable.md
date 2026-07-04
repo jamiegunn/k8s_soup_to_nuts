@@ -52,8 +52,6 @@ Fix in the manifest (Service selector or pod template labels, whichever is wrong
 
 ## Hop 3: Do EndpointSlices have addresses?
 
-This hop *proves* hops 1–2 in one command:
-
 ```bash
 kubectl get endpointslices -l kubernetes.io/service-name=api
 ```
@@ -63,8 +61,23 @@ NAME        ADDRESSTYPE   PORTS   ENDPOINTS                     AGE
 api-x7k2m   IPv4          8080    10.42.3.17,10.42.5.22         2d
 ```
 
-- Endpoints present → Service→pod wiring works; the problem is upstream (DNS, client, NetworkPolicy, ingress) or the port (hop 4).
-- `ENDPOINTS <none>` → no Ready pods match the selector. Back to hops 1–2.
+Careful with this column: **it lists addresses without filtering on readiness** — unready endpoints show up too. Addresses present proves the selector wiring (hop 2) and nothing more; it does *not* prove hop 1. To see readiness per endpoint, ask for the conditions explicitly:
+
+```bash
+kubectl get endpointslices -l kubernetes.io/service-name=api \
+  -o jsonpath='{range .items[*].endpoints[*]}{.addresses[0]}{"\t"}{.conditions.ready}{"\n"}{end}'
+```
+
+```console
+10.42.3.17	false
+10.42.5.22	true
+```
+
+(`kubectl describe endpointslice api-x7k2m` shows the same thing, more verbosely — ready and not-ready addresses are listed separately.)
+
+- Addresses present, all `ready: true` → Service→pod wiring works; the problem is upstream (DNS, client, NetworkPolicy, ingress) or the port (hop 4).
+- Addresses present but `ready: false` → the selector matches, but the readiness probe is failing — that's hop 1's problem. See [Health Checks](/workloads/health-checks/).
+- `ENDPOINTS <none>` → **no pods match the selector at all** — not even unready ones. That's a selector mismatch; back to hop 2.
 - Endpoints exist but the PORTS column isn't what clients dial → hop 4.
 
 ## Hop 4: Port chain — port vs targetPort vs containerPort
@@ -132,6 +145,8 @@ Only relevant when external clients fail but in-cluster access works. The status
 | **503** Service Unavailable | I have no healthy backends for this route | Zero endpoints (hops 1–3!), wrong Service name/port in the Ingress rule |
 | **504** Gateway Timeout | Backend took too long | Slow app, controller timeout shorter than your slowest request, NetworkPolicy silently dropping controller→pod traffic |
 
+When the 5xx arrives through the corporate front door rather than a plain browser hit, the full front-door playbook — VIP, appliance, and everything between the user and the ingress — is at [Front-Door 5xx](/troubleshooting/front-door-5xx/).
+
 An Ingress pointing at a Service name or port that doesn't exist produces eternal 503s with everything green in your namespace — validate the reference:
 
 ```bash
@@ -139,6 +154,58 @@ kubectl describe ingress api | grep -A5 "Rules"
 ```
 
 The ingress *controller* itself (config, logs, reloads) is platform-owned; escalate with the status code, a timestamped failing request, and proof that in-cluster access works.
+
+## Beyond the ingress: the corporate entry path
+
+Everything above ends at the ingress controller — but on this site the request has already crossed a corporate VIP, a bare-metal load balancer, and a NodePort/LoadBalancer hop before it gets there. When *in-cluster access works, the ingress answers, and external users still can't connect*, work these hops outward.
+
+### Hop 9: Does the LoadBalancer Service have an external IP?
+
+```bash
+kubectl -n ingress-nginx get svc
+```
+
+```console
+NAME            TYPE           CLUSTER-IP     EXTERNAL-IP   PORT(S)                      AGE
+ingress-nginx   LoadBalancer   10.96.114.20   <pending>     80:31380/TCP,443:31443/TCP   3d
+```
+
+`EXTERNAL-IP <pending>` on bare metal means nothing is fulfilling `type: LoadBalancer` — MetalLB isn't running, or its address pool is exhausted or doesn't cover this Service. Assigned IP → this hop is fine, keep going. Pool and controller diagnostics in [MetalLB](/controllers/metallb/).
+
+### Hop 10: Is MetalLB actually announcing the IP?
+
+An assigned IP is a promise; the announcement makes it reachable. Check that a speaker claimed it:
+
+```bash
+kubectl -n metallb-system get pods -o wide          # speakers up on every node?
+kubectl -n metallb-system logs -l component=speaker | grep -i announc
+kubectl describe svc ingress-nginx -n ingress-nginx  # look for "nodeAssigned"/"announcing" events
+```
+
+In L2 mode exactly one node answers ARP for the IP; if that node just died, expect a blackout until failover. No announcement events, or ARP for the external IP going unanswered from an adjacent subnet host → MetalLB problem, not yours to guess at: [MetalLB](/controllers/metallb/).
+
+### Hop 11: `externalTrafficPolicy: Local` blackholes
+
+```bash
+kubectl -n ingress-nginx get svc ingress-nginx -o jsonpath='{.spec.externalTrafficPolicy}'
+```
+
+With `Local`, a node only forwards external traffic to endpoints *on that same node* — nodes without a local endpoint silently drop the connection. If the upstream balancer sends traffic to all nodes but the ingress controller runs on two of six, two-thirds of requests work and the rest time out. The Service exposes a `healthCheckNodePort` precisely so the upstream balancer can skip endpoint-less nodes — verify the appliance is actually probing it. Why `Local` exists (source-IP preservation, skipping the extra SNAT hop) and its trade-offs: [NAT and Traffic Policies](/routing/nat/) and [Services Deep Dive](/networking/services-deep-dive/).
+
+### Hop 12: The corporate VIP layer
+
+The last hop is the one you can't `kubectl` your way into: the corporate appliance that owns the public VIP. Its health monitor is a config object of its own — if the monitor targets the wrong port, the wrong node set, or a health path that changed, the appliance marks every backend down and **the VIP goes dead while every dashboard in the cluster is green**. Classic signature: internal URLs work, external URL times out or resets instantly, and nothing in the cluster has changed.
+
+Before filing the network-team ticket, collect: the VIP and FQDN, a timestamped failing request from outside, proof that the NodePort/external IP answers from inside the corporate network, and the `healthCheckNodePort` value if `externalTrafficPolicy: Local` is in play. The whole handoff, including what the appliance monitor should probe, is documented in [External Load Balancing](/networking/external-load-balancing/).
+
+Symptoms mapped to these hops:
+
+| Symptom | Broken hop | Look at |
+|---|---|---|
+| `EXTERNAL-IP <pending>` forever | Hop 9 | MetalLB not running, address pool empty/mismatched — [MetalLB](/controllers/metallb/) |
+| External IP assigned, nothing answers | Hop 10 | No speaker announcing (L2 leader died, ARP unanswered) — [MetalLB](/controllers/metallb/) |
+| *Some* external requests time out, others fine | Hop 11 | `externalTrafficPolicy: Local` + nodes without local endpoints; appliance not probing `healthCheckNodePort` — [NAT](/routing/nat/) |
+| VIP dead, everything in-cluster green | Hop 12 | Appliance health monitor down/misconfigured — network-team ticket, [External Load Balancing](/networking/external-load-balancing/) |
 
 :::tip[Two chain-breakers this walkthrough can't see]
 If the namespace is meshed, 503s can originate in the sidecar rather than any hop above — check the Envoy response flags ([Service Mesh](/networking/service-mesh/)). And if only *some* requests fail, or one pod gets all the traffic, suspect gRPC/WebSocket connection-level balancing ([Long-Lived Connections](/networking/long-lived-connections/)).
@@ -168,7 +235,7 @@ kubectl -n "$NS" run "svc-check-$$" --rm -i --restart=Never \
   sh -c "nslookup $SVC.$NS.svc.cluster.local && curl -sv --max-time 5 http://$SVC.$NS:$PORT/ 2>&1 | tail -15"
 ```
 
-Interpretation: empty pod list → selector bug (hop 2). Pods `0/1` → readiness (hop 1). Empty endpoints with Ready pods → port/selector mismatch. DNS fails → hop 6. curl times out with endpoints present → NetworkPolicy (hop 7) or app bind address (hop 5).
+Interpretation: empty pod list → selector bug (hop 2). Pods `0/1` → readiness (hop 1). `ENDPOINTS <none>` even with pods listed → selector mismatch (hop 2) — remember, unready endpoints would still appear. DNS fails → hop 6. curl times out with endpoints present → NetworkPolicy (hop 7) or app bind address (hop 5).
 
 ## Prevention
 

@@ -95,6 +95,9 @@ kubectl logs <pod-name> --previous
 | Tune probe timings, JVM memory flags, or requests/limits with real numbers | [Knobs & Levers](/tuning/overview/) |
 | Retrofit sane requests/limits onto a fleet that grew organically | [Requests & Limits on a Running Fleet](/tuning/brownfield-resources/) |
 | Design health endpoints properly (and fix a fleet of bad probes safely) | [Health Check Design](/tuning/health-check-design/) |
+| Stop dropping requests during deploys — the termination lifecycle | [Graceful Shutdown](/workloads/graceful-shutdown/) |
+| Tune rollout pacing and the shutdown budget (surge, grace, preStop) | [Rollout & Shutdown Knobs](/tuning/rollout-shutdown-knobs/) |
+| Decode a 502/503/504 from the front door, layer by layer | [502, 503, 504 from the Front Door](/troubleshooting/front-door-5xx/) |
 | Size a new service from zero, step by step | [Sizing Walkthrough](/tuning/sizing-walkthrough/) |
 | Tell whether it's my pod or the node (evictions, `Terminating`, `Unknown`) | [Node Problems](/troubleshooting/node-problems/) |
 | Shell into a distroless container, or debug one that dies before I can exec | [Debugging Toolbox](/troubleshooting/debugging-toolbox/) |

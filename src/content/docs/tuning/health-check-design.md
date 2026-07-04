@@ -35,6 +35,10 @@ Three rules fall out of the table, and they are the whole discipline:
 
 **Rule 2: readiness checks hard deps only — with hysteresis.** If the DB is down, this pod genuinely cannot serve; leaving rotation is correct and it's what makes rolling deploys and failovers clean. But check with flap-damping: one failed DB ping should not yank a pod from rotation for 10 seconds and back. Require N consecutive failures in the *endpoint logic* (or lean on `failureThreshold` — the trade-offs are in [Health Check Knobs](/tuning/health-check-knobs/)), and remember that if *all* pods leave rotation because a shared hard dep died, callers get connection refused instead of fast 503s — sometimes keeping ready and returning 503s with a `Retry-After` is the kinder failure. That's a design decision to make per service, on purpose, and to write down.
 
+:::note[The canonical position]
+Rule 2 is this site's canonical answer to "may readiness check dependencies?" — **yes, hard deps only, with hysteresis and per-dep timeout budgets.** Other pages ([Health Check Knobs](/tuning/health-check-knobs/), [Health Checks](/workloads/health-checks/)) lead with the blunter "don't check dependencies in readiness" — that's the safe simplification for anyone not yet doing the classification and budgeting on this page, and both defer here for the disciplined version.
+:::
+
 **Rule 3: soft deps never gate probes.** Cache down? Serve slower from the DB and set a flag that trips the "degraded" alert. The moment a soft dep appears in a probe you've promoted it to hard — you've told Kubernetes to remove capacity because a *cache* hiccuped, converting a 5% latency degradation into a 100% capacity loss.
 
 ### Worked example: orders-api
@@ -208,7 +212,7 @@ Three of those four rows are incidents on a timer. Grade every row against the s
 | Smell | What it means | 3am risk |
 |---|---|---|
 | Liveness == readiness, same endpoint | Nobody designed either; whatever that endpoint checks, the kubelet *restarts* on it | **High** — this is the fleet-outage pattern from Rule 1 |
-| Probe hits `/` (or the login page) | "Returns 200" was the whole design; you're health-checking the router and, charmingly, your auth redirect | Medium — passes when the app is broken, occasionally fails when it isn't (a 302 is a probe failure) |
+| Probe hits `/` (or the login page) | "Returns 200" was the whole design; you're health-checking the router and, charmingly, your auth redirect | Medium — passes when the app is broken: the kubelet counts any 2xx/3xx as success, so the login redirect's 302 sails through while everything behind it is down |
 | `timeoutSeconds: 1` on a JVM | One healthy full GC pause = probe failure; three in a row = restart during peak load, which causes more GC... | **High** — self-amplifying, strikes under load |
 | No startup probe + `initialDelaySeconds: 300` | The fossil. Five minutes of crash-detection blindness every boot | Low urgency, real cost |
 | Readiness checks four downstreams | Any blip anywhere removes this pod from rotation; the failure domain is the union of everyone else's | **High** — and it *looks* diligent in review |

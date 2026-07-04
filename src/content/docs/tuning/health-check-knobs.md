@@ -54,14 +54,14 @@ All the outage math on this page is multiplication. Worked numbers use the state
 **Time-to-restart (liveness).** With `periodSeconds: 10`, `timeoutSeconds: 5`, `failureThreshold: 3`:
 
 ```text
-detection jitter:  up to 1 × period      = 0–10s   (hang starts just after a success)
-failing attempts:  3 × period            = 30s     (attempts are period-spaced)
-per-attempt wait:  each may burn timeout = up to 5s before counting as failed
-                                         ─────────
-kill signal sent:  ~30–45s after the hang begins, then SIGTERM → grace period → restart
+detection jitter:  up to 1 × period       = 0–10s   (hang starts just after a success)
+failure spacing:   (3 − 1) × period       = 20s     (the 3 failures land at t, t+10, t+20)
+final attempt:     burns its timeout      = up to 5s before the 3rd failure registers
+                                          ─────────
+kill signal sent:  ~25–35s after the hang begins, then SIGTERM → grace period → restart
 ```
 
-Rule of thumb: **liveness kill time ≈ `failureThreshold × periodSeconds`, plus up to one period of jitter.** Your app must be able to be unresponsive for *less* than this during normal operation (GC, cache rebuild, burst load), or liveness becomes a random pod-killer.
+Rule of thumb: **liveness kill time ≈ `(failureThreshold − 1) × periodSeconds`, plus up to one period of detection jitter and one `timeoutSeconds` on the last attempt.** (Why N−1: the first failing probe *is* failure #1 — three consecutive failures span two periods, not three.) Your app must be able to be unresponsive for *less* than this during normal operation (GC, cache rebuild, burst load), or liveness becomes a random pod-killer.
 
 The kill itself is plain Unix [signal semantics](https://man7.org/linux/man-pages/man7/signal.7.html): the kubelet sends SIGTERM, which the process may catch to shut down cleanly, then after the grace period SIGKILL, which cannot be caught, blocked, or ignored. A truly wedged process that never handles the SIGTERM just spends the whole grace period dying slowly — which is exactly the case the probe-level `terminationGracePeriodSeconds` above exists to shortcut.
 
@@ -86,7 +86,7 @@ t=95    first startup success → startup probe retires permanently
 t=95+   liveness and readiness begin on their own periodSeconds, from now
 ```
 
-Because the startup probe absorbs the whole boot, liveness and readiness keep `initialDelaySeconds: 0` — adding a delay there just re-penalizes every pod for a boot that already happened.
+Because the startup probe absorbs the whole boot, liveness and readiness keep `initialDelaySeconds: 0` — not because a delay would punish anything, but because it's redundant: the delay is measured from *container start*, so by the time the startup probe passes it has usually already elapsed. The only case where it does anything is when it outlasts the boot — pure dead air after a boot the startup probe already vouched for.
 
 **Time-out-of-rotation on a blip (readiness).** De-rotation costs `failureThreshold × periodSeconds` of serving errors before traffic stops (`3 × 10` = up to 30s of failed requests). Recovery costs `successThreshold × periodSeconds` after the app is fine again (`1 × 10` = up to 10s; `successThreshold: 3` makes it 30s). Both directions on one timeline, defaults everywhere:
 
@@ -123,7 +123,7 @@ When a pod goes Terminating it's removed from endpoints *regardless* of readines
 
 ### Liveness × JVM warmup and GC
 
-A stop-the-world GC pause freezes probe responses along with everything else. With the defaults (`period: 10, timeout: 1, failureThreshold: 3`), a pause or pause-cluster spanning ~30s of probe attempts gets the pod killed *mid-GC*. The storm mechanics:
+A stop-the-world GC pause freezes probe responses along with everything else. With the defaults (`period: 10, timeout: 1, failureThreshold: 3`), a pause or pause-cluster spanning ~20s of probe attempts (three period-spaced failures) gets the pod killed *mid-GC*. The storm mechanics:
 
 ```text
 1. heap pressure → long full GC → probe timeouts → liveness kill
@@ -132,7 +132,7 @@ A stop-the-world GC pause freezes probe responses along with everything else. Wi
 4. goto 1, now with n-1 healthy pods
 ```
 
-Nothing was ever wrong except the probe config. Defenses: `timeoutSeconds ≥ 5` and `failureThreshold ≥ 5` on JVM liveness probes (a single attempt then tolerates a 5s pause; the kill needs ~50s of *sustained* silence), and fix the pause itself via heap sizing in [JVM in Containers](/java/jvm-in-containers/) and [JVM Memory Knobs](/tuning/jvm-memory-knobs/).
+Nothing was ever wrong except the probe config. Defenses: `timeoutSeconds ≥ 5` and `failureThreshold ≥ 5` on JVM liveness probes (a single attempt then tolerates a 5s pause; the kill needs ~40s of *sustained* silence — five failures spanning four periods), and fix the pause itself via heap sizing in [JVM in Containers](/java/jvm-in-containers/) and [JVM Memory Knobs](/tuning/jvm-memory-knobs/).
 
 ### Liveness timeout × CPU throttling
 
@@ -140,7 +140,7 @@ A pod at its CPU limit gets throttled in 100ms enforcement windows: under [CFS b
 
 ### Readiness × dependency checks
 
-The cascade-outage knob, and you turn it **off**: a readiness endpoint that pings the database converts one dependency blip into every replica going Unready simultaneously — a full outage where you'd have had degraded responses, and one that *slows recovery*, because Unready pods get no warm-up traffic. Readiness answers "can *this pod* serve?" — deps belong in your own alerting, or at most in a startup gate. Spring Boot's separate liveness/readiness health groups exist precisely so you can keep dependency indicators out of both.
+The cascade-outage knob, and the *naive* setting is always wrong: a readiness endpoint that pings the database with no damping converts one dependency blip into every replica going Unready simultaneously — a full outage where you'd have had degraded responses, and one that *slows recovery*, because Unready pods get no warm-up traffic. That cascade is why the discipline exists, not why dependency checks are banned: readiness *may* gate on **hard** dependencies — ones the pod genuinely cannot serve without — when done with hysteresis (`failureThreshold` doing real flap-damping work) and per-dep timeout budgets that sum below `timeoutSeconds`. The canonical treatment of what counts as hard and how to check it is [Health Check Design](/tuning/health-check-design/); soft deps belong in your own alerting, and Spring Boot's separate liveness/readiness health groups exist precisely so you choose which indicators gate which probe.
 
 ## Recipes
 
@@ -164,7 +164,7 @@ livenessProbe:
   httpGet: { path: /healthz, port: 8080 }
   periodSeconds: 10         # no rush — readiness already pulled traffic
   timeoutSeconds: 5         # survive throttle windows
-  failureThreshold: 6       # ~60s provably wedged before the kill
+  failureThreshold: 6       # ~50s provably wedged before the kill
 ```
 
 ### Slow-starting JVM / Spring Boot
@@ -186,7 +186,7 @@ livenessProbe:
   httpGet: { path: /actuator/health/liveness, port: 8080 }
   periodSeconds: 10
   timeoutSeconds: 5         # must exceed your worst full-GC pause per attempt
-  failureThreshold: 6       # 60s of consecutive misses before the kill
+  failureThreshold: 6       # ~50s of consecutive misses before the kill
   terminationGracePeriodSeconds: 10   # a wedged JVM won't drain; don't wait 60s pod grace
 ```
 
@@ -201,7 +201,7 @@ livenessProbe:
     # app touches /tmp/worker-alive every loop; stale >2min = wedged
   periodSeconds: 60         # exec forks a process each period — keep it rare
   timeoutSeconds: 5
-  failureThreshold: 3       # 3min stale + 3 misses before restart; workers aren't urgent
+  failureThreshold: 3       # 2min-stale file + misses spanning ~2min before restart; workers aren't urgent
 ```
 
 The freshness window (`-mmin -2`) must exceed your longest *legitimate* work item, or long jobs get their pod shot mid-task.
@@ -290,6 +290,6 @@ The `Unhealthy` message tells you which knob to turn: `context deadline exceeded
 | `successThreshold: 2` on liveness or startup | API server rejects the manifest outright | Keep it 1 there; tune it on readiness only |
 | `exec` probe spawning a JVM every 5s | A JVM boot per probe per period, billed to your CPU limit | File-touch + shell `find -mmin`, `periodSeconds: 30+` |
 | `failureThreshold: 1` anywhere | One dropped packet, one slow accept — instant restart or de-rotation | Minimum 3; liveness deserves 5–6 |
-| Readiness probing the database | Dependency blip → all replicas Unready → total outage instead of degraded | Probe only what this pod controls |
+| Readiness probing the database *naively* | Dependency blip, no flap-damping → all replicas Unready → total outage instead of degraded | Hard deps only, with hysteresis and timeout budgets — per [Health Check Design](/tuning/health-check-design/) |
 
 The knobs are simple; the products aren't. When a probe misbehaves, write out the multiplication for your actual numbers before touching anything — the fix is usually visible in the arithmetic.

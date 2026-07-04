@@ -98,6 +98,23 @@ memory if the container has no limit — one more reason JVM workloads should
 always set `limits.memory`). And note it sizes only the *heap*. The other
 25% is not slack; it's spoken for.
 
+:::caution[In-place pod resize doesn't re-run heap ergonomics]
+"The heap follows the limit" has a time dimension: the JVM reads the cgroup
+values **once, at startup**, and computes the max heap then. Kubernetes
+in-place pod resize (stable in recent releases) can change `memory.max` on a
+*running* container — and the JVM will not notice. After an in-place resize,
+your `MaxRAMPercentage` is a percentage of a limit that no longer exists:
+shrink the limit and the already-sized heap can now exceed the non-heap
+headroom budget, which is an OOMKill waiting for load; grow the limit and the
+new memory simply sits unused. The rule for JVM workloads: treat an in-place
+memory resize as requiring a **deliberate restart** to re-ergonomize —
+resize, then roll the pods on your schedule. How in-place resize fits into a
+tuning workflow is covered in
+[resource tuning in prod](/operations/resource-tuning-in-prod/); the budget
+math the stale percentage breaks is in
+[JVM Memory Knobs](/tuning/jvm-memory-knobs/).
+:::
+
 ## Total JVM memory: heap is just the biggest tenant
 
 The kernel OOM-kills the container based on total resident memory (RSS), and

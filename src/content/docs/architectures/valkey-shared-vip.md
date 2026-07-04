@@ -45,7 +45,7 @@ There are two "VIPs" in this picture, owned by different teams, and only one of 
 **Why it beats NodePort:** NodePorts land in the 30000–32767 range (no `:6379` for your Redis-protocol clients), they couple clients to node IPs that change when the platform team recycles nodes, and they announce on *every* node. A MetalLB VIP gives you stable, conventional port numbers on a stable address, with `externalTrafficPolicy` as a real choice rather than an afterthought.
 
 :::caution[Be honest about failover]
-This design has **manual failover**. If the primary pod dies, the StatefulSet recreates it on the same PVC and clients reconnect — usually within a minute. But if the *node or volume* is lost, promoting the replica is a human action (sketched in [§6](#6-operations-notes)). If you need automatic failover, you want Sentinel or a Valkey operator instead — see [Valkey and Redis on Kubernetes](/stateful/valkey-and-redis/) for that decision. This architecture is the right size when a minute of write downtime is acceptable and you want something you fully understand.
+This design has **manual failover**. If the primary pod dies, the StatefulSet recreates it on the same PVC and clients reconnect — usually within a minute. But if the *node or volume* is lost, promoting the replica is a human action (the full runbook is [§6](#6-operations-notes)). And because replication is **asynchronous**, promotion silently drops any writes the dead primary acknowledged but hadn't yet shipped to the replica — a data-loss window you can measure but not avoid. If you need automatic failover or acknowledged-write guarantees, you want Sentinel or a Valkey operator instead — see [Valkey and Redis on Kubernetes](/stateful/valkey-and-redis/) for that decision. This architecture is the right size when a minute of write downtime and a small async-loss window are acceptable and you want something you fully understand.
 :::
 
 ## 2. Prerequisites and the platform ask
@@ -191,6 +191,15 @@ spec:
     spec:
       terminationGracePeriodSeconds: 60
       # priorityClassName: <ask platform team for their stateful/critical class>
+      affinity:
+        podAntiAffinity:          # keep primary and replica on different nodes
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              topologyKey: kubernetes.io/hostname
+              labelSelector:
+                matchLabels:
+                  app: valkey
       securityContext:
         runAsNonRoot: true
         runAsUser: 999
@@ -269,11 +278,11 @@ spec:
           storage: 10Gi
 ```
 
-**Why these choices:** requests == limits gives **Guaranteed QoS** — a cache/datastore is the last thing you want evicted under node pressure. Liveness is a bare `PING` (is the process alive?); readiness additionally checks `role:master` and `loading:0` so the VIP never routes to a primary still loading its AOF into memory — the split matters, see [health checks](/workloads/health-checks/). `REDISCLI_AUTH` keeps the password out of probe command lines. On SIGTERM Valkey shuts down cleanly and AOF makes the last second of writes durable; the `preStop` sleep gives kube-proxy time to pull the pod from Endpoints before the listener closes, and 60s of grace covers a final AOF flush. `masterauth` is set on the primary too, so it can be demoted to replica during a promotion without a config edit.
+**Why these choices:** requests == limits gives **Guaranteed QoS** — a cache/datastore is the last thing you want evicted under node pressure. The `podAntiAffinity` (on both StatefulSets, matching `app: valkey`) pushes primary and replica onto **different nodes** — colocate them and one node loss takes both the write path *and* the promotion candidate, which voids the entire HA story; it's `preferred` rather than `required` so a shrunken or single-node cluster still schedules. Liveness is a bare `PING` (is the process alive?); readiness additionally checks `role:master` and `loading:0` so the VIP never routes to a primary still loading its AOF into memory — the split matters, see [health checks](/workloads/health-checks/). `REDISCLI_AUTH` keeps the password out of probe command lines. On SIGTERM Valkey shuts down cleanly and AOF makes the last second of writes durable; the `preStop` sleep gives kube-proxy time to pull the pod from Endpoints before the listener closes, and 60s of grace covers a final AOF flush. `masterauth` is set on the primary too, so it can be demoted to replica during a promotion without a config edit.
 
 ### 3d. StatefulSet: valkey-replica
 
-Identical shape — only the differences are shown; everything else is copied verbatim from `valkey-primary`:
+Same shape as the primary, and written out in full — the contract of this page is that every manifest applies as-is. Three deliberate differences: the labels/serviceName/config point at the replica's resources, `--masterauth` here authenticates *replication to the primary*, and the readiness probe is **role-aware**, not a bare copy:
 
 ```yaml
 apiVersion: apps/v1
@@ -294,25 +303,96 @@ spec:
         app: valkey
         role: replica
     spec:
-      # ... same securityContext, tgps, container spec (incl. --requirepass and
-      # --masterauth — masterauth authenticates replication to the primary),
-      # resources, livenessProbe, preStop and volumeClaimTemplates as
-      # valkey-primary, with two substitutions:
+      terminationGracePeriodSeconds: 60
+      # priorityClassName: <ask platform team for their stateful/critical class>
+      affinity:
+        podAntiAffinity:          # keep replica off the primary's node
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              topologyKey: kubernetes.io/hostname
+              labelSelector:
+                matchLabels:
+                  app: valkey
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        runAsGroup: 999
+        fsGroup: 999
+        seccompProfile:
+          type: RuntimeDefault
       containers:
       - name: valkey
-        # 1) config volume: configMap: { name: valkey-replica-config }
-        # 2) readinessProbe verifies the replication link, not just liveness:
+        # Pin by digest in CI, same as the primary
+        image: valkey/valkey:8.1.2
+        command:
+        - valkey-server
+        - /etc/valkey/valkey.conf
+        - --requirepass
+        - $(VALKEY_PASSWORD)
+        - --masterauth              # authenticates this replica to the primary
+        - $(VALKEY_PASSWORD)
+        env:
+        - name: VALKEY_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: valkey-auth
+              key: password
+        - name: REDISCLI_AUTH        # lets probe/exec valkey-cli auth without -a on the cmdline
+          valueFrom:
+            secretKeyRef:
+              name: valkey-auth
+              key: password
+        ports:
+        - { name: valkey, containerPort: 6379 }
+        resources:
+          requests: { cpu: "1", memory: 3Gi }
+          limits:   { cpu: "1", memory: 3Gi }
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+        livenessProbe:
+          exec:
+            command: ["sh", "-c", "valkey-cli PING | grep -q PONG"]
+          initialDelaySeconds: 10
+          periodSeconds: 10
         readinessProbe:
+          # Role-aware: Ready = healthy replica OR promoted master.
+          # The 'role:master' clause is what makes §6 promotion possible.
           exec:
             command:
             - sh
             - -c
-            - valkey-cli INFO replication | grep -q 'master_link_status:up'
+            - valkey-cli INFO replication | grep -Eq 'role:master|master_link_status:up'
           periodSeconds: 5
           timeoutSeconds: 3
+        lifecycle:
+          preStop:
+            exec:
+              command: ["sh", "-c", "sleep 5"]
+        volumeMounts:
+        - name: config
+          mountPath: /etc/valkey
+          readOnly: true
+        - name: data
+          mountPath: /data
+      volumes:
+      - name: config
+        configMap:
+          name: valkey-replica-config
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: fast-local   # ask platform: prefer local NVMe or low-latency SAN class
+      resources:
+        requests:
+          storage: 10Gi
 ```
 
-**Why:** the readiness probe is the load-bearing line of this whole build. `VIP:6380` should only ever serve a replica whose link to the primary is **up**. If replication breaks, the probe fails, the pod leaves the `valkey-ro` Endpoints, and clients get connection refused instead of silently stale reads. Serving errors beats serving lies.
+**Why:** the readiness probe is the load-bearing line of this whole build — and it is deliberately **role-aware**. In normal operation the pod reports `role:slave` and readiness hinges on `master_link_status:up`: if replication breaks, the probe fails, the pod leaves the `valkey-ro` Endpoints, and clients get connection refused instead of silently stale reads. Serving errors beats serving lies. The `role:master` clause looks useless today, and it is the **promotion enabler**: the moment you run `REPLICAOF NO ONE` (§6), `master_link_status` *vanishes* from `INFO replication` — masters have no master link. A probe that greps only for `master_link_status:up` fails at that instant, the pod goes NotReady, kube-proxy pulls it from **both** Services' Endpoints, and your failover becomes a total VIP outage on both ports. The OR condition means the pod stays Ready as a healthy replica *or* as a freshly promoted master. Ship this probe from day one — retrofitting it mid-incident means editing a StatefulSet while the VIP is dark.
 
 ### 3e. The two LoadBalancer Services — the shared VIP
 
@@ -381,15 +461,17 @@ spec:
           app: valkey
     ports:
     - { port: 6379, protocol: TCP }
-  - from:                      # monitoring/exporter scrapes
+  - from:                      # Prometheus scrapes — metrics port ONLY, never 6379
     - namespaceSelector:
         matchLabels:
           kubernetes.io/metadata.name: monitoring
     ports:
-    - { port: 6379, protocol: TCP }
+    - { port: 9121, protocol: TCP }
 ```
 
 **Why:** default-deny plus three explicit paths. Note the policy sees **container** ports only — 6380 doesn't exist at the pod, so one rule on 6379 covers both Services. And because ETP is `Cluster`, VIP traffic is SNAT'd to **node IPs** before it reaches the pod — your `ipBlock` must include the node CIDR or you'll block your own VIP while `kubectl exec` tests keep working. (External connections are SNAT'd twice: once by the corporate appliance, once by kube-proxy — by the time the pod sees them, the source is a node IP.) Patterns in [NetworkPolicies](/networking/network-policies/).
+
+The monitoring rule deserves its own sentence, because the lazy version is a hole. Valkey doesn't speak Prometheus natively — scraping means adding an exporter sidecar (e.g. `redis_exporter`, which speaks Valkey fine) listening on **9121**, which this build doesn't include; until you add one, the rule matches no open port and admits nothing, which is the correct default. What you must *not* do is open **6379** to the whole monitoring namespace "for the exporter": that hands every pod in that namespace a network path to the authenticated data port, and NetworkPolicy is exactly the layer that shouldn't rely on `requirepass` catching what it let through. If your exporter runs as a separate deployment instead of a sidecar, scope a 6379 rule to that one pod with a `podSelector` on its labels — never the whole namespace.
 
 ### 3g. PodDisruptionBudgets
 
@@ -460,7 +542,7 @@ Steps 2–3 deliberately target the MetalLB IP — that isolates the in-cluster 
 kubectl -n valkey delete pod valkey-primary-0
 ```
 
-Expect: writes to `:6379` fail with connection errors for roughly 15–45s (pod reschedule + AOF load + readiness); the StatefulSet recreates `valkey-primary-0` on the **same PVC**, so no data loss for fsynced writes. Watch the replica reconnect: `master_link_status` flips `down → up` within ~10s of the primary going Ready, and `:6380` briefly leaves rotation (readiness fails) then returns — exactly the stale-read protection from 3d. Clients need retry logic; that's the honest cost of the no-Sentinel design.
+Expect: writes to `:6379` fail with connection errors for roughly 15–45s (pod reschedule + AOF load + readiness); the StatefulSet recreates `valkey-primary-0` on the **same PVC**, so no data loss for fsynced writes. Watch the replica reconnect: `master_link_status` flips `down → up` within ~10s of the primary going Ready, and `:6380` briefly leaves rotation (the role-aware probe fails — `role:slave` with the link down — then passes again) — exactly the stale-read protection from 3d. Clients need retry logic; that's the honest cost of the no-Sentinel design. While you're here, dry-run the first step of the [§6 promotion runbook](#6-operations-notes) too: confirm the deployed replica probe is the role-aware one, so the real promotion never starts from a broken contract.
 
 **5. Drain test (coordinate with the platform team):** drain the primary's node and confirm the PDB doesn't block, the pod reschedules (this requires your StorageClass to be attachable on other nodes — local PV users, this is your promotion drill instead), and the VIP keeps answering on 6380 throughout.
 
@@ -470,8 +552,9 @@ Expect: writes to `:6379` fail with connection errors for roughly 15–45s (pod 
 |---|---|---|
 | Second Service stuck `<pending>` | Sharing-key annotation mismatch (typo/whitespace), ETP mismatch, or `Local` with different pod sets | `kubectl describe svc valkey-ro` events; make annotations byte-identical, both ETP `Cluster` |
 | Both Services `<pending>` | Pool exhausted, or pinned IP outside the pool / already taken | MetalLB controller logs; re-ask platform team for the pool range |
-| `:6380` connection refused, pods Running | Replication link down — readiness probe correctly pulled the replica from Endpoints | `kubectl exec valkey-replica-0 -- valkey-cli INFO replication`; check `master_link_status`, auth (`masterauth`), NetworkPolicy |
-| `:6380` serving stale data | Readiness probe missing/edited — link is down but pod still Ready | Restore the `master_link_status:up` probe; this is the guardrail |
+| `:6380` connection refused, pods Running | Replication link down on a non-promoted replica (`role:slave` + link down) — the role-aware probe correctly pulled it from Endpoints | `kubectl exec valkey-replica-0 -- valkey-cli INFO replication`; check `master_link_status`, auth (`masterauth`), NetworkPolicy |
+| `:6380` serving stale data | Readiness probe missing/edited — link is down but pod still Ready | Restore the role-aware probe (`role:master` OR `master_link_status:up`); this is the guardrail |
+| Both ports dark the instant you promote | Probe drift: replica probe greps only `master_link_status:up`, so `REPLICAOF NO ONE` makes the pod NotReady on both Services | Restore the §3d role-aware probe *before* promoting; the `role:master` clause is the promotion enabler |
 | Writes to `:6380` rejected (`READONLY`) | By design: `replica-read-only yes` | Point writers at `:6379`; do not "fix" this |
 | Entire VIP dark for ~10s, both ports | L2 mode: announcing node died; MetalLB memberlist failover re-announces from another node (GARP) | Expected blip; if it persists, check speaker pods and ARP caches upstream |
 | MetalLB IP answers, corporate VIP doesn't | Appliance layer: pool member wrong or disabled, monitor marking 10.40.0.50 down, or DNS not pointing at the corporate VIP | `dig valkey.example.internal`; ask the network team for pool-member and monitor status — nothing in the cluster fixes this |
@@ -479,10 +562,32 @@ Expect: writes to `:6379` fail with connection errors for roughly 15–45s (pod 
 
 ## 6. Operations notes
 
-**Manual promotion (primary's node/volume is gone):** the sketch — (1) `kubectl exec valkey-replica-0 -- valkey-cli REPLICAOF NO ONE` — the replica becomes a writable master; (2) repoint the write path by patching the Service, not the clients: `kubectl -n valkey patch svc valkey-rw -p '{"spec":{"selector":{"app":"valkey","role":"replica"}}}'` — `VIP:6379` now hits the promoted pod (both LB Services temporarily select it; the port split still routes correctly since both target 6379); (3) when the old primary is recoverable, give it `replicaof` config pointing at the promoted pod, let it sync, then either flip everything back in a maintenance window or relabel permanently. Write this as a runbook *now*, not during the incident.
+### Manual promotion runbook (primary's node/volume is gone)
+
+This is a runbook, not a sketch — copy it into your incident tooling *now*, not during the outage. It only works because the replica's readiness probe ([§3d](#3d-statefulset-valkey-replica)) is **role-aware**. Steps in order:
+
+1. **Verify the probe contract before touching Valkey.** Confirm the deployed replica probe is the role-aware one: `kubectl -n valkey get sts valkey-replica -o yaml | grep -B2 -A2 'role:master'`. Here's why this is step 1 and not a footnote: `REPLICAOF NO ONE` makes `master_link_status` *disappear* from `INFO replication` (masters have no master link). Under a link-only probe (`grep -q 'master_link_status:up'`), the promoted pod instantly goes NotReady, kube-proxy pulls it from **both** `valkey-rw` and `valkey-ro` Endpoints, and your promotion becomes a total VIP outage on both ports. If you find the link-only probe deployed, patch the StatefulSet to the §3d probe and let the pod roll *first*.
+
+2. **Measure the data-loss window, then promote.** Record the replica's position: `kubectl exec valkey-replica-0 -- valkey-cli INFO replication | grep -E 'master_repl_offset|slave_read_repl_offset'`. Compare against the primary's last known `master_repl_offset` from your monitoring (you can't ask the dead primary). The delta, in bytes of replication stream, is what's about to be lost — see the aside below. Then: `kubectl exec valkey-replica-0 -- valkey-cli REPLICAOF NO ONE`. The pod flips to `role:master`, becomes writable, and **stays Ready** — the `role:master` clause holding the door open is the whole point of the §3d probe.
+
+3. **Repoint the write path** by patching the Service, not the clients: `kubectl -n valkey patch svc valkey-rw -p '{"spec":{"selector":{"app":"valkey","role":"replica"}}}'` — `VIP:6379` now hits the promoted pod (both LB Services temporarily select it; the port split still routes correctly since both target 6379).
+
+4. **Persist the promotion.** `REPLICAOF NO ONE` is runtime-only, and `valkey-replica-config` (§3a) still bakes in `replicaof valkey-primary-0...` and `replica-read-only yes`. Edit the ConfigMap: delete the `replicaof` line, drop `replica-read-only`, and — since this pod is now your durability anchor — adopt the primary's persistence settings (`appendonly yes`, `appendfsync everysec`). Then restart the pod **deliberately, at a moment you choose**: `kubectl -n valkey delete pod valkey-replica-0` in a window, after confirming the new ConfigMap is mounted-in or the STS has rolled.
+
+   :::danger[Skip step 4 and the cluster undoes your promotion]
+   The next *unplanned* restart — node reboot, eviction, OOM — boots the pod from the stale ConfigMap as a replica of `valkey-primary-0`. If the old primary's node has meanwhile returned, the pod full-syncs from it and **discards every write accepted since the promotion**. If the old primary is still gone, the pod comes up `role:slave` with the link down, the role-aware probe fails, and the write VIP goes dark anyway. Either outcome turns a recovered incident back into an outage.
+   :::
+
+5. **Fence the old primary — name the failure: split-brain.** The dead node or volume will eventually come back, and when it does, `valkey-primary-0` boots from its PVC as a fully writable `role:master` with the old dataset. Two masters, one VIP architecture: any client or process that still resolves the old headless DNS name, or a hasty selector flip-back, writes to a dataset that will later be thrown away. Fence it *before* it can return: `kubectl -n valkey scale sts valkey-primary --replicas=0`. If you can't scale it down in time (e.g. GitOps fights you), edit `valkey-primary-config` to add `replicaof valkey-replica-0.valkey-replica-headless.valkey.svc.cluster.local 6379` so that if the pod does start, it comes up as a replica of the promoted node — subordinate, not split-brained.
+
+6. **Re-establish the pair later, in a maintenance window.** With the old primary fenced and its config pointing at the promoted pod, scale `valkey-primary` back to 1, let it full-sync as a replica, then either flip the Service selectors and configs back to the original topology or relabel permanently. Whichever you pick, finish with the §4 verification plan end to end.
+
+:::caution[The data-loss window is the price of no Sentinel — say it out loud]
+Replication here is **asynchronous**: the primary acks writes to clients before the replica has them. Every write acked in the gap between the replica's last received offset and the primary's death is **gone the moment you promote** — no tool recovers it. You can quantify it (offset deltas in step 2, and trend `master_repl_offset` minus replica offsets in your monitoring so you know your steady-state lag *before* the incident), but you cannot avoid it in this design. Sentinel with `min-replicas-to-write`, or an operator with synchronous semantics, shrinks that window at the cost of the simplicity this whole page is buying. Choose knowingly.
+:::
 
 **Backups run off the replica:** `kubectl exec valkey-replica-0 -- valkey-cli BGSAVE`, wait for `rdb_bgsave_in_progress:0` in `INFO persistence`, then `kubectl cp valkey/valkey-replica-0:/data/dump.rdb ./dump-$(date +%F).rdb` (or a CronJob mounting nothing and streaming `--rdb -`). The fork cost and disk I/O land on the replica, never the write path. Full strategy: [backup and DR](/stateful/backup-and-dr/).
 
-**Scaling reads:** bump `valkey-replica` to `replicas: 2`. `valkey-replica-1` gets its own PVC, full-syncs from the primary, and joins the `valkey-ro` Endpoints once its readiness probe sees `master_link_status:up`. With ETP `Cluster`, kube-proxy spreads `:6380` connections roughly evenly across replicas per-connection (not per-command — pooled clients stick to one backend per connection). Each replica full-sync costs the primary a fork; add replicas one at a time.
+**Scaling reads:** bump `valkey-replica` to `replicas: 2`. `valkey-replica-1` gets its own PVC, full-syncs from the primary, and joins the `valkey-ro` Endpoints once the role-aware readiness probe sees `master_link_status:up` (the replica half of the OR). With ETP `Cluster`, kube-proxy spreads `:6380` connections roughly evenly across replicas per-connection (not per-command — pooled clients stick to one backend per connection). Each replica full-sync costs the primary a fork; add replicas one at a time.
 
 **Upgrades:** always **replica first, then primary** — a newer replica can sync from an older primary, rarely the reverse. With one of each, update the `valkey-replica` image, wait for `master_link_status:up` and a clean `GET` on `:6380`, then update `valkey-primary` and eat the same brief write blip as the failover drill. At `replicas: 2+`, use the StatefulSet `spec.updateStrategy.rollingUpdate.partition` field to canary one replica before the rest.

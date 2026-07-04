@@ -67,6 +67,7 @@ DaemonSets typically need node-level privileges and tolerations the platform tea
 15. **[Scheduling](/workloads/scheduling/)** — nodeSelector, affinity, taints and tolerations, topology spread, and priority — where pods land and why.
 16. **[GPUs and AI workloads](/workloads/gpu-and-ai-workloads/)** — requesting accelerators you don't manage, model-load vs startup-probe budgets, and queue etiquette on shared GPUs.
 17. **[DaemonSets](/workloads/daemonsets/)** — the per-node fleet running under your pods, how it affects you, and the rare cases where you run your own.
+18. **[Graceful shutdown](/workloads/graceful-shutdown/)** — the termination lifecycle end to end: the SIGTERM/endpoint race, the preStop pattern, and the budget inequality that makes deploys dropless.
 
 ## Which article do I need?
 

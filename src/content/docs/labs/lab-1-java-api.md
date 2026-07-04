@@ -358,10 +358,11 @@ service/orders-api   ClusterIP   10.43.114.23   <none>        80/TCP    40s
 (Pods showing `0/1` for a few seconds is the readiness probe doing its job.) Thanks to `fullnameOverride`, the Service is `orders-api`, not `orders-orders-api`. Port-forward through it — backgrounded, so one terminal suffices — and hit the API:
 
 ```bash
-kubectl port-forward svc/orders-api 8080:80 >/dev/null & sleep 2
+kubectl port-forward svc/orders-api 8080:80 >/dev/null & PF_PID=$!
+sleep 2
 curl -s localhost:8080/api/orders/2
 curl -s localhost:8080/api/hello
-kill %1
+kill $PF_PID
 ```
 
 ```console
@@ -369,12 +370,15 @@ kill %1
 {"greeting":"hello from the default"}
 ```
 
+`$!` is the PID of the command you just backgrounded; capturing it in `PF_PID` means the `kill` targets exactly that port-forward. (You'll see `kill %1` in the wild — it kills *job number one*, which is the wrong job the moment an earlier retry left something else running in the background.)
+
 Now the management port. It's deliberately not on the Service — probes and internals shouldn't ride the traffic port — so target the Deployment directly:
 
 ```bash
-kubectl port-forward deploy/orders-api 8081:8081 >/dev/null & sleep 2
+kubectl port-forward deploy/orders-api 8081:8081 >/dev/null & PF_PID=$!
+sleep 2
 curl -s localhost:8081/actuator/health/readiness
-kill %1
+kill $PF_PID
 ```
 
 ```console
@@ -382,6 +386,14 @@ kill %1
 ```
 
 That's the exact URL the kubelet polls every 5 seconds to decide whether this pod belongs behind the Service.
+
+:::tip[When a step fails]
+Retries are part of lab life, and two errors greet every retrying reader:
+
+**`Error: INSTALL FAILED: cannot re-use a name that is still in use`** — a previous `helm install orders` (even a failed one) already created the release. Either `helm uninstall orders` and install fresh, or — the better habit — make the command idempotent: `helm upgrade --install orders charts/orders-api` installs when the release doesn't exist and upgrades when it does, safe to run any number of times.
+
+**`bind: address already in use`** on port-forward — a stale forward from an earlier attempt still owns the port. Kill it with the PID you captured (`kill $PF_PID`), or if that shell is long gone, `pkill -f "port-forward.*8080"`.
+:::
 
 ## Step 8: Upgrade — and the `--set` discipline
 
@@ -419,10 +431,11 @@ USER-SUPPLIED VALUES:
 null
 NAME                          TYPE                 DATA   AGE
 sh.helm.release.v1.orders.v1  helm.sh/release.v1   1      12m
+sh.helm.release.v1.orders.v2  helm.sh/release.v1   1      4m
 sh.helm.release.v1.orders.v3  helm.sh/release.v1   1      1m
 ```
 
-`helm get values` shows `null` because revision 3 used pure chart defaults — the `--set` from revision 2 is gone, which is exactly Step 8's point. Each `sh.helm.release.v1.orders.vN` Secret is one revision: chart, values, and rendered manifests, gzipped. That's Helm's entire memory, and it's what `helm rollback` replays — full story in [Release Lifecycle and Operations](/helm/lifecycle-and-operations/).
+`helm get values` shows `null` because revision 3 used pure chart defaults — the `--set` from revision 2 is gone, which is exactly Step 8's point. Each `sh.helm.release.v1.orders.vN` Secret is one revision: chart, values, and rendered manifests, gzipped. One Secret per revision — you've made three (install, `--set` upgrade, file-backed upgrade), so all three are there, which is how `helm rollback` can replay any of them. That's Helm's entire memory, and it's what `helm rollback` replays — full story in [Release Lifecycle and Operations](/helm/lifecycle-and-operations/).
 
 ## Troubleshooting
 
