@@ -69,7 +69,12 @@ kubectl logs <pod-name> --previous
 | Work out why my pod was killed with exit code 137 | [OOMKilled](/troubleshooting/oomkilled/) |
 | Diagnose a pod stuck on a mount, or a PVC that won't attach | [Volume Failures](/troubleshooting/volume-failures/) |
 | Find out what's behind my StorageClass (Longhorn, Ceph, Harvester…) | [Storage Controllers](/controllers/storage-controllers/) |
-| Deploy a complete, tested build — stateless golden service, Valkey, PostgreSQL, IBM MQ, RabbitMQ, Kafka, or the cluster front door | [Reference Architectures](/architectures/overview/) |
+| Deploy a complete, tested build — golden service, zero-downtime, locked-down namespace, canary, KEDA, Valkey, PostgreSQL, IBM MQ, RabbitMQ, Kafka, front door | [Reference Architectures](/architectures/overview/) |
+| Look up an exact error message and jump to its playbook | [Error Message Index](/troubleshooting/error-index/) |
+| Follow a curated track instead of browsing 180 pages | [Learning Paths](/start/learning-paths/) |
+| Write HTTPRoutes on a platform-run Gateway | [Gateway API for App Teams](/networking/gateway-api/) |
+| Cut namespace cost without causing an OOM storm | [Cost and Rightsizing](/operations/cost-and-rightsizing/) |
+| Request GPUs and keep a 40GB model load from killing the pod | [GPUs and AI Workloads](/workloads/gpu-and-ai-workloads/) |
 | See every point where the JVM and Kubernetes interlock | [The JVM–Kubernetes Coupling Map](/java/jvm-kubernetes-coupling/) |
 | Run .NET on Kubernetes — GC vs limits, dumps from runtime-only images | [.NET on Kubernetes](/dotnet/overview/) |
 | Change log levels or pull a heap dump over HTTP — no redeploy, no JDK | [Actuator as an Ops Surface](/java/actuator/) |

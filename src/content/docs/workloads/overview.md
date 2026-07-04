@@ -65,6 +65,7 @@ DaemonSets typically need node-level privileges and tolerations the platform tea
 13. **[Pod security](/workloads/pod-security/)** — securityContext, Pod Security Standards, and hardening that doesn't break the app.
 14. **[ServiceAccounts](/workloads/serviceaccounts/)** — workload identity: pods calling the Kubernetes API and cloud services without long-lived keys.
 15. **[Scheduling](/workloads/scheduling/)** — nodeSelector, affinity, taints and tolerations, topology spread, and priority — where pods land and why.
+16. **[GPUs and AI workloads](/workloads/gpu-and-ai-workloads/)** — requesting accelerators you don't manage, model-load vs startup-probe budgets, and queue etiquette on shared GPUs.
 
 ## Which article do I need?
 

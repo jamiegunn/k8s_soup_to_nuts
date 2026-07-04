@@ -25,6 +25,10 @@ The rest of this site explains *how things work*. This section is different: eac
 | [The Golden Service](/architectures/golden-service/) | The stateless flagship: a production Spring Boot service with every default consciously set — HPA, PDB, spread, probes, NetworkPolicy — numbers traceable to the Sizing Walkthrough |
 | [Kafka: Production Reference Architecture (Strimzi)](/architectures/kafka-strimzi/) | A 3-broker KRaft cluster with the acks/min-ISR durability contract, rack awareness, per-broker external listeners, and the advertised-listener decoder |
 | [The Bare-Metal Front Door](/architectures/front-door/) | The platform-side edge: MetalLB + ingress-nginx + cert-manager as one build — how HTTP traffic actually enters, end to end |
+| [Zero-Downtime Deploys](/architectures/zero-downtime/) | The behavioral build: probes + PDB + preStop + surge assembled and *proven* with a load-generator harness — zero dropped requests through deploys, drains, and kills |
+| [The Locked-Down Namespace](/architectures/locked-down-namespace/) | PSA restricted + default-deny NetworkPolicy + non-root read-only containers + least-privilege RBAC — with a real app working inside and every diagnostic path preserved |
+| [Event-Driven Autoscaling with KEDA](/architectures/keda-autoscaling/) | Scaling consumers on queue depth/lag (Kafka, RabbitMQ, IBM MQ) with scale-to-zero and the drain-safe scale-in story |
+| [Progressive Delivery](/architectures/progressive-delivery/) | Metric-gated canary with automatic rollback via Argo Rollouts — a bad version caught at 10% traffic by its own error rate |
 
 ## The conventions every build follows
 

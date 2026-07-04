@@ -125,6 +125,7 @@ Read in order the first time; after that, jump to the layer that's on fire.
 9. [gRPC, WebSockets, and long-lived connections](/networking/long-lived-connections/) — why connection-level load balancing breaks for HTTP/2 and hours-long connections, and the fixes.
 10. [ingress-nginx in practice](/networking/ingress-nginx/) — the de facto controller: the annotation toolbox, TLS behavior, canaries, and a symptom→fix table.
 11. [TCP and non-HTTP ingress](/networking/tcp-ingress/) — getting databases, queues, and other raw TCP/UDP traffic into the cluster when Ingress can't help.
+12. [Gateway API for app teams](/networking/gateway-api/) — the Ingress successor: HTTPRoute anatomy, weighted canaries without annotations, and the status conditions that tell the truth.
 
 :::note
 Networking failures often masquerade as application failures — "readiness probe failed" is frequently a NetworkPolicy or DNS problem, not your app. If you landed here mid-incident, [Service unreachable](/troubleshooting/service-unreachable/) in the troubleshooting section is the fastest entry point.

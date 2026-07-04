@@ -122,6 +122,7 @@ kubectl annotate deployment payments \
 | [Image and supply-chain security](/operations/supply-chain-security/) | Base images, digest pinning, CI scanning, SBOMs, and signing — securing what you ship |
 | [API deprecations and cluster upgrades](/operations/api-deprecations/) | Surviving upgrades you don't control: detection with pluto/kubent, the pre-upgrade routine, and behavior changes that bite |
 | [CI/CD pipeline design](/operations/cicd-pipeline-design/) | The reference pipeline: immutable artifacts, promotion, migrations, rollback design, and the anti-patterns ranked |
+| [Cost and rightsizing](/operations/cost-and-rightsizing/) | FinOps from the app seat: you're billed on requests not usage, the waste taxonomy with detection queries, and the quarterly rightsizing ritual |
 
 ## The vocabulary this section uses
 
