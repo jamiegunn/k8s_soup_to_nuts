@@ -103,6 +103,10 @@ export default defineConfig({
 					items: [{ autogenerate: { directory: 'operations' } }],
 				},
 				{
+					label: 'CI with GitHub & Artifactory',
+					items: [{ autogenerate: { directory: 'ci' } }],
+				},
+				{
 					label: 'Helm Deep Dive',
 					items: [{ autogenerate: { directory: 'helm' } }],
 				},

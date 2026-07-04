@@ -7,6 +7,10 @@ sidebar:
 
 The [Debugging Toolbox](/troubleshooting/debugging-toolbox/) mentions busybox in a table row: "~2MB, minimal poking, fastest pull". That undersells it. On a locked-down cluster — namespace-scoped kubectl, distroless production images, no package manager anywhere — busybox is frequently the *only* toolkit you can get into a pod in under ten seconds. This page is the field guide: what it actually is, the four ways to get it where you need it, and the applets that solve real incidents.
 
+:::tip[The other half]
+This article gets tools INTO the pod. Its twin, [Linux Inside the Pod](/troubleshooting/linux-inside-the-pod/), covers what to run and how to read the output once you're in — including the /proc and cgroup fallbacks that need no tools at all.
+:::
+
 ## One binary, three hundred tools
 
 [BusyBox](https://busybox.net/) is a single statically linked executable (about 1MB in the official musl builds) that implements 300+ Unix utilities as "applets" inside one binary. Which applet runs is decided by how you invoke it:

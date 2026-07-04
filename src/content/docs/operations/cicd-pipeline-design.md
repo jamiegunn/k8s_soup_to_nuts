@@ -7,6 +7,10 @@ sidebar:
 
 Every Kubernetes deployment pipeline that works well looks roughly the same, and every one that pages you at 2 AM violates one of a small set of rules. This article is the reference shape. Snippets are GitHub Actions flavored because they're compact, but nothing here is GitHub-specific — the same stages port directly to GitLab CI, Jenkins, Tekton, or a shell script in a container. The shape is what matters.
 
+:::tip[Running GitHub + Artifactory?]
+This article is deliberately tool-agnostic. The [CI with GitHub & Artifactory](/ci/overview/) section implements this exact shape on that stack: [workflow foundations](/ci/github-actions/), [reusable templates](/ci/reusable-workflows/), [Artifactory as the artifact hub](/ci/artifactory/), and [the testing ladder](/ci/testing-in-ci/).
+:::
+
 ## The pipeline contract
 
 Four rules. Everything else in this article is implementation detail.

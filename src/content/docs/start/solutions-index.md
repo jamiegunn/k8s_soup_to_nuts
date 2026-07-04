@@ -99,6 +99,9 @@ kubectl logs <pod-name> --previous
 | Tell whether it's my pod or the node (evictions, `Terminating`, `Unknown`) | [Node Problems](/troubleshooting/node-problems/) |
 | Shell into a distroless container, or debug one that dies before I can exec | [Debugging Toolbox](/troubleshooting/debugging-toolbox/) |
 | Get a full Unix toolkit into a shell-less pod with one tiny image | [The BusyBox Toolkit](/troubleshooting/busybox/) |
+| Read /proc and cgroup files like a pro once I'm exec'd in | [Linux Inside the Pod](/troubleshooting/linux-inside-the-pod/) |
+| Build CI on GitHub Actions + Artifactory — templates, charts, tests | [CI with GitHub & Artifactory](/ci/overview/) |
+| Test my Helm chart in CI (units, rendered manifests, ephemeral k3d) | [Testing in CI](/ci/testing-in-ci/) |
 | Find out why my pods never appear even though the Deployment applied | [Pod Security](/workloads/pod-security/) |
 
 ## Debug networking and traffic
