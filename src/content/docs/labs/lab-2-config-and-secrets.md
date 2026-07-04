@@ -15,14 +15,15 @@ Kubernetes gives you a menu of ways to get configuration into a container, and t
 - The cluster running. If you paused since Lab 1, revive it:
 
 ```bash
-limactl start docker
+limactl start docker && limactl start k3s
 export DOCKER_HOST="unix://$HOME/.lima/docker/sock/docker.sock"
+export KUBECONFIG="$HOME/.lima/k3s/copied-from-guest/kubeconfig.yaml"
 kubectl get nodes
 ```
 
 ```console
-NAME                 STATUS   ROLES           AGE   VERSION
-labs-control-plane   Ready    control-plane   2d    v1.32.2
+NAME       STATUS   ROLES                  AGE   VERSION
+lima-k3s   Ready    control-plane,master   2d    v1.31.5+k3s1
 ```
 
 ## Step 1: The menu
@@ -175,7 +176,7 @@ Bump `<version>` in `app/pom.xml` to `0.2.0`, then rebuild and load — Lab 1's 
 ```bash
 cd ~/k8s-labs
 docker build -t orders-api:0.2.0 app/
-kind load docker-image orders-api:0.2.0 --name labs
+docker save orders-api:0.2.0 | limactl shell k3s sudo k3s ctr images import -
 ```
 
 This rebuild re-downloads dependencies, by the way: changing `pom.xml` invalidated the cached `dependency:go-offline` layer — Lab 1's caching lesson in reverse.
@@ -456,4 +457,4 @@ Finally, back to chart defaults — and recall from Lab 1 that upgrades don't in
 
 Release `orders` runs `orders-api:0.2.0`, consuming config through all six channels, with a checksum annotation that turns every config change into a clean rollout. You've *watched* a mounted file update inside a live container, watched env and `subPath` stay frozen, and watched Helm erase manual drift. On disk: the updated `app/`, a chart with `configmap.yaml` and `secret.yaml` templates, and `values-dev.yaml`.
 
-Pause with `limactl stop docker` whenever you like — but keep the release installed: in [Lab 3](/labs/lab-3-backend-service/), `orders-api` stops being alone. You'll install a Valkey cache as a second Helm release and wire the two together the way real services find each other: a Service name and cluster DNS.
+Pause with `limactl stop docker && limactl stop k3s` whenever you like — but keep the release installed: in [Lab 3](/labs/lab-3-backend-service/), `orders-api` stops being alone. You'll install a Valkey cache as a second Helm release and wire the two together the way real services find each other: a Service name and cluster DNS.

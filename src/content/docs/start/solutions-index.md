@@ -75,7 +75,7 @@ kubectl logs <pod-name> --previous
 | Find out what's behind my StorageClass (Longhorn, Ceph, Harvester…) | [Storage Controllers](/controllers/storage-controllers/) |
 | Deploy a complete, tested build — golden service, zero-downtime, locked-down namespace, canary, KEDA, Valkey, PostgreSQL, IBM MQ, RabbitMQ, Kafka, front door | [Reference Architectures](/architectures/overview/) |
 | Look up an exact error message and jump to its playbook | [Error Message Index](/troubleshooting/error-index/) |
-| Follow a curated track instead of browsing 180 pages | [Learning Paths](/start/learning-paths/) |
+| Follow a curated track instead of browsing 180 pages | [Learning Paths](/learning-paths/) |
 | Build and ship a real Java API on my Mac, step by step (Lima + kind + Helm) | [Hands-On Labs](/labs/overview/) |
 | Write HTTPRoutes on a platform-run Gateway | [Gateway API for App Teams](/networking/gateway-api/) |
 | Finally understand L2/L4/L7 and what a VIP actually is | [Network Layers and VIPs](/networking/layers-and-vips/) |
@@ -93,6 +93,8 @@ kubectl logs <pod-name> --previous
 | Get the actuator-style ops API for .NET (dumps, traces, collection rules) | [.NET Operational Endpoints](/dotnet/operational-endpoints/) |
 | Add a sidecar the right way — log shipper, config reloader, secrets fetcher | [Sidecars](/sidecars/overview/) |
 | Tune probe timings, JVM memory flags, or requests/limits with real numbers | [Knobs & Levers](/tuning/overview/) |
+| Retrofit sane requests/limits onto a fleet that grew organically | [Requests & Limits on a Running Fleet](/tuning/brownfield-resources/) |
+| Design health endpoints properly (and fix a fleet of bad probes safely) | [Health Check Design](/tuning/health-check-design/) |
 | Size a new service from zero, step by step | [Sizing Walkthrough](/tuning/sizing-walkthrough/) |
 | Tell whether it's my pod or the node (evictions, `Terminating`, `Unknown`) | [Node Problems](/troubleshooting/node-problems/) |
 | Shell into a distroless container, or debug one that dies before I can exec | [Debugging Toolbox](/troubleshooting/debugging-toolbox/) |

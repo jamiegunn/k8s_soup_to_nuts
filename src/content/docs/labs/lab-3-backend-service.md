@@ -11,12 +11,13 @@ So far `orders-api` talks to nobody. Real services almost always have something 
 
 ## Prerequisites
 
-- [Lab 0](/labs/lab-0-cluster/), [Lab 1](/labs/lab-1-java-api/), and [Lab 2](/labs/lab-2-config-and-secrets/) completed: the `labs` kind cluster exists, `orders-api:0.2.0` is deployed as release `orders` from `~/k8s-labs/charts/orders-api`, and config flows through env vars, a Secret, and ConfigMap files.
-- If you paused between sittings, revive everything (the last command should show `labs-control-plane … Ready`):
+- [Lab 0](/labs/lab-0-cluster/), [Lab 1](/labs/lab-1-java-api/), and [Lab 2](/labs/lab-2-config-and-secrets/) completed: the Lima `k3s` cluster exists, `orders-api:0.2.0` is deployed as release `orders` from `~/k8s-labs/charts/orders-api`, and config flows through env vars, a Secret, and ConfigMap files.
+- If you paused between sittings, revive everything (the last command should show `lima-k3s … Ready`):
 
 ```bash
-limactl start docker
+limactl start docker && limactl start k3s
 export DOCKER_HOST="unix://$HOME/.lima/docker/sock/docker.sock"
+export KUBECONFIG="$HOME/.lima/k3s/copied-from-guest/kubeconfig.yaml"
 kubectl get nodes
 ```
 
@@ -262,11 +263,11 @@ spring:
 
 Where's the host and password config? Nowhere in the app — and that's the point. Spring's relaxed binding maps the env vars `SPRING_DATA_REDIS_HOST`, `SPRING_DATA_REDIS_PORT`, and `SPRING_DATA_REDIS_PASSWORD` straight onto `spring.data.redis.*`. The chart will supply them. Same pattern you built in Lab 2, new consumer.
 
-Build and load, same dance as always (expect the `…not yet present on node "labs-control-plane", loading...` line):
+Build and import, same dance as always (expect the `unpacking docker.io/library/orders-api:0.3.0 …done` line):
 
 ```bash
 docker build -t orders-api:0.3.0 app/
-kind load docker-image orders-api:0.3.0 --name labs
+docker save orders-api:0.3.0 | limactl shell k3s sudo k3s ctr images import -
 ```
 
 ## 5. Wire the chart: DNS, the shared Secret, and a gate
@@ -321,7 +322,7 @@ Release "orders" has been upgraded. Happy Helming!
 deployment "orders-api" successfully rolled out
 ```
 
-The app has no ingress yet (that's Lab 4), so port-forward — using local port 8088, since Lima already claims 8080 on your Mac — and hit the endpoint twice, inside the 60-second TTL:
+The app has no ingress yet (that's Lab 4), so port-forward — using local port 8088, keeping clear of anything else camped on 8080 on your Mac — and hit the endpoint twice, inside the 60-second TTL:
 
 ```bash
 kubectl port-forward svc/orders-api 8088:8080 &
@@ -415,14 +416,14 @@ nslookup cache-valkey
 ```
 
 ```console
-Server:         10.96.0.10
-Address:        10.96.0.10:53
+Server:         10.43.0.10
+Address:        10.43.0.10:53
 
 Name:   cache-valkey.labs.svc.cluster.local
-Address: 10.96.143.201
+Address: 10.43.143.201
 ```
 
-There's the trick exposed: you asked for the bare name `cache-valkey`, and the answer came back for `cache-valkey.labs.svc.cluster.local` — the pod's `resolv.conf` search domains (run `cat /etc/resolv.conf` to see them) expanded it, and the nameserver `10.96.0.10` is CoreDNS itself. Compare the returned address with `kubectl get svc cache-valkey`: it's the Service's ClusterIP, not any pod's. Exit with `exit`. Naming rules live in [DNS](/networking/dns/); what CoreDNS does with that query is in [CoreDNS Deep Dive](/routing/coredns-deep-dive/).
+There's the trick exposed: you asked for the bare name `cache-valkey`, and the answer came back for `cache-valkey.labs.svc.cluster.local` — the pod's `resolv.conf` search domains (run `cat /etc/resolv.conf` to see them) expanded it, and the nameserver `10.43.0.10` is CoreDNS itself. Compare the returned address with `kubectl get svc cache-valkey`: it's the Service's ClusterIP, not any pod's. Exit with `exit`. Naming rules live in [DNS](/networking/dns/); what CoreDNS does with that query is in [CoreDNS Deep Dive](/routing/coredns-deep-dive/).
 
 :::caution
 **Troubleshooting box**
@@ -435,6 +436,6 @@ There's the trick exposed: you asked for the bare name `cache-valkey`, and the a
 
 ## Where you are now
 
-Two charts, two releases, one namespace: `orders` (0.3.0) reading through `cache` via nothing but a DNS name and a shared Secret, gated by an initContainer, degrading gracefully when the cache is gone. Stop the port-forward (`kill %1`) and pause with `limactl stop docker` if you're done for the day. What you built is the toy edition of a real pattern — the production version, with replication, failover, and a stable VIP shared across clients, is assembled piece by piece in [Valkey with a Shared VIP](/architectures/valkey-shared-vip/). Read it after Lab 4 and you'll recognize every part.
+Two charts, two releases, one namespace: `orders` (0.3.0) reading through `cache` via nothing but a DNS name and a shared Secret, gated by an initContainer, degrading gracefully when the cache is gone. Stop the port-forward (`kill %1`) and pause with `limactl stop docker && limactl stop k3s` if you're done for the day. What you built is the toy edition of a real pattern — the production version, with replication, failover, and a stable VIP shared across clients, is assembled piece by piece in [Valkey with a Shared VIP](/architectures/valkey-shared-vip/). Read it after Lab 4 and you'll recognize every part.
 
 Next: [Lab 4: Ingress and the Full Path](/labs/lab-4-ingress-end-to-end/) — where `curl` finally gets to come from your Mac instead of a port-forward.

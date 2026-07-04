@@ -1,8 +1,6 @@
 ---
 title: Learning Paths
 description: Curated reading tracks through the site — new-to-K8s, Java and .NET onboarding, on-call prep, shipping to prod, and running stateful services.
-sidebar:
-  order: 10
 ---
 
 This site has ~180 pages. Nobody should read it front to back, and nobody should land mid-topic without the prerequisites. Pick the track that matches your situation, read the steps **in order**, and use the checkpoint to know when you're done.

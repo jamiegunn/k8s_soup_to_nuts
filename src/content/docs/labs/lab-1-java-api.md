@@ -1,29 +1,30 @@
 ---
 title: "Lab 1: A Java API, Shipped with Helm"
-description: Build a Spring Boot 3.3 / Java 21 API entirely inside Docker, load it into your kind cluster, and deploy it with a Helm chart you author from scratch — probes, resources, upgrades and all.
+description: Build a Spring Boot 3.3 / Java 21 API entirely inside Docker, stream it into your k3s cluster, and deploy it with a Helm chart you author from scratch — probes, resources, upgrades and all.
 sidebar:
   order: 3
 ---
 
-In [Lab 0](/labs/lab-0-cluster/) you built a cluster. Now you'll give it something to run: `orders-api`, a small Spring Boot REST service. You'll build the image without installing Java or Maven (the Dockerfile does both), get it into kind the one way that works, and then — the heart of this lab — author a Helm chart from an empty directory and use it to install, verify, and upgrade the app.
+In [Lab 0](/labs/lab-0-cluster/) you built a cluster. Now you'll give it something to run: `orders-api`, a small Spring Boot REST service. You'll build the image without installing Java or Maven (the Dockerfile does both), get it into the cluster the one way that works, and then — the heart of this lab — author a Helm chart from an empty directory and use it to install, verify, and upgrade the app.
 
 **What you'll have at the end:** `orders-api:0.1.0` running as a 3-replica Deployment in the `labs` namespace, installed as Helm release `orders` from a chart you wrote yourself, answering `curl` on `/api/orders` and passing actuator health probes.
 
 ## Prerequisites
 
-- [Lab 0](/labs/lab-0-cluster/) completed: Lima VM `docker`, kind cluster `labs`, namespace `labs` as your context default, directory `~/k8s-labs/`.
-- `DOCKER_HOST` exported in **every new terminal** you open (Lab 0 suggested adding it to `~/.zshrc`).
+- [Lab 0](/labs/lab-0-cluster/) completed: Lima VMs `docker` (builds) and `k3s` (the cluster), namespace `labs` as your context default, directory `~/k8s-labs/`.
+- `DOCKER_HOST` and `KUBECONFIG` exported in **every new terminal** you open (Lab 0 suggested adding both to `~/.zshrc`).
 - The cluster running. If you paused since Lab 0, revive it:
 
 ```bash
-limactl start docker
+limactl start docker && limactl start k3s
 export DOCKER_HOST="unix://$HOME/.lima/docker/sock/docker.sock"
+export KUBECONFIG="$HOME/.lima/k3s/copied-from-guest/kubeconfig.yaml"
 kubectl get nodes
 ```
 
 ```console
-NAME                 STATUS   ROLES           AGE   VERSION
-labs-control-plane   Ready    control-plane   1d    v1.32.2
+NAME       STATUS   ROLES                  AGE   VERSION
+lima-k3s   Ready    control-plane,master   1d    v1.31.5+k3s1
 ```
 
 ## Step 1: The application source
@@ -172,20 +173,20 @@ curl -s localhost:8080/api/orders
 
 `Ctrl-C` the `docker run` when you're satisfied.
 
-## Step 4: Load the image into kind
+## Step 4: Stream the image into k3s
 
-Here's the step everyone forgets once and never again. Your image exists in the Lima VM's Docker daemon — but the kind "node" is itself a container with **its own** containerd image store. To the cluster, `orders-api:0.1.0` doesn't exist, and there's no registry to pull it from. `kind load` copies it across:
+Here's the step everyone forgets once and never again. Your image exists in the **docker** VM's daemon — but the cluster runs in the *other* VM, where k3s has **its own** containerd image store. To the cluster, `orders-api:0.1.0` doesn't exist, and there's no registry to pull it from. So stream it across: `docker save` writes the image as a tar archive to stdout, and `limactl shell k3s` pipes it straight into k3s's bundled containerd importer in the cluster VM:
 
 ```bash
-kind load docker-image orders-api:0.1.0 --name labs
+docker save orders-api:0.1.0 | limactl shell k3s sudo k3s ctr images import -
 ```
 
 ```console
-Image: "orders-api:0.1.0" with ID "sha256:7c1e..." not yet present on node "labs-control-plane", loading...
+unpacking docker.io/library/orders-api:0.1.0 (sha256:7c1e...)...done
 ```
 
 :::caution[This step is not optional]
-Skip it and your pods sit in `ImagePullBackOff` while Kubernetes tries to pull the image from Docker Hub, where it doesn't exist — the number-one kind gotcha ([Local Development](/start/local-development/) has the image-visibility model, [ImagePullBackOff](/troubleshooting/imagepullbackoff/) the triage). Repeat this command after **every** rebuild.
+Skip it and your pods sit in `ImagePullBackOff` while Kubernetes tries to pull the image from Docker Hub, where it doesn't exist — the number-one local-cluster gotcha ([Local Development](/start/local-development/) has the image-visibility model, [ImagePullBackOff](/troubleshooting/imagepullbackoff/) the triage). Repeat this command after **every** rebuild.
 :::
 
 ## Step 5: Author the chart — from scratch
@@ -230,7 +231,7 @@ resources:
   limits: {memory: 512Mi}
 ```
 
-*What to notice:* `values.yaml` is the chart's public API — everything a user may vary, with defaults. `pullPolicy: IfNotPresent` is **load-bearing on kind**: `Always` makes the kubelet contact a registry even though the image is already on the node, and fail. The JVM-ish resources (generous memory, no CPU limit) follow [Resources and QoS](/workloads/resources-and-qos/).
+*What to notice:* `values.yaml` is the chart's public API — everything a user may vary, with defaults. `pullPolicy: IfNotPresent` is **load-bearing for imported images**: `Always` makes the kubelet contact a registry even though the image is already in the node's containerd store, and fail. The JVM-ish resources (generous memory, no CPU limit) follow [Resources and QoS](/workloads/resources-and-qos/).
 
 And `fullnameOverride` deserves its comment: Helm's conventional `fullname` helper names resources `<release>-<chart>` so two releases of one chart can coexist in a namespace — install release `orders` from chart `orders-api` and you'd get a Deployment named `orders-orders-api`. Correct, collision-proof, and silly-looking. This chart is only ever installed once per namespace here, so we override to the clean name `orders-api` — but keep the helper below, because it's the convention every chart you'll ever read uses.
 
@@ -351,7 +352,7 @@ NAME                              READY   STATUS    RESTARTS   AGE
 pod/orders-api-7d9c6b58d4-8kwzr   1/1     Running   0          40s
 pod/orders-api-7d9c6b58d4-tj6mp   1/1     Running   0          40s
 NAME                 TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)   AGE
-service/orders-api   ClusterIP   10.96.114.23   <none>        80/TCP    40s
+service/orders-api   ClusterIP   10.43.114.23   <none>        80/TCP    40s
 ```
 
 (Pods showing `0/1` for a few seconds is the readiness probe doing its job.) Thanks to `fullnameOverride`, the Service is `orders-api`, not `orders-orders-api`. Port-forward through it — backgrounded, so one terminal suffices — and hit the API:
@@ -426,9 +427,9 @@ sh.helm.release.v1.orders.v3  helm.sh/release.v1   1      1m
 ## Troubleshooting
 
 :::caution[When the pods don't come up]
-**`ImagePullBackOff`** — you forgot `kind load docker-image orders-api:0.1.0 --name labs`, or `pullPolicy` isn't `IfNotPresent`. `kubectl describe pod <name>` shows a pull error against Docker Hub. [ImagePullBackOff](/troubleshooting/imagepullbackoff/).
+**`ImagePullBackOff`** — you forgot `docker save orders-api:0.1.0 | limactl shell k3s sudo k3s ctr images import -`, or `pullPolicy` isn't `IfNotPresent`. `kubectl describe pod <name>` shows a pull error against Docker Hub. [ImagePullBackOff](/troubleshooting/imagepullbackoff/).
 
-**`CrashLoopBackOff`** — the container starts and dies. `kubectl logs <pod> --previous` shows the dead container's last words; a Java stack trace usually means a typo in `application.yaml` or the controller. Rebuild, `kind load`, `kubectl rollout restart deploy/orders-api`. [CrashLoopBackOff](/troubleshooting/crashloopbackoff/).
+**`CrashLoopBackOff`** — the container starts and dies. `kubectl logs <pod> --previous` shows the dead container's last words; a Java stack trace usually means a typo in `application.yaml` or the controller. Rebuild, re-import (Step 4's pipe), `kubectl rollout restart deploy/orders-api`. [CrashLoopBackOff](/troubleshooting/crashloopbackoff/).
 
 **Pods `Running` but never `1/1` Ready** — probe failures. `kubectl describe pod` shows `Readiness probe failed: connection refused` when the probe port and the app's management port disagree: `managementPort` in values must match `management.server.port: 8081` in `application.yaml`.
 :::
@@ -437,4 +438,4 @@ sh.helm.release.v1.orders.v3  helm.sh/release.v1   1      1m
 
 Running in the `labs` namespace: Helm release `orders`, revision 3 — a 3-replica Deployment of `orders-api:0.1.0` with actuator-backed probes, behind ClusterIP Service `orders-api:80`. On disk: `~/k8s-labs/app/` and `~/k8s-labs/charts/orders-api/`.
 
-Stopping for the day? `limactl stop docker` pauses everything; the revival snippet at the top brings it back. `helm uninstall orders` would remove the release cleanly — **but don't**: [Lab 2](/labs/lab-2-config-and-secrets/) picks up with `orders` installed and teaches it to consume configuration every way Kubernetes knows how.
+Stopping for the day? `limactl stop docker && limactl stop k3s` pauses everything; the revival snippet at the top brings it back. `helm uninstall orders` would remove the release cleanly — **but don't**: [Lab 2](/labs/lab-2-config-and-secrets/) picks up with `orders` installed and teaches it to consume configuration every way Kubernetes knows how.

@@ -51,6 +51,10 @@ export default defineConfig({
 					items: [{ autogenerate: { directory: 'start' } }],
 				},
 				{
+					label: 'Learning Paths',
+					link: '/learning-paths/',
+				},
+				{
 					label: 'kubectl Mastery',
 					items: [{ autogenerate: { directory: 'kubectl' } }],
 				},

@@ -23,6 +23,8 @@ Three reasons these live together instead of inside the concept articles:
 | [JVM Memory Knobs](/tuning/jvm-memory-knobs/) | Heap and the non-heap budget everyone forgets — `MaxRAMPercentage`, Metaspace, code cache, direct memory, thread stacks — plus the RSS budget formula and ready-made flag strings |
 | [Requests & Limits Knobs](/tuning/requests-limits-knobs/) | The four primary knobs with exact semantics (CFS quota math included), QoS, LimitRange/quota interplay, and archetype resource blocks |
 | [Sizing Walkthrough](/tuning/sizing-walkthrough/) | The capstone: one service taken from a cold start to production-tuned, every number derived from a measurement, ending in a 12-step ritual you can reuse |
+| [Requests & Limits on a Running Fleet](/tuning/brownfield-resources/) | The brownfield companion: auditing what's actually deployed, deriving numbers from live traffic (no load tests), and the wave-by-wave rollout that doesn't cause the incident it prevents |
+| [Health Check Design](/tuning/health-check-design/) | Probes as a design discipline: hard/soft dependency classification, per-archetype endpoint designs, and the fleet retrofit order that never breaks prod |
 
 ## The three rules that govern every knob here
 
@@ -31,5 +33,5 @@ Three reasons these live together instead of inside the concept articles:
 - **Through git, not `kubectl edit`.** Tuning that isn't in the manifest is [drift](/operations/drift-and-cicd/), and the next deploy will un-tune it at the worst possible moment.
 
 :::tip[Where to start]
-New service with no data? Start with the honest starter configs in the [Sizing Walkthrough](/tuning/sizing-walkthrough/) and work the phases. Existing service misbehaving? Go straight to the knob table for the symptom — probe restarts to [Health Checks](/tuning/health-check-knobs/), OOMKills to [JVM Memory](/tuning/jvm-memory-knobs/), latency-with-idle-CPU to [Requests & Limits](/tuning/requests-limits-knobs/).
+New service with no data? Start with the honest starter configs in the [Sizing Walkthrough](/tuning/sizing-walkthrough/) and work the phases. Existing fleet that grew organically? [Requests & Limits on a Running Fleet](/tuning/brownfield-resources/) and [Health Check Design](/tuning/health-check-design/) are the retrofit programs. Existing service misbehaving? Go straight to the knob table for the symptom — probe restarts to [Health Checks](/tuning/health-check-knobs/), OOMKills to [JVM Memory](/tuning/jvm-memory-knobs/), latency-with-idle-CPU to [Requests & Limits](/tuning/requests-limits-knobs/).
 :::

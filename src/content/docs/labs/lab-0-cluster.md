@@ -1,13 +1,13 @@
 ---
 title: "Lab 0: A Cluster on Your Mac"
-description: Build the lab foundation — CLI tools via Homebrew, a Lima VM running dockerd, a kind cluster with ingress-ready port mappings, and a smoke-tested labs namespace.
+description: Build the lab foundation — CLI tools via Homebrew, a Lima VM running dockerd for builds, a second Lima VM running k3s as the cluster, and a smoke-tested labs namespace.
 sidebar:
   order: 2
 ---
 
-Every subsequent lab deploys onto the cluster you build here, so this lab is pure foundation: install four CLIs, start a Linux VM that runs Docker, create a kind cluster inside it, and prove the whole stack works end to end. No application code yet — that starts in Lab 1.
+Every subsequent lab deploys onto the cluster you build here, so this lab is pure foundation: install three CLIs, start a Linux VM that runs Docker, start a second Linux VM that runs Kubernetes, and prove the whole stack works end to end. No application code yet — that starts in Lab 1.
 
-**What you'll have at the end:** a kind cluster named `labs` running inside a Lima VM, with port mappings and node labels pre-provisioned for Lab 4's ingress, a `labs` namespace set as your context default, and a passing smoke test for docker, kubectl, and helm.
+**What you'll have at the end:** a single-node k3s cluster running in a Lima VM named `k3s`, a second Lima VM named `docker` whose daemon builds your images, `kubectl` and `helm` wired to the cluster through `KUBECONFIG`, a `labs` namespace set as your context default, and a passing smoke test for docker, kubectl, and helm.
 
 ## Prerequisites
 
@@ -24,11 +24,11 @@ limactl version 1.0.6
 
 If that fails, `brew install lima` first.
 
-- Roughly **8 GB of free RAM** (the VM defaults to 4 CPUs / 4 GiB) and ~15 GB free disk.
+- Roughly **10 GB of free RAM** (each of the two VMs defaults to 4 CPUs / 4 GiB) and ~15 GB free disk.
 - **No Docker Desktop needed.** These labs never touch it.
 
 :::caution[Docker Desktop users]
-If Docker Desktop is installed, it doesn't need to be uninstalled — but if it's *running*, you now have two Docker daemons on one machine, and whichever one your `docker` CLI talks to depends on `DOCKER_HOST` and context settings. Quit Docker Desktop for these labs. Step 3 sets `DOCKER_HOST` explicitly so the CLI always targets the Lima VM, but a running Desktop plus a half-configured shell is the classic source of "it built the image, but kind can't find it."
+If Docker Desktop is installed, it doesn't need to be uninstalled — but if it's *running*, you now have two Docker daemons on one machine, and whichever one your `docker` CLI talks to depends on `DOCKER_HOST` and context settings. Quit Docker Desktop for these labs. Step 3 sets `DOCKER_HOST` explicitly so the CLI always targets the Lima VM, but a running Desktop plus a half-configured shell is the classic source of "it built the image, but the cluster can't find it."
 :::
 
 Why this stack instead of Docker Desktop or minikube? See [Local Development](/start/local-development/) — short version: free, scriptable, and closest to how the pieces actually fit together.
@@ -36,28 +36,26 @@ Why this stack instead of Docker Desktop or minikube? See [Local Development](/s
 ## Step 1: Install the CLIs
 
 ```bash
-brew install docker kind kubectl helm
+brew install docker kubectl helm
 ```
 
 ```console
 ==> Installing docker
-==> Installing kind
 ==> Installing kubectl
 ==> Installing helm
 🍺  ...
 ```
 
-One line here deserves attention: `brew install docker` installs the **Docker CLI only** — the `docker` command, a client program. It does *not* install a Docker daemon, because the daemon (`dockerd`) needs a Linux kernel and your Mac doesn't have one. The daemon is Step 2's job. The other three are also plain clients: `kind` creates clusters by talking to a Docker daemon; `kubectl` and `helm` talk to a Kubernetes API server. Nothing installed in this step runs anything by itself.
+One line here deserves attention: `brew install docker` installs the **Docker CLI only** — the `docker` command, a client program. It does *not* install a Docker daemon, because the daemon (`dockerd`) needs a Linux kernel and your Mac doesn't have one. The daemon is Step 2's job. The other two are also plain clients: `kubectl` and `helm` talk to a Kubernetes API server — Step 4 starts the VM that runs one. Nothing installed in this step runs anything by itself.
 
 Verify the versions (yours may be newer; same major version is fine):
 
 ```bash
-docker --version && kind --version && kubectl version --client && helm version --short
+docker --version && kubectl version --client && helm version --short
 ```
 
 ```console
 Docker version 27.4.0, build bde2b89
-kind version 0.27.0
 Client Version: v1.32.3
 v3.17.2+gcc0f318
 ```
@@ -128,116 +126,109 @@ Server: Docker Engine - Community
 
 Read those two `OS/Arch` lines carefully: the **client is `darwin`** (your Mac) and the **server is `linux`** (the Lima VM). Every `docker build` and `docker run` you type from now on is a macOS program sending API calls through that Unix socket to a daemon inside a Linux VM. This is exactly what Docker Desktop does too — it just doesn't show you. It's also the same client/server shape as `kubectl` talking to an API server, which is why understanding it now pays off in [How kubectl Works](/kubectl/how-kubectl-works/).
 
-## Step 4: Write the kind cluster config
+## Step 4: Start the k3s VM
 
-Create the lab directory and the cluster config. This file front-loads two things Lab 4 needs (ingress port mappings and a node label), so you never have to recreate the cluster mid-sequence.
-
-```bash
-mkdir -p ~/k8s-labs && cd ~/k8s-labs
-```
-
-**`~/k8s-labs/kind-labs.yaml`** — create with the editor of your choice:
-
-```yaml
-# ~/k8s-labs/kind-labs.yaml
-kind: Cluster
-apiVersion: kind.x-k8s.io/v1alpha4
-nodes:
-  - role: control-plane
-    kubeadmConfigPatches:
-      - |
-        kind: InitConfiguration
-        nodeRegistration:
-          kubeletExtraArgs:
-            node-labels: "ingress-ready=true"
-    extraPortMappings:
-      - containerPort: 80
-        hostPort: 8080
-        protocol: TCP
-      - containerPort: 443
-        hostPort: 8443
-        protocol: TCP
-```
-
-Line by line:
-
-- `kind: Cluster` / `apiVersion` — this is kind's own config format, not a Kubernetes manifest.
-- `role: control-plane` — a single node that runs both the control plane and your workloads. One node is plenty for the labs.
-- `kubeadmConfigPatches` — injects extra kubelet arguments at cluster bootstrap; here it stamps the label `ingress-ready=true` onto the node.
-- `node-labels: "ingress-ready=true"` — the label ingress-nginx's kind deployment uses as a node selector, so the controller lands on the node that has the port mappings (Lab 4).
-- `extraPortMappings` — publishes ports from the node container to the host, exactly like `docker run -p`. Port **8080 on your Mac → 80 in the node**, and **8443 → 443**. We use 8080/8443 instead of 80/443 to avoid privileged ports and collisions.
-
-This is the standard kind-ingress recipe; you'll see it verbatim in kind's own docs.
-
-## Step 5: Create the cluster
+Your Mac can now build images. It still has no Kubernetes — that's the second VM's job. Lima's `k3s` template boots another small Linux VM and installs **k3s** inside it:
 
 ```bash
-kind create cluster --name labs --config kind-labs.yaml
+limactl start template://k3s
+```
+
+:::note[First start takes a while]
+Same story as Step 2: the first run downloads a Linux image and installs k3s — allow **3–8 minutes**. Later starts (`limactl start k3s`) take seconds.
+:::
+
+```console
+? Creating an instance "k3s" Proceed with the current configuration
+INFO[0000] Starting the instance "k3s" with VM driver "vz"
+INFO[0031] [hostagent] Waiting for the essential requirement 1 of 2: "ssh"
+INFO[0092] READY. Run `limactl shell k3s` to open the shell.
+INFO[0092] Message from the instance "k3s":
+To run `kubectl` on the host (assumes kubectl is installed), run the following commands:
+export KUBECONFIG="/Users/you/.lima/k3s/copied-from-guest/kubeconfig.yaml"
+kubectl ...
+```
+
+Accept **"Proceed with the current configuration"** again if prompted. That closing message is Step 5's whole job: Lima copied the cluster's admin kubeconfig out of the guest onto your Mac — you just have to point `kubectl` at it.
+
+What's now running in that VM is not a toy or a simulator. **k3s** is a real, certified Kubernetes distribution that packages the entire control plane — API server, scheduler, controller manager, datastore — plus the kubelet into **one binary**, with containerd riding along as the runtime. It's what runs on production edge devices, in retail back rooms, and on on-prem boxes where a full multi-node install would be overkill. One process inside one VM, but every component described in [How Kubernetes Works](/start/how-kubernetes-works/) is genuinely in there.
+
+Confirm both VMs are up:
+
+```bash
+limactl list
 ```
 
 ```console
-Creating cluster "labs" ...
- ✓ Ensuring node image (kindest/node:v1.32.2) 🖼
- ✓ Preparing nodes 📦
- ✓ Writing configuration 📜
- ✓ Starting control-plane 🕹️
- ✓ Installing CNI 🔌
- ✓ Installing StorageClass 💾
-Set kubectl context to "kind-labs"
-Have a nice day! 👋
+NAME      STATUS     SSH                VMTYPE    ARCH       CPUS    MEMORY    DISK      DIR
+docker    Running    127.0.0.1:60022    vz        aarch64    4       4GiB      100GiB    ~/.lima/docker
+k3s       Running    127.0.0.1:60023    vz        aarch64    4       4GiB      100GiB    ~/.lima/k3s
 ```
 
-(The first run pulls the ~900 MB `kindest/node` image; expect a couple of minutes. Reruns are ~30 seconds.) What just happened: kind asked the Docker daemon to start **one container** that *pretends to be a machine*. Inside that container run systemd, a kubelet, containerd, and the entire Kubernetes control plane — API server, etcd, scheduler, controller manager. Your pods will be containers *inside* that container. The full nesting:
+The full picture, one honest layer at a time:
 
 ```console
 macOS (your laptop)
-└── Lima VM (Linux, runs dockerd)
-    └── "labs-control-plane" container (the kind "node")
-        └── your pods (containers inside the node)
+├── Lima VM "docker" — dockerd (builds your images)
+└── Lima VM "k3s"    — k3s: control plane + kubelet + containerd (runs your cluster)
+    └── your pods
 ```
 
-Turtles all the way down — but each layer does an honest job, and the Kubernetes components inside are the real ones described in [How Kubernetes Works](/start/how-kubernetes-works/). kind also wrote credentials into `~/.kube/config` and switched your current context to `kind-labs`. See the "node" as the container it really is:
+Two VMs, one job each: images are built on the left and run on the right — and Lab 1 makes a point of how they travel across.
+
+## Step 5: Point kubectl at the cluster
+
+Step 3's move again, different CLI: `kubectl` reads the file named by `KUBECONFIG` to know which API server to talk to and how to authenticate. Point it at the file Lima copied out of the guest, and make it permanent:
 
 ```bash
-docker ps
+export KUBECONFIG="$HOME/.lima/k3s/copied-from-guest/kubeconfig.yaml"
+echo 'export KUBECONFIG="$HOME/.lima/k3s/copied-from-guest/kubeconfig.yaml"' >> ~/.zshrc
+```
+
+Your shell profile now carries two exports — `DOCKER_HOST` aiming `docker` at one VM, `KUBECONFIG` aiming `kubectl` at the other. Verify:
+
+```bash
+kubectl get nodes
 ```
 
 ```console
-CONTAINER ID   IMAGE                  STATUS         PORTS                                                                     NAMES
-1f2e3d4c5b6a   kindest/node:v1.32.2   Up 2 minutes   0.0.0.0:8080->80/tcp, 0.0.0.0:8443->443/tcp, 127.0.0.1:60101->6443/tcp   labs-control-plane
+NAME       STATUS   ROLES                  AGE     VERSION
+lima-k3s   Ready    control-plane,master   2m40s   v1.31.5+k3s1
 ```
 
-Note the `PORTS` column — your `extraPortMappings` from Step 4, live.
+One node, `Ready`, and a `VERSION` with `+k3s1` stapled onto the Kubernetes version — the k3s signature. That node is the whole cluster: control plane and worker in one.
 
-## Step 6: Verify the cluster
-
-```bash
-kubectl cluster-info
-```
-
-```console
-Kubernetes control plane is running at https://127.0.0.1:60101
-CoreDNS is running at https://127.0.0.1:60101/api/v1/namespaces/kube-system/services/kube-dns:dns/proxy
-```
+## Step 6: Verify the cluster — and meet what k3s bundled
 
 ```bash
 kubectl get nodes -o wide
 ```
 
 ```console
-NAME                 STATUS   ROLES           AGE     VERSION   INTERNAL-IP   EXTERNAL-IP   OS-IMAGE       KERNEL-VERSION    CONTAINER-RUNTIME
-labs-control-plane   Ready    control-plane   2m14s   v1.32.2   172.18.0.2    <none>        Debian GNU/Linux 12 (bookworm)   6.8.0-generic     containerd://1.7.24
+NAME       STATUS   ROLES                  AGE     VERSION        INTERNAL-IP    EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION     CONTAINER-RUNTIME
+lima-k3s   Ready    control-plane,master   3m10s   v1.31.5+k3s1   192.168.5.15   <none>        Ubuntu 24.04.1 LTS   6.8.0-51-generic   containerd://1.7.23-k3s2
 ```
 
-Check `STATUS Ready` (the CNI installed and the kubelet is healthy), then confirm the node label you baked in:
+`STATUS Ready` means the CNI installed and the kubelet is healthy. Now look at what came in the box:
 
 ```bash
-kubectl get node labs-control-plane -o jsonpath='{.metadata.labels.ingress-ready}{"\n"}'
+kubectl get pods -n kube-system
 ```
 
 ```console
-true
+NAME                                      READY   STATUS      RESTARTS   AGE
+coredns-ccb96694c-x7trd                   1/1     Running     0          3m
+local-path-provisioner-5cf85fd84d-9hjts   1/1     Running     0          3m
+metrics-server-5985cbc9d7-nl4q8           1/1     Running     0          3m
+helm-install-traefik-crd-b2xn7            0/1     Completed   0          3m
+helm-install-traefik-4kb9c                0/1     Completed   0          3m
+svclb-traefik-8fd6db8f-tqzmk              2/2     Running     0          2m
+traefik-57b79cf995-jgm4l                  1/1     Running     0          2m
 ```
+
+:::note[k3s ships batteries]
+Three of those are k3s add-ons you'd have to install yourself on a bare cluster: **Traefik**, a full ingress controller (Lab 4 has a decision to make about it); **ServiceLB** (the `svclb-*` pods), a minimal LoadBalancer implementation for clusters with no cloud around them; and the **local-path** StorageClass behind `local-path-provisioner`, which satisfies any PersistentVolumeClaim with a directory on the node's disk — the reason PVC experiments Just Work on this cluster. How provisioners like that operate is covered in [Storage Controllers](/controllers/storage-controllers/).
+:::
 
 ## Step 7: Create and default the labs namespace
 
@@ -250,18 +241,24 @@ kubectl config set-context --current --namespace=labs
 
 ```console
 namespace/labs created
-Context "kind-labs" modified.
+Context "default" modified.
 ```
 
-Confirm where you're pointed — the habit that prevents more incidents than any other (see the [kubectl Survival Kit](/start/kubectl-survival-kit/)):
+(k3s names its context, cluster, and user all `default` — plain, but honest.) Confirm where you're pointed — the habit that prevents more incidents than any other (see the [kubectl Survival Kit](/start/kubectl-survival-kit/)):
 
 ```bash
 kubectl config get-contexts
 ```
 
 ```console
-CURRENT   NAME        CLUSTER     AUTHINFO    NAMESPACE
-*         kind-labs   kind-labs   kind-labs   labs
+CURRENT   NAME      CLUSTER   AUTHINFO   NAMESPACE
+*         default   default   default    labs
+```
+
+One last piece of housekeeping — create the directory every later lab works from:
+
+```bash
+mkdir -p ~/k8s-labs
 ```
 
 ## Step 8: Smoke test — run a pod
@@ -277,7 +274,7 @@ hello-from-the-vm
 pod "hello" deleted
 ```
 
-That one line of output traveled from a container, inside a container, inside a VM, to your terminal. `--rm --restart=Never` makes it a one-shot pod that cleans up after itself — a pattern you'll use constantly for in-cluster debugging (see [Busybox](/troubleshooting/busybox/)).
+That one line of output traveled from a container, inside a VM, to your terminal. `--rm --restart=Never` makes it a one-shot pod that cleans up after itself — a pattern you'll use constantly for in-cluster debugging (see [Busybox](/troubleshooting/busybox/)).
 
 ## Step 9: Helm sanity check
 
@@ -297,11 +294,15 @@ An empty list is the correct answer — `helm list` reads Release records from t
 :::caution[When output doesn't match]
 **`Cannot connect to the Docker daemon at unix:///var/run/docker.sock`** — `DOCKER_HOST` isn't set in this shell. The CLI fell back to the default socket path, which doesn't exist on your Mac. Run the `export` from Step 3, and confirm it's in `~/.zshrc` for future shells (`echo $DOCKER_HOST` should print the Lima socket path).
 
-**`Cannot connect to the Docker daemon at unix:///Users/you/.lima/docker/sock/docker.sock`** — `DOCKER_HOST` is set, but the Lima VM is stopped (common after a reboot). Check `limactl list`; if `STATUS Stopped`, run `limactl start docker`. Your kind cluster comes back with it — the node container restarts automatically.
+**`Cannot connect to the Docker daemon at unix:///Users/you/.lima/docker/sock/docker.sock`** — `DOCKER_HOST` is set, but the `docker` VM is stopped (common after a reboot). Check `limactl list`; if `STATUS Stopped`, run `limactl start docker`. Your images and build cache come back with it.
 
-**`kind create cluster` fails with `address already in use` on 8080 or 8443** — something on your Mac already owns that port (another dev server, a proxy). Find it with `lsof -nP -iTCP:8080 -sTCP:LISTEN` and stop it, or change `hostPort` in `kind-labs.yaml` — but if you change it, remember Lab 4's URL becomes `orders.localtest.me:<your-port>`.
+**`The connection to the server localhost:8080 was refused`** (or kubectl answering about some *other* cluster) — `KUBECONFIG` isn't set in this shell, so kubectl fell back to `~/.kube/config`, which on a fresh Mac doesn't exist — and if you have older clusters configured, points at one of *them*. Run the export from Step 5, confirm it's in `~/.zshrc`, and check `kubectl config current-context` prints `default`.
 
-**Builds/images behave strangely and Docker Desktop is installed** — check `docker context ls` and `echo $DOCKER_HOST`. If Desktop is running, its context may win in shells where `DOCKER_HOST` isn't exported, so images land in the wrong daemon and `kind load docker-image` can't find them. Quit Docker Desktop, keep the Step 3 export, open a fresh terminal.
+**`dial tcp 127.0.0.1:6443: connect: connection refused`** — `KUBECONFIG` is right, but the `k3s` VM is stopped. Check `limactl list`; if `STATUS Stopped`, run `limactl start k3s`. The cluster and everything in it survive stops.
+
+**Your Mac is crawling** — two VMs at 4 GiB each is a real bite out of a small machine. Close what you can, or `limactl stop docker` between builds — only the image-building steps need that VM; kubectl and helm talk exclusively to the `k3s` VM.
+
+**Builds/images behave strangely and Docker Desktop is installed** — check `docker context ls` and `echo $DOCKER_HOST`. If Desktop is running, its context may win in shells where `DOCKER_HOST` isn't exported, so images land in the wrong daemon and Lab 1's image-import pipe streams the wrong (or a missing) image. Quit Docker Desktop, keep the Step 3 export, open a fresh terminal.
 
 **Everything is broken and you're tired of debugging** — teardown below, then rerun this lab. Under fifteen minutes, nothing of value lost.
 :::
@@ -311,29 +312,30 @@ An empty list is the correct answer — `helm list` reads Release records from t
 **Pausing between sittings** (keeps everything):
 
 ```bash
-limactl stop docker
+limactl stop docker && limactl stop k3s
 ```
 
-Stopping the VM stops the cluster with it; `limactl start docker` brings both back, state intact. Stopping is **not** deleting — the VM disk, the node container, and everything in the cluster survive.
+Stopping the `k3s` VM stops the cluster with it; `limactl start k3s` brings both back, state intact. Stopping is **not** deleting — both VM disks and everything in the cluster survive.
 
-**Full teardown** (removes the cluster, keeps the VM for a fast rebuild):
+**Full teardown** (removes the cluster — the VM *is* the cluster — keeps the docker VM and your built images for a fast rebuild):
 
 ```bash
-kind delete cluster --name labs
+limactl delete -f k3s
 ```
 
 ```console
-Deleting cluster "labs" ...
+INFO[0000] Stopping the instance "k3s"
+INFO[0004] The instance "k3s" is deleted
 ```
 
-**Scorched earth** (VM and all — only when you're done with the whole lab section):
+**Scorched earth** (both VMs and all — only when you're done with the whole lab section):
 
 ```bash
-kind delete cluster --name labs && limactl delete docker && rm -rf ~/k8s-labs
+limactl delete -f k3s && limactl delete -f docker && rm -rf ~/k8s-labs
 ```
 
 ## Where you are now
 
-You have a real Kubernetes cluster — real API server, real scheduler, real kubelet — idling on your laptop, with ingress plumbing pre-installed and a namespace waiting for workloads. In **Lab 1** you'll build the `orders-api` Spring Boot image entirely inside Docker (no Java toolchain required), load it into this cluster, and write the Helm chart that deploys it.
+You have a real Kubernetes cluster — real API server, real scheduler, real kubelet — idling on your laptop, with a bundled ingress controller already running and a namespace waiting for workloads. In **Lab 1** you'll build the `orders-api` Spring Boot image entirely inside Docker (no Java toolchain required), stream it into this cluster, and write the Helm chart that deploys it.
 
 If you want the theory to catch up with your fingers first: [How Kubernetes Works](/start/how-kubernetes-works/) explains what all those control-plane pieces were doing during Step 8, and [Local Development](/start/local-development/) compares this stack to the alternatives you didn't have to install.
