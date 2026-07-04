@@ -2,7 +2,7 @@
 title: "Sizing Walkthrough: From Zero to Tuned"
 description: An end-to-end worked example that sizes one real service — probes, JVM, requests, limits, and HPA — from first deploy to production, with every number traced to a measurement.
 sidebar:
-  order: 5
+  order: 6
 ---
 
 The other articles in this section are reference material: every probe field ([Health Check Knobs](/tuning/health-check-knobs/)), every JVM memory flag ([JVM Memory Knobs](/tuning/jvm-memory-knobs/)), every resources field ([Requests & Limits Knobs](/tuning/requests-limits-knobs/)). This one is the assembly manual. We take a single new service and carry the *same numbers* from "we have no data" to "this is guarded by alerts in production", showing every calculation on the way.

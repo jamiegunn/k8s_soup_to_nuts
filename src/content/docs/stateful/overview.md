@@ -13,6 +13,8 @@ You *can* run state on Kubernetes well. Plenty of teams do. But the honest first
 Application teams with namespace-scoped access on a platform-managed cluster. That constraint shapes every recommendation here: StorageClasses, operators, snapshot infrastructure, and Velero are all things you *use* but the platform team *installs*. Each article flags those handoff points explicitly.
 :::
 
+Running state for the first time? The ["Running state" track on Learning Paths](/learning-paths/) sequences this section with the reference architectures and backup drills.
+
 ## The decision framework
 
 Work down this list. Stop at the first option you can actually use.

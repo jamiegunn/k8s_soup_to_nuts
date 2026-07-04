@@ -2,7 +2,7 @@
 title: Debugging the Network
 description: A systematic hop-by-hop playbook for network failures — ephemeral netshoot containers, the right tools, signature symptoms, and a printable checklist.
 sidebar:
-  order: 9
+  order: 10
 ---
 
 Network debugging goes wrong when you test end-to-end, see a failure, and start guessing. It goes right when you decompose the path into hops and test each one independently. Every network problem in a Kubernetes cluster lives on exactly one of four paths:

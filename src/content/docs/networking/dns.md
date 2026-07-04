@@ -11,6 +11,10 @@ Every service call in your cluster starts with a DNS lookup, and a shocking frac
 This article covers DNS from the pod's seat. The [Routing & DNS Deep Dive](/routing/overview/) section goes beneath: [CoreDNS itself](/routing/coredns-deep-dive/) (the Corefile, plugin chain, caching, stub domains) and [how cluster DNS integrates with corporate DNS](/routing/dns-integration/) (external-dns, naming architecture, split-horizon).
 :::
 
+:::tip[War story]
+The ndots tax has a Field Note: [Chasing a DNS Timeout](/blog/chasing-a-dns-timeout/) — intermittent 2-second spikes traced through tcpdump to search-domain expansion and conntrack pressure.
+:::
+
 ## The architecture in 30 seconds
 
 **CoreDNS** runs as a Deployment (usually 2+ replicas) in `kube-system`, fronted by a ClusterIP Service (traditionally `10.96.0.10`, often named `kube-dns` for historical reasons). It answers queries for cluster names (`*.cluster.local`) from its watch of Services and pods, and **forwards everything else** to upstream resolvers (corporate DNS, cloud VPC DNS). Many clusters also run **NodeLocal DNSCache**, a per-node caching agent, in front of it.

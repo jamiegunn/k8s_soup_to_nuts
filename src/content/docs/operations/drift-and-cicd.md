@@ -9,6 +9,10 @@ You made a live change during an incident. The only question that matters now is
 
 This article is the map. Know which pipeline style you have before you need this at 2 AM.
 
+:::tip[War story]
+The 2am-edit horror story is told in full as a Field Note: [The Deployment That Unfixed Itself](/blog/the-deployment-that-unfixed-itself/).
+:::
+
 ## What drift actually is
 
 **Drift** is any difference between the declared state (git, Helm values, the rendered manifests your CD tool holds) and the live state in the cluster. It has exactly two sources:

@@ -2,7 +2,7 @@
 title: "JVM Memory Knobs"
 description: Every JVM memory flag that matters in a container — heap, metaspace, code cache, stacks, direct memory — with the RSS budget math and copy-paste recipes.
 sidebar:
-  order: 3
+  order: 7
 ---
 
 The JVM has one memory number everyone tunes (`-Xmx`) and half a dozen it

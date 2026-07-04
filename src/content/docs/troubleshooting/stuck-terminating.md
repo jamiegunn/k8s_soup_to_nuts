@@ -2,7 +2,7 @@
 title: "Stuck Terminating"
 description: Symptom-first playbook for pods, PVCs, and namespaces that won't die — grace periods vs finalizers vs dead nodes, the force-delete decision table, and when to wake platform.
 sidebar:
-  order: 17
+  order: 10
 ---
 
 **Symptom:** `kubectl get pods` shows `Terminating`, and it showed `Terminating` five minutes ago, and it will show `Terminating` five minutes from now. Maybe it's blocking a rollout. Maybe it's a PVC that won't release, or a whole namespace your pipeline deleted twenty minutes ago that's still sitting there. Something in the cluster has been told to die and is refusing. It's 2am, and the internet's advice is a `--force` flag and a shrug.

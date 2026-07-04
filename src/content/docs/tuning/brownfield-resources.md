@@ -2,7 +2,7 @@
 title: "Requests & Limits on a Running Fleet"
 description: Retrofitting resource management onto an existing, live-traffic fleet — the audit kit, deriving numbers from production history instead of load tests, and the wave-by-wave rollout choreography that doesn't page anyone.
 sidebar:
-  order: 6
+  order: 5
 ---
 
 The [Sizing Walkthrough](/tuning/sizing-walkthrough/) is the luxury version: a brand-new service, a load-test environment, and permission to be wrong in staging. Most of us don't get that. We inherit forty Deployments that have been serving production traffic for three years, sized by whoever was on the team at the time, and the mandate is "get this under control **without an incident**." That is a different discipline. This article is that discipline: audit what you have, derive numbers from the traffic you're already serving, and change things in an order that never bets the fleet on one edit.

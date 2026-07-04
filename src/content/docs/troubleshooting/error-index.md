@@ -2,7 +2,7 @@
 title: Error Message Index
 description: Look up the exact error string on your screen — CrashLoopBackOff, FailedScheduling, x509, 502s — and jump straight to the playbook that fixes it.
 sidebar:
-  order: 13
+  order: 17
 ---
 
 You have an error on your screen. This page maps the **literal string** to the playbook that fixes it — no concept-hunting required.

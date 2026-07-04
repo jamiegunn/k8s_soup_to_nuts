@@ -2,7 +2,7 @@
 title: RBAC Denied (Forbidden)
 description: Decode "Error from server (Forbidden)", test permissions with kubectl auth can-i, and write access requests platform can approve fast.
 sidebar:
-  order: 9
+  order: 13
 ---
 
 **Symptom:** `Error from server (Forbidden)`. Either your kubectl command bounced, or your application's in-cluster API calls are getting 403s. RBAC denials are the most *precisely documented* failures in Kubernetes — the error message contains every field you need. The skill is reading it, not guessing around it.

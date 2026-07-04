@@ -9,6 +9,8 @@ It's 2:14 AM. Your service is throwing OOMKilled events, you've bumped the memor
 
 That story, in some form, has happened on every team that runs Kubernetes. This section is about making sure it stops happening to yours.
 
+Carrying the pager or locking down for prod? [Learning Paths](/learning-paths/) has curated tracks that sequence this section with troubleshooting and security.
+
 ## The core tension
 
 You live between two truths that both matter:

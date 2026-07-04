@@ -31,6 +31,8 @@ at a volume is your crash-time insurance, exactly like
 `HeapDumpOnOutOfMemoryError`.
 :::
 
+Onboarding a .NET team? The [.NET track on Learning Paths](/learning-paths/) sequences this section with its workload and tuning companions.
+
 ## How .NET diagnostics work (and why the SDK doesn't matter)
 
 Java's classic tools use the JVM attach protocol; .NET's use **EventPipe and

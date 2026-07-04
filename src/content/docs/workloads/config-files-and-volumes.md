@@ -2,10 +2,14 @@
 title: Config as Files (Volumes)
 description: How ConfigMap and Secret volumes actually land on disk — atomic symlink swaps, items and modes, subPath traps, projected volumes, permissions, and debugging FailedMount.
 sidebar:
-  order: 10
+  order: 11
 ---
 
 Mounting config as files is the mechanism behind hot-reloadable settings, TLS material, nginx snippets, and every "just drop a YAML file in the container" request you'll ever get. It's also where the sneakiest config bugs live: files that silently never update, files your app can't read, and mounts that make the rest of a directory vanish. This article is the deep dive on the volume machinery itself. For the env-vs-volume overview see [Configuration](/workloads/configuration/); for making apps actually pick up changes, see [ConfigMap and Secret rotation](/operations/configmap-secret-rotation/).
+
+:::tip[War story]
+The subPath trap has a Field Note: [The subPath Mount That Never Updated](/blog/the-subpath-mount-that-never-updated/) — per-pod config skew that took days to notice.
+:::
 
 ## The mechanics: `..data` and the atomic swap
 

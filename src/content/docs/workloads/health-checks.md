@@ -11,6 +11,10 @@ Probes are the only channel your app has to tell Kubernetes how it's doing, and 
 This article explains how probes behave; the consolidated knob table — every field, default, the restart math, and per-archetype recipes — lives in [Health Check Knobs](/tuning/health-check-knobs/).
 :::
 
+:::tip[War story]
+Footgun #2 happened for real: [The Readiness Probe That Took Down Prod](/blog/the-readiness-probe-that-took-down-prod/) — a 30-second dependency blip becoming 100% 503s.
+:::
+
 ## The three probes, precisely
 
 | Probe | Question it answers | On failure (past threshold) | Runs |

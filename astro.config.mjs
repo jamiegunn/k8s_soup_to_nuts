@@ -51,7 +51,10 @@ export default defineConfig({
 			sidebar: [
 				{
 					label: 'Start Here',
-					items: [{ autogenerate: { directory: 'start' } }],
+					items: [
+						{ autogenerate: { directory: 'start' } },
+						{ label: 'Error Message Index ↗', link: '/troubleshooting/error-index/' },
+					],
 				},
 				{
 					label: 'Learning Paths',
@@ -125,16 +128,16 @@ export default defineConfig({
 					items: [{ autogenerate: { directory: 'helm' } }],
 				},
 				{
+					label: 'Tuning: Knobs & Levers',
+					items: [{ autogenerate: { directory: 'tuning' } }],
+				},
+				{
 					label: 'Reference Architectures',
 					items: [{ autogenerate: { directory: 'architectures' } }],
 				},
 				{
 					label: 'Hands-On Labs',
 					items: [{ autogenerate: { directory: 'labs' } }],
-				},
-				{
-					label: 'Knobs & Levers',
-					items: [{ autogenerate: { directory: 'tuning' } }],
 				},
 				{
 					label: 'About & Methodology',

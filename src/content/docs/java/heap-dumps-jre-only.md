@@ -12,6 +12,10 @@ roughly the size of the used heap. Get the cheap alternatives (histograms)
 into your habits, and get the automatic-on-OOM dump configured *before* you
 need it.
 
+:::tip[War story]
+The whole escalation ladder, lived: [The Heap Dump With No JDK](/blog/the-heap-dump-with-no-jdk/) — read-only HeapDumpPath, jattach, and finally the ephemeral JDK container at 3am.
+:::
+
 ## Option 0 (do this today): dump automatically on OutOfMemoryError
 
 Works on every HotSpot JVM ever shipped, JRE or JDK:

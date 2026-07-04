@@ -2,7 +2,7 @@
 title: "The BusyBox Toolkit"
 description: How one ~1MB static binary becomes a complete troubleshooting toolkit on a cluster where you can't install anything.
 sidebar:
-  order: 12
+  order: 15
 ---
 
 The [Debugging Toolbox](/troubleshooting/debugging-toolbox/) mentions busybox in a table row: "~2MB, minimal poking, fastest pull". That undersells it. On a locked-down cluster — namespace-scoped kubectl, distroless production images, no package manager anywhere — busybox is frequently the *only* toolkit you can get into a pod in under ten seconds. This page is the field guide: what it actually is, the four ways to get it where you need it, and the applets that solve real incidents.

@@ -7,6 +7,10 @@ sidebar:
 
 Every container image you ship is an executable you compiled from other people's code, pulled over the network, by a build system you probably didn't write. Supply-chain security sounds like a compliance topic until you realize the practical version of it: **you are one `FROM` line away from running someone else's code in production.** The good news for an app team: unlike CNI plugins or admission policy, the image pipeline is *yours*, end to end. This is one of the few security domains where you don't have to file a ticket with the platform team to fix things.
 
+:::tip[War story]
+Mutable tags bit for real in the Field Note [The Image That Changed Under Us](/blog/the-image-that-changed-under-us/) — two digests, one tag, one ReplicaSet.
+:::
+
 ## The threat model, in plain terms
 
 Skip the diagrams. Here are the four incident shapes that actually happen to app teams:

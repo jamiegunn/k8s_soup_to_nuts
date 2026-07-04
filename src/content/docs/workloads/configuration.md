@@ -2,7 +2,7 @@
 title: Configuration
 description: ConfigMaps and Secrets in practice — env vs volume mounts, update propagation rules, immutability, projected volumes, and forcing rollouts on config change.
 sidebar:
-  order: 8
+  order: 9
 ---
 
 Configuration bugs have a special quality: the app is fine, the cluster is fine, and yet production is wrong because a pod is reading last week's values. Almost all of that pain comes from not knowing exactly *when* config updates reach running containers. That's the core of this article.

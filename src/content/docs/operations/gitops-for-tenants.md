@@ -9,6 +9,10 @@ Somewhere in the cluster — in a namespace you can't see — a reconciler is ru
 
 The reconciler itself is just a controller doing what all controllers do — see [Reconciliation](/controllers/reconciliation/) — but this one's desired state lives in a git repo instead of in the cluster.
 
+:::tip[War story]
+Prune semantics bit for real in the Field Note [The Prune That Ate Our ConfigMap](/blog/the-prune-that-ate-our-configmap/) — a hand-created resource in an Argo-managed namespace, deleted at 4pm on a Friday.
+:::
+
 ## Recognizing the setup from your seat
 
 You can identify the tool and often the source repo without any access beyond your namespace.

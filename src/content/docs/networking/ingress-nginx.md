@@ -2,7 +2,7 @@
 title: ingress-nginx in Practice
 description: The de facto Ingress controller from the tenant seat — annotations that actually matter, timeouts, TLS fallback traps, canaries, and debugging 502/504s.
 sidebar:
-  order: 12
+  order: 13
 ---
 
 Most clusters you'll ever touch route HTTP through **ingress-nginx**. The generic Ingress model — resource anatomy, host/path rules, pathTypes, the controller/resource split — lives in [Ingress and Routing](/networking/ingress-and-routing/). This page is the controller-specific layer: the annotations, defaults, and failure modes of ingress-nginx specifically, from the seat of someone who owns Ingress resources but not the controller.

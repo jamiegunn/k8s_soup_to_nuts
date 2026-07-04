@@ -2,7 +2,7 @@
 title: "Linux Inside the Pod: A Field Guide"
 description: What to run and how to read it once you're exec'd into a container — memory, CPU, disk, and network truth from /proc and cgroup files, with and without tools.
 sidebar:
-  order: 14
+  order: 16
 ---
 
 You're in. `kubectl exec -it` worked, you have a shell, and something is wrong. This page is about the next twenty minutes: which files to read, which commands to run, and — critically — how to *interpret* the output, because inside a container half of what Linux tells you is about the node, not about you. If you *can't* get a shell or the image has no tools at all, that's the sibling problem: [The BusyBox Toolkit](/troubleshooting/busybox/) covers getting tools in. This page assumes you're inside and covers what to do there.

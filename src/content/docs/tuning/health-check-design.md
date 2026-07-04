@@ -2,7 +2,7 @@
 title: "Health Check Design"
 description: What "healthy" should actually mean — designing probe endpoints backwards from their consequences, classifying dependencies, per-archetype designs, and the retrofit program for a fleet full of inherited probes.
 sidebar:
-  order: 7
+  order: 3
 ---
 
 [Health Check Knobs](/tuning/health-check-knobs/) owns the timing dials — periods, thresholds, budgets. [Health Checks](/workloads/health-checks/) owns the probe semantics — what the kubelet does with each probe type. This article owns the question both of them assume you've already answered: **what should the endpoint say, and why?** That's a design discipline, not a config field. And because most of us are retrofitting it onto services that already have probes — usually bad ones — the second half is the fleet program for fixing them without breaking production.

@@ -2,10 +2,14 @@
 title: Jobs and CronJobs
 description: Run-to-completion workloads — Job retry and parallelism semantics, CronJob scheduling and missed-run behavior, and debugging jobs that failed at 3 a.m.
 sidebar:
-  order: 12
+  order: 13
 ---
 
 Deployments answer "keep this running forever." Jobs answer the other question: "run this until it succeeds, then stop." Migrations, batch imports, report generation, cleanup tasks. The semantics look simple and hide a surprising number of sharp edges — mostly around retries and schedules.
+
+:::tip[War stories]
+Two Field Notes live in this territory: [The CronJob That Fired 137 Times](/blog/the-cronjob-that-fired-137-times/) (missed-run backfill) and [The Migration That Ran Twice](/blog/the-migration-that-ran-twice/) (non-idempotent Job retries).
+:::
 
 ## Job anatomy
 

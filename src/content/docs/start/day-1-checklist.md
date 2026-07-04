@@ -2,7 +2,7 @@
 title: "Day-1 Checklist: Before Your First Deploy"
 description: What to ask for and verify before shipping to a platform-provisioned namespace — access, quotas, image path, deploy path, traffic, observability, and the people — each with the command that proves it.
 sidebar:
-  order: 11
+  order: 10
 ---
 
 Someone provisioned a namespace for you. There's a kubeconfig in your inbox, a Slack channel you were added to, and a deadline. Between you and your first successful deploy stand a dozen small facts about *this specific cluster* — which registry, which ingress class, who actually runs `helm upgrade` — and every one of them is a Friday-afternoon blocker if you discover it on deploy day instead of day one.

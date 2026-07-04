@@ -11,6 +11,10 @@ Your platform team drains nodes constantly: kernel patches, cluster upgrades, au
 This article covers graceful shutdown as part of the HA story. The full termination lifecycle — the SIGTERM/endpoint-removal race, per-stack drain wiring, the budget inequality — now lives in [Graceful Shutdown](/workloads/graceful-shutdown/), with the dials in [Rollout & Shutdown Knobs](/tuning/rollout-shutdown-knobs/).
 :::
 
+:::tip[War story]
+The PDB section has a Field Note: [The PDB That Blocked the Drain](/blog/the-pdb-that-blocked-the-drain/) — maxUnavailable: 0 holding a node hostage for six hours.
+:::
+
 ## Replicas > 1 is table stakes, not HA
 
 One replica means every voluntary drain, every OOMKill, every image pull hiccup is a full outage for your service. Two replicas on the *same node* is barely better — one drain still takes both. Real availability is three layers:

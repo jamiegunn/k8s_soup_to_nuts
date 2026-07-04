@@ -2,7 +2,7 @@
 title: "Graceful Shutdown and the Termination Lifecycle"
 description: The canonical termination mechanics — the full deletion timeline, the endpoint-propagation race, the grace-period budget inequality, PID 1 signal reality, and per-stack drain wiring.
 sidebar:
-  order: 19
+  order: 7
 ---
 
 Every pod you will ever run gets killed. Deploys kill pods. Node drains kill pods. Scale-downs, evictions, spot reclaims, liveness failures — all of them end in the same sequence of events, and whether that sequence drops requests is decided by fields *you* write in your manifest and code *you* ship in your image. This page owns those mechanics. Other pages use them in context — [rolling updates](/workloads/rollouts-and-rollbacks/), [node drains](/workloads/high-availability/), [the full zero-downtime build](/architectures/zero-downtime/) — and all of them link back here for the sequence itself. The tunable numbers get their own dial-table in [Rollout & Shutdown Knobs](/tuning/rollout-shutdown-knobs/).

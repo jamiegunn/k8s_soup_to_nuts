@@ -12,9 +12,13 @@ hero:
     - text: Start Here
       link: /k8s_soup_to_nuts/start/overview/
       icon: right-arrow
+    - text: Learning Paths
+      link: /k8s_soup_to_nuts/learning-paths/
+      icon: open-book
+      variant: minimal
     - text: How Do I…?
       link: /k8s_soup_to_nuts/start/solutions-index/
-      icon: open-book
+      icon: list-format
       variant: minimal
     - text: Troubleshooting
       link: /k8s_soup_to_nuts/troubleshooting/triage-methodology/
@@ -111,7 +115,7 @@ import { Card, CardGrid } from '@astrojs/starlight/components';
 		shipped with a Helm chart you author, secrets and config every way, a
 		backend, and ingress. [Start Lab 0 →](/labs/overview/)
 	</Card>
-	<Card title="Knobs & Levers" icon="setting">
+	<Card title="Tuning: Knobs & Levers" icon="setting">
 		Every tuning dial in one place: probe timings, JVM memory flags,
 		requests and limits — defaults, real semantics, and sizing math.
 		[Browse the section →](/tuning/overview/)

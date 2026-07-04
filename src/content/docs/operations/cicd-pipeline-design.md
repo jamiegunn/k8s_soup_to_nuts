@@ -11,6 +11,10 @@ Every Kubernetes deployment pipeline that works well looks roughly the same, and
 This article is deliberately tool-agnostic. The [CI with GitHub & Artifactory](/ci/overview/) section implements this exact shape on that stack: [workflow foundations](/ci/github-actions/), [reusable templates](/ci/reusable-workflows/), [Artifactory as the artifact hub](/ci/artifactory/), and [the testing ladder](/ci/testing-in-ci/).
 :::
 
+:::tip[War story]
+The migrations section has a Field Note: [The Migration That Ran Twice](/blog/the-migration-that-ran-twice/) — backoffLimit retries meeting a non-idempotent rename at 11pm.
+:::
+
 ## The pipeline contract
 
 Four rules. Everything else in this article is implementation detail.

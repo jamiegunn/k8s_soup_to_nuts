@@ -2,7 +2,7 @@
 title: Node Problems (From Your Seat)
 description: Recognize node trouble from inside your namespace — evictions, stuck Terminating pods, drains — and make your app survive it.
 sidebar:
-  order: 8
+  order: 12
 ---
 
 **Symptom:** pods stuck `Terminating` or `Unknown`, a wave of pods rescheduling at once, pods with `Status: Evicted`, or "everything on worker-07 is weird". You don't run the nodes — but node trouble lands squarely in your namespace, and there's a lot you can diagnose and harden without ever touching SSH.

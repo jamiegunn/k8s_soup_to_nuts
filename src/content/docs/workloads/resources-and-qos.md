@@ -2,7 +2,7 @@
 title: Resources and QoS
 description: Requests vs limits precisely, QoS classes and eviction order, detecting CPU throttling, and a sizing methodology that survives contact with production.
 sidebar:
-  order: 7
+  order: 8
 ---
 
 Requests and limits are four small numbers that decide where your pods run, who gets killed under pressure, and whether your p99 latency has a mysterious sawtooth. Most teams set them once by copy-paste and never revisit. Let's do better.

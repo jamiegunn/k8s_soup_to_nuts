@@ -2,7 +2,7 @@
 title: Environment Variables
 description: Every way env vars get into a container, precedence and collision rules, $(VAR) expansion, service links, JVM options variables, and how to debug what a container actually sees.
 sidebar:
-  order: 9
+  order: 10
 ---
 
 Environment variables look like the simplest part of Kubernetes. Then one day `DB_HOST` is literally the string `$(DB_HOST)` in production, a pod won't start with `CreateContainerConfigError`, and a var you never defined is shadowing your config because someone created a Service named `redis`. The [Configuration overview](/workloads/configuration/) covers env vs volume mounts broadly; this article is the env-var deep dive.

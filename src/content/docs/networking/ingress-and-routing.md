@@ -123,6 +123,8 @@ cert-manager watches the Certificate, performs the issuance (ACME/Let's Encrypt,
 
 ## Gateway API: the successor, and why the role split is the point
 
+This section is the orientation; the full tenant-seat treatment — HTTPRoute anatomy, weighted canaries, status conditions, ReferenceGrant — is in [Gateway API for App Teams](/networking/gateway-api/).
+
 Ingress is being succeeded by the **Gateway API**, and its defining feature is exactly the org chart this guide assumes:
 
 | Resource | Purpose | Owner |

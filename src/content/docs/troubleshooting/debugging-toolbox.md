@@ -2,7 +2,7 @@
 title: Debugging Toolbox
 description: kubectl debug, ephemeral containers, pod copies, port-forward, kubectl cp, and the debug images worth memorizing.
 sidebar:
-  order: 10
+  order: 14
 ---
 
 Modern production images are deliberately hostile to debugging: distroless, no shell, no package manager, read-only filesystem, non-root. Good for security, useless for `kubectl exec`. This page is the toolkit that works anyway — all of it namespace-scoped, none of it requiring node access.

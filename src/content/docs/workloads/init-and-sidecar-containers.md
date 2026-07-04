@@ -2,7 +2,7 @@
 title: Init and Sidecar Containers
 description: Multi-container pods done right — init container semantics, native sidecars, the classic sidecar patterns, and the anti-patterns that turn one pod into two problems.
 sidebar:
-  order: 13
+  order: 14
 ---
 
 A pod is not "a container". It's a group of containers that share a network namespace, an IP, and optionally volumes and a process namespace. Most pods only need one container, and that's fine. But when you genuinely need helpers — wait for a dependency, ship logs, terminate TLS, reload config — Kubernetes gives you two distinct mechanisms with very different semantics: **init containers** (run before, in order, to completion) and **sidecars** (run alongside, for the pod's whole life). Mixing up which one you need is how you end up with Jobs that never finish and rollouts that run database migrations twice.

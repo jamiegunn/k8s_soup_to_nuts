@@ -2,7 +2,7 @@
 title: "It's Slow, Not Down"
 description: Symptom-first playbook for latency incidents — the p50/p99 four-quadrant read, then the eight causes of mystery slowness ranked by base rate, from CPU throttling to retry storms.
 sidebar:
-  order: 16
+  order: 9
 ---
 
 **Symptom:** every dashboard is green. Pods `1/1 Running`, zero restarts, error rate flat, CPU graphs cruising at 40%. And the p99 latency alert has been screaming for twenty minutes, users are complaining, and someone in the incident channel just typed "but everything looks fine???" It's 2am.
@@ -22,6 +22,10 @@ p99: 2.87    ← last Tuesday: 0.31. The tail is on fire.
 ```
 
 Two numbers, and this pair already says something: the typical request is *fine* — some fraction of requests is hitting a wall. Everything else in this page branches off which of those two numbers moved.
+
+:::tip[War story]
+Cause #1 has a Field Note: [The Throttled App That Looked Idle](/blog/the-throttled-app-that-looked-idle/) — a week of chasing GC while CFS quota froze the p99.
+:::
 
 ## The confirm step: slow for everyone, or slow for some?
 

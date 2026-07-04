@@ -1,6 +1,6 @@
 ---
 title: Services Deep Dive
-description: How ClusterIP, NodePort, LoadBalancer, and headless Services actually work — kube-proxy, EndpointSlices, externalTrafficPolicy, and the debugging chain.
+description: How ClusterIP, NodePort, LoadBalancer, and headless Services actually work — kube-proxy, EndpointSlices, externalTrafficPolicy, and the debugging chain. (The full machinery — the iptables chain walk, IPVS, eBPF, conntrack — lives in [kube-proxy and the Dataplane](/routing/kube-proxy-and-the-dataplane/).)
 sidebar:
   order: 4
 ---

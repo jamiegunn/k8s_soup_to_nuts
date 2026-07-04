@@ -2,7 +2,7 @@
 title: "502, 503, 504 from the Front Door"
 description: Symptom-first playbook for gateway errors at the corporate edge — fingerprint who minted the error, decode the code, bisect the layer in three curls, and fix the cause.
 sidebar:
-  order: 15
+  order: 8
 ---
 
 **Symptom:** clients get 502 Bad Gateway, 503 Service Unavailable, or 504 Gateway Timeout from your application's public URL. Maybe constantly, maybe in bursts, maybe only during deploys. Your pods look green. It's 2am.

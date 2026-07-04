@@ -24,6 +24,8 @@ ships in every OpenJDK 11+ runtime, jattach is a tiny static binary you can
 copy into any pod, and `kubectl debug` can bring a full JDK to the party.
 :::
 
+Onboarding a Java team? The [Java track on Learning Paths](/learning-paths/) sequences this section with the tuning and workload pages in reading order.
+
 ## First: inventory what your runtime actually has
 
 Before an incident, not during one, run these against a real production pod
