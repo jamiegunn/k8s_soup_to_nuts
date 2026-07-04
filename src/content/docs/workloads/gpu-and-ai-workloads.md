@@ -2,7 +2,7 @@
 title: GPUs and AI Workloads
 description: Running GPU workloads as a tenant — extended resources and their strict rules, MIG vs time-slicing, the two failure modes (Pending forever and the startup-probe problem), a complete model-serving Deployment, and GPU etiquette in a shared cluster.
 sidebar:
-  order: 18
+  order: 19
 ---
 
 GPUs in Kubernetes are simultaneously simpler and stricter than everything else you schedule. Simpler: there's one line of YAML. Stricter: that line follows rules that CPU and memory don't, the failure modes are more expensive, and in a shared cluster the etiquette matters because a hoarded GPU is $2–10 an hour of someone else's blocked work.

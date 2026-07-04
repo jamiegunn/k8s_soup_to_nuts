@@ -26,11 +26,12 @@ Time estimates assume reading plus trying things against a real (dev) namespace.
 5. [kubectl Survival Kit](/start/kubectl-survival-kit/) — the dozen commands you'll run daily.
 6. [Life of a Deployment](/start/life-of-a-deployment/) — follow one `kubectl apply` from YAML to running pods.
 7. [Deployments Deep Dive](/workloads/deployments-deep-dive/) — the workload type you'll actually use 90% of the time.
-8. [Health Checks](/workloads/health-checks/) — probes are the contract between your app and the cluster.
-9. [Resources & QoS](/workloads/resources-and-qos/) — requests and limits, before they bite you.
-10. [Configuration](/workloads/configuration/) — ConfigMaps, env vars, and where secrets fit.
-11. [Triage Methodology](/troubleshooting/triage-methodology/) — your first broken pod, diagnosed in the right order.
-12. [Error Message Index](/troubleshooting/error-index/) — bookmark it; you'll use it more than any other page.
+8. [What Triggers a Rollout](/workloads/rollout-triggers/) — which changes replace your pods and which silently don't; saves you the two classic deploy surprises.
+9. [Health Checks](/workloads/health-checks/) — probes are the contract between your app and the cluster.
+10. [Resources & QoS](/workloads/resources-and-qos/) — requests and limits, before they bite you.
+11. [Configuration](/workloads/configuration/) — ConfigMaps, env vars, and where secrets fit.
+12. [Triage Methodology](/troubleshooting/triage-methodology/) — your first broken pod, diagnosed in the right order.
+13. [Error Message Index](/troubleshooting/error-index/) — bookmark it; you'll use it more than any other page.
 
 **You're done when you can:** deploy an app from scratch with probes and resource requests, roll it back after a bad change, and diagnose a `CrashLoopBackOff` or `Pending` pod without asking for help.
 

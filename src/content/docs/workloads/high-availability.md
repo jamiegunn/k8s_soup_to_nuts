@@ -2,7 +2,7 @@
 title: High Availability
 description: PodDisruptionBudgets, anti-affinity, topology spread, priority, and graceful shutdown — surviving node drains and cluster upgrades without paging anyone.
 sidebar:
-  order: 4
+  order: 5
 ---
 
 Your platform team drains nodes constantly: kernel patches, cluster upgrades, autoscaler consolidation, spot reclaims. Each drain evicts your pods. Whether that's a non-event or an outage is decided entirely by things *you* control in your manifests. This article is the checklist.

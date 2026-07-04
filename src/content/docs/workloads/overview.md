@@ -52,22 +52,23 @@ DaemonSets typically need node-level privileges and tolerations the platform tea
 
 1. **[Deployments deep dive](/workloads/deployments-deep-dive/)** — the spec field by field: the selector/labels contract, replicas, revision history, and how Deployments, ReplicaSets, and Pods relate on the wire.
 2. **[Rollouts and rollbacks](/workloads/rollouts-and-rollbacks/)** — RollingUpdate vs Recreate, maxSurge/maxUnavailable tuning, `kubectl rollout`, and canary/blue-green patterns you can build with nothing but labels.
-3. **[High availability](/workloads/high-availability/)** — PodDisruptionBudgets, anti-affinity, topology spread, and graceful shutdown so node drains don't take you down.
-4. **[Autoscaling](/workloads/autoscaling/)** — HPA v2 done right, stabilization windows, and the classic misconfigurations that cause replica thrash.
-5. **[Health checks](/workloads/health-checks/)** — startup vs readiness vs liveness, precisely, plus the footguns that turn probes into outage generators.
-6. **[Resources and QoS](/workloads/resources-and-qos/)** — requests vs limits, QoS classes, CPU throttling, and how to size honestly.
-7. **[Configuration](/workloads/configuration/)** — ConfigMaps and Secrets, env vs volumes, update propagation, and forcing rollouts on config change.
-8. **[Environment variables](/workloads/environment-variables/)** — every env source, precedence and collision rules, `$(VAR)` expansion, and JVM flag-injection patterns.
-9. **[Config as files](/workloads/config-files-and-volumes/)** — volume mount mechanics, `subPath` traps, projected volumes, and file permissions.
-10. **[Secrets](/workloads/secrets/)** — types, why files beat env, and keeping secrets out of git (Sealed Secrets, SOPS, External Secrets).
-11. **[Jobs and CronJobs](/workloads/jobs-and-cronjobs/)** — run-to-completion semantics, retry behavior, schedules, and missed-run gotchas.
-12. **[Init and sidecar containers](/workloads/init-and-sidecar-containers/)** — multi-container pods: init semantics, native sidecars, and the patterns that justify them.
-13. **[Pod security](/workloads/pod-security/)** — securityContext, Pod Security Standards, and hardening that doesn't break the app.
-14. **[ServiceAccounts](/workloads/serviceaccounts/)** — workload identity: pods calling the Kubernetes API and cloud services without long-lived keys.
-15. **[Scheduling](/workloads/scheduling/)** — nodeSelector, affinity, taints and tolerations, topology spread, and priority — where pods land and why.
-16. **[GPUs and AI workloads](/workloads/gpu-and-ai-workloads/)** — requesting accelerators you don't manage, model-load vs startup-probe budgets, and queue etiquette on shared GPUs.
-17. **[DaemonSets](/workloads/daemonsets/)** — the per-node fleet running under your pods, how it affects you, and the rare cases where you run your own.
-18. **[Graceful shutdown](/workloads/graceful-shutdown/)** — the termination lifecycle end to end: the SIGTERM/endpoint race, the preStop pattern, and the budget inequality that makes deploys dropless.
+3. **[What triggers a rollout](/workloads/rollout-triggers/)** — the pod-template rule: which edits roll pods, which silently don't, forcing rollouts on config change, and pausing the trigger entirely.
+4. **[High availability](/workloads/high-availability/)** — PodDisruptionBudgets, anti-affinity, topology spread, and graceful shutdown so node drains don't take you down.
+5. **[Autoscaling](/workloads/autoscaling/)** — HPA v2 done right, stabilization windows, and the classic misconfigurations that cause replica thrash.
+6. **[Health checks](/workloads/health-checks/)** — startup vs readiness vs liveness, precisely, plus the footguns that turn probes into outage generators.
+7. **[Resources and QoS](/workloads/resources-and-qos/)** — requests vs limits, QoS classes, CPU throttling, and how to size honestly.
+8. **[Configuration](/workloads/configuration/)** — ConfigMaps and Secrets, env vs volumes, update propagation, and forcing rollouts on config change.
+9. **[Environment variables](/workloads/environment-variables/)** — every env source, precedence and collision rules, `$(VAR)` expansion, and JVM flag-injection patterns.
+10. **[Config as files](/workloads/config-files-and-volumes/)** — volume mount mechanics, `subPath` traps, projected volumes, and file permissions.
+11. **[Secrets](/workloads/secrets/)** — types, why files beat env, and keeping secrets out of git (Sealed Secrets, SOPS, External Secrets).
+12. **[Jobs and CronJobs](/workloads/jobs-and-cronjobs/)** — run-to-completion semantics, retry behavior, schedules, and missed-run gotchas.
+13. **[Init and sidecar containers](/workloads/init-and-sidecar-containers/)** — multi-container pods: init semantics, native sidecars, and the patterns that justify them.
+14. **[Pod security](/workloads/pod-security/)** — securityContext, Pod Security Standards, and hardening that doesn't break the app.
+15. **[ServiceAccounts](/workloads/serviceaccounts/)** — workload identity: pods calling the Kubernetes API and cloud services without long-lived keys.
+16. **[Scheduling](/workloads/scheduling/)** — nodeSelector, affinity, taints and tolerations, topology spread, and priority — where pods land and why.
+17. **[GPUs and AI workloads](/workloads/gpu-and-ai-workloads/)** — requesting accelerators you don't manage, model-load vs startup-probe budgets, and queue etiquette on shared GPUs.
+18. **[DaemonSets](/workloads/daemonsets/)** — the per-node fleet running under your pods, how it affects you, and the rare cases where you run your own.
+19. **[Graceful shutdown](/workloads/graceful-shutdown/)** — the termination lifecycle end to end: the SIGTERM/endpoint race, the preStop pattern, and the budget inequality that makes deploys dropless.
 
 ## Which article do I need?
 
@@ -75,6 +76,7 @@ DaemonSets typically need node-level privileges and tolerations the platform tea
 |---|---|
 | "What does this Deployment YAML field actually do?" | [Deployments deep dive](/workloads/deployments-deep-dive/) |
 | "My deploy is stuck / I need to roll back" | [Rollouts and rollbacks](/workloads/rollouts-and-rollbacks/) |
+| "I deployed and nothing rolled" / "why did everything restart?" | [What triggers a rollout](/workloads/rollout-triggers/) |
 | "A node drain / cluster upgrade caused an outage" | [High availability](/workloads/high-availability/) |
 | "Replicas keep bouncing up and down" | [Autoscaling](/workloads/autoscaling/) |
 | "Pods restart under load but the app was fine" | [Health checks](/workloads/health-checks/) |

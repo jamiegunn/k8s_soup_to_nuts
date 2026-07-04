@@ -2,7 +2,7 @@
 title: Secrets
 description: What Kubernetes Secrets actually protect, how to create and consume them safely, and how to keep them out of git without breaking your pipeline.
 sidebar:
-  order: 12
+  order: 13
 ---
 
 A Kubernetes Secret is a ConfigMap with a different type field and slightly better manners. That's not cynicism — it's the correct mental model, and internalizing it early will save you from a false sense of security. This article goes deep on Secrets specifically; for the broader ConfigMap-vs-Secret decision, see [Configuration](/workloads/configuration/), and for rotating values already in production, see [ConfigMap and Secret rotation](/operations/configmap-secret-rotation/).

@@ -2,7 +2,7 @@
 title: Autoscaling
 description: HPA v2 metrics and behavior tuning, why replica thrash almost always traces to bad CPU requests, and where VPA and KEDA fit.
 sidebar:
-  order: 5
+  order: 6
 ---
 
 Autoscaling is one of those features that works beautifully when the inputs are honest and becomes a chaos generator when they're not. The HPA is simple arithmetic on top of your resource requests — so most "autoscaling bugs" are actually requests bugs wearing a disguise.

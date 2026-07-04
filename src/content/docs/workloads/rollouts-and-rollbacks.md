@@ -5,7 +5,7 @@ sidebar:
   order: 3
 ---
 
-Every deploy is a controlled failure drill: you're deliberately killing healthy pods and betting the replacements are better. The strategy fields decide how much of your capacity you gamble at once, and `kubectl rollout` is how you watch, pause, and reverse the bet.
+Every deploy is a controlled failure drill: you're deliberately killing healthy pods and betting the replacements are better. The strategy fields decide how much of your capacity you gamble at once, and `kubectl rollout` is how you watch, pause, and reverse the bet. (This article is about the roll itself — if your question is why a rollout did or didn't *start*, that's [what triggers a rollout](/workloads/rollout-triggers/).)
 
 ## RollingUpdate vs Recreate
 

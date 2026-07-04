@@ -73,7 +73,7 @@ Every time the pod **template** changes (image, env, resources, labels, anything
 3. Adds `pod-template-hash: <hash>` to that ReplicaSet's selector and pod labels — this is how two ReplicaSets under one Deployment avoid claiming each other's pods.
 4. Scales the new ReplicaSet up and the old one down, per the strategy.
 
-Scaling `replicas` alone does **not** create a new ReplicaSet — replica count lives on the Deployment, not in the template.
+Scaling `replicas` alone does **not** create a new ReplicaSet — replica count lives on the Deployment, not in the template. The full catalog of what does and doesn't trip this mechanism — including the config-change gap — is in [what triggers a rollout](/workloads/rollout-triggers/).
 
 You can watch the relationship:
 

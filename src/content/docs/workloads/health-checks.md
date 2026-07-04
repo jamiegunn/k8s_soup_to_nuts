@@ -2,7 +2,7 @@
 title: Health Checks
 description: Startup, readiness, and liveness probes — exact semantics, tuning math, and the classic misconfigurations that turn probes into outage amplifiers.
 sidebar:
-  order: 6
+  order: 7
 ---
 
 Probes are the only channel your app has to tell Kubernetes how it's doing, and Kubernetes acts on them with total literal-mindedness. A wrong probe isn't neutral — it's an automated operator that kills healthy pods or routes traffic to broken ones, at machine speed, around the clock. Get the semantics exactly right.

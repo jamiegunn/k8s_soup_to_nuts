@@ -2,7 +2,7 @@
 title: ServiceAccounts
 description: Workload identity — how your pods (not you) authenticate to the Kubernetes API and cloud services, and how to debug it when they can't.
 sidebar:
-  order: 16
+  order: 17
 ---
 
 There are two kinds of identity in a cluster and people conflate them constantly. *You* authenticate with your user credentials — that's what `kubectl` uses, and what [RBAC denied](/troubleshooting/rbac-denied/) errors against your commands are about. *Your pods* authenticate as a **ServiceAccount** — a namespaced identity object that exists whether you think about it or not, because every pod runs as one. This article is about the second kind: what the pod-side identity is, when your app should actually use it, and how the same mechanism extends to cloud IAM.
