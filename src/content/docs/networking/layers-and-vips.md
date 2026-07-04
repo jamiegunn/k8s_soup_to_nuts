@@ -212,7 +212,7 @@ Every VIP is a place where someone can stand between client and backend — whic
 
 Every VIP layer is also a place where:
 
-- **Client IPs get rewritten.** SNAT at the appliance, SNAT at the node for `externalTrafficPolicy: Cluster` — by the time your pod logs a "client IP", it's often a node or appliance address. If your access logs show the same three IPs for every user on earth, count your VIPs.
+- **Client IPs get rewritten.** SNAT at the appliance, SNAT at the node for `externalTrafficPolicy: Cluster` — by the time your pod logs a "client IP", it's often a node or appliance address. If your access logs show the same three IPs for every user on earth, count your VIPs. The full census of every rewrite in the chain — and the menu of ways to avoid each one — is in [SNAT and DNAT](/routing/nat/).
 - **Timeouts stack.** Appliance idle timeout (often 300 s), nginx `proxy_read_timeout` (60 s default), conntrack timeouts, your app's own client timeout — the *shortest* one in the chain wins, and it's rarely the one you configured. Mysterious disconnects at suspiciously round intervals are a hop's idle timer, not your code — the case files are in [long-lived connections](/networking/long-lived-connections/).
 - **Health checks can lie.** Each hop health-checks only the *next* hop. The appliance can be green on the MetalLB IP while every pod behind the Service is on fire. "Monitoring says up, users say down" usually means you're monitoring the wrong end of the VIP chain.
 

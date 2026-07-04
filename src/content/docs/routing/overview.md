@@ -83,6 +83,12 @@ The full corporate topology — external VIP → in-cluster [MetalLB](/controlle
 - "Why do 1-in-N connections fail intermittently?" (conntrack exhaustion has a signature)
 - "Why did all my connections reset when a Deployment rolled?"
 
+**[SNAT and DNAT](/routing/nat/)** — every address rewrite between the client and the pod: why each NAT exists, what it costs, and the menu of ways to avoid each one. It answers:
+
+- "Which hop ate my client IPs — and how do I get them back?"
+- "Why does my NetworkPolicy `ipBlock` never match?"
+- "When is SNAT actually the right choice?" (egress gateways: sometimes you *want* one stable NAT)
+
 **[CoreDNS Deep Dive](/routing/coredns-deep-dive/)** and **[DNS Integration](/routing/dns-integration/)** — the resolution layer from the inside: the plugin chain, the cluster-zone/corporate-zone split, and how a name in corporate DNS ends up pointing at a pod. ([DNS Inside the Cluster](/networking/dns/) remains the practical guide to `resolv.conf`, `ndots`, and pod-side knobs.)
 
 ## The methodology: trace first, then zoom

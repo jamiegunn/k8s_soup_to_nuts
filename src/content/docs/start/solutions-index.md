@@ -24,6 +24,10 @@ kubectl logs <pod-name> --previous
 |---|---|
 | Understand what actually happens between `kubectl apply` and running pods | [Life of a Deployment](/start/life-of-a-deployment/) |
 | Understand every field in my Deployment YAML | [Deployments Deep Dive](/workloads/deployments-deep-dive/) |
+| Understand ReplicaSets and the pod-template-hash machinery | [Deployments Deep Dive](/workloads/deployments-deep-dive/) |
+| Get CronJob timing right — missed runs, concurrency, deadlines | [Jobs and CronJobs](/workloads/jobs-and-cronjobs/) |
+| Order startup with init containers (and debug Init:CrashLoopBackOff) | [Init and Sidecar Containers](/workloads/init-and-sidecar-containers/) |
+| Understand the DaemonSets running under my pods (or run my own) | [DaemonSets](/workloads/daemonsets/) |
 | Roll back a bad release, or unstick a stuck rollout | [Rollouts and Rollbacks](/workloads/rollouts-and-rollbacks/) |
 | Do a canary or blue-green release with plain labels | [Rollouts and Rollbacks](/workloads/rollouts-and-rollbacks/) |
 | Stop my 2am fix being reverted by the 9am deploy | [Drift and CI/CD](/operations/drift-and-cicd/) |
@@ -75,6 +79,7 @@ kubectl logs <pod-name> --previous
 | Write HTTPRoutes on a platform-run Gateway | [Gateway API for App Teams](/networking/gateway-api/) |
 | Finally understand L2/L4/L7 and what a VIP actually is | [Network Layers and VIPs](/networking/layers-and-vips/) |
 | Trace one request end to end — DNS to VIP to pod and back | [Life of a Request](/routing/life-of-a-request/) |
+| Find out which NAT ate my client IPs — and how to get them back | [SNAT and DNAT](/routing/nat/) |
 | Understand what actually answers my DNS queries (and tune it) | [CoreDNS Deep Dive](/routing/coredns-deep-dive/) |
 | Get a DNS record pointed at my service the right way | [DNS Integration](/routing/dns-integration/) |
 | Write, template, and override Helm charts properly | [Helm Deep Dive](/helm/overview/) |

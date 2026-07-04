@@ -2,7 +2,7 @@
 title: CoreDNS Deep Dive
 description: The Corefile line by line, how cluster records are synthesized from the API watch, where your external lookups go, and the cache semantics that explain "I fixed DNS but pods still fail."
 sidebar:
-  order: 4
+  order: 5
 ---
 
 Every lookup your pod makes — every Service call, every outbound HTTPS request, every database connection string — terminates at the same place: a CoreDNS pod in `kube-system`. The client side of that story (resolv.conf, ndots, search domains) lives in [DNS inside the cluster](/networking/dns/). This article is the *server* side: what CoreDNS actually is, what its config means, and why it behaves the way it does when things get weird.

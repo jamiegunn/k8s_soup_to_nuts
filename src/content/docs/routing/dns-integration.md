@@ -2,7 +2,7 @@
 title: DNS Integration and Naming Architecture
 description: How cluster DNS and corporate DNS form one namespace — naming decisions, external-dns, TTL strategy, split-horizon, and the checklist to run before you ask for a record.
 sidebar:
-  order: 5
+  order: 6
 ---
 
 Your application lives under two entirely separate naming authorities. Inside the cluster, `orders.myteam.svc.cluster.local` is synthesized on demand by [CoreDNS](/routing/coredns-deep-dive/) from an API watch — it exists in no zone file and is invisible to the rest of the company. Outside, `orders.company.com` lives on corporate resolvers (Infoblox, BIND, Windows DNS — whatever your enterprise runs), authoritative, replicated, change-controlled. Neither authority knows the other exists.

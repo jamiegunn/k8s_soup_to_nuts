@@ -42,7 +42,7 @@ Deployment/payments
 | **Deployment** | Stateless services, APIs, web frontends — anything where replicas are interchangeable | This section |
 | **StatefulSet** | Databases, queues, anything needing stable identity or per-pod storage | [Stateful workloads](/stateful/statefulsets-fundamentals/) |
 | **Job / CronJob** | Run-to-completion work: migrations, batch processing, scheduled tasks | [Jobs and CronJobs](/workloads/jobs-and-cronjobs/) |
-| **DaemonSet** | One pod per node (log shippers, node agents) | Usually the platform team's domain — you'll rarely create one |
+| **DaemonSet** | One pod per node (log shippers, node agents) | [DaemonSets](/workloads/daemonsets/) — usually platform territory, but worth understanding |
 
 :::note
 DaemonSets typically need node-level privileges and tolerations the platform team controls. If you think you need one, [talk to your platform team](/operations/working-with-platform-team/) first — there's often a namespace-scoped alternative.
@@ -66,6 +66,7 @@ DaemonSets typically need node-level privileges and tolerations the platform tea
 14. **[ServiceAccounts](/workloads/serviceaccounts/)** — workload identity: pods calling the Kubernetes API and cloud services without long-lived keys.
 15. **[Scheduling](/workloads/scheduling/)** — nodeSelector, affinity, taints and tolerations, topology spread, and priority — where pods land and why.
 16. **[GPUs and AI workloads](/workloads/gpu-and-ai-workloads/)** — requesting accelerators you don't manage, model-load vs startup-probe budgets, and queue etiquette on shared GPUs.
+17. **[DaemonSets](/workloads/daemonsets/)** — the per-node fleet running under your pods, how it affects you, and the rare cases where you run your own.
 
 ## Which article do I need?
 
