@@ -1,0 +1,120 @@
+---
+title: Hands-On Labs
+description: Follow-along tutorials — build a kind cluster in a Lima VM on your Mac, then ship a Java API through Helm, secrets, a Valkey backend, and ingress.
+sidebar:
+  order: 1
+---
+
+Everything else on this site is a **reference**: you land on a page mid-incident, grab what you need, and leave. This section is different. The labs are **tutorials** — you start at Lab 0, type every command in order, and end with a working system you built yourself. References tell you how things work; labs make your fingers believe it.
+
+If you've read [How Kubernetes Works](/start/how-kubernetes-works/) and thought "fine, but I want to *touch* it" — this is the place.
+
+The distinction matters for how you read. In a reference article, skimming is a feature. In a lab, skipping a step breaks step twelve in a way that looks nothing like the step you skipped. So the deal is:
+
+- **References** (the rest of the site): random access, skim freely, land anywhere.
+- **Labs** (this section): sequential, every command typed, every output checked against the expected output shown.
+
+You need no prior Kubernetes experience to start Lab 0, but the labs explain *what to type and why it worked*, not the full theory behind each object. Reading [How Kubernetes Works](/start/how-kubernetes-works/) first — even skimmed — will make every step land twice as hard.
+
+## What you'll build
+
+Across five labs you'll stand up a real (if small) delivery pipeline on your Mac:
+
+- A Kubernetes cluster running in a Linux VM — no Docker Desktop, no cloud account, no admin ticket.
+- `orders-api`, a Spring Boot 3.3 / Java 21 REST service, built entirely inside Docker (you don't need Java or Maven installed) and deployed with a Helm chart you author from scratch.
+- Configuration and secrets injected every way Kubernetes offers, so you can feel the differences instead of memorizing them.
+- A Valkey cache wired in as a backend service, found via DNS the way real services find each other.
+- ingress-nginx routing `http://orders.localtest.me:8080` from your browser all the way to a pod.
+
+## Before you start: what the labs assume
+
+Every lab assumes the same host setup, stated once here and repeated in each lab's Prerequisites:
+
+- **macOS** with **Homebrew** installed and working.
+- **Lima** installed (`brew install lima` if not; verify with `limactl --version`).
+- Roughly **8 GB of free RAM** and ~15 GB of free disk for the VM, images, and cluster.
+- **No Docker Desktop required** — and if you have it, the labs neither use nor conflict with it as long as it isn't fighting over `DOCKER_HOST` (Lab 0 covers this).
+- **No Java, Maven, or any language toolchain.** The `orders-api` app builds inside a multi-stage Dockerfile; Docker is the only build tool.
+- **No cluster-admin anxiety.** You are the admin of this cluster. If your day job is a locked-down namespace, enjoy the change of scenery — then read [Working Without Admin](/start/working-without-admin/) to map what you learn back to reality.
+
+Everything else — `docker`, `kind`, `kubectl`, `helm` — is installed in Lab 0's first step.
+
+## The lab stack, and why
+
+The labs standardize on one toolchain so every command works verbatim:
+
+| Layer | Tool | Why this one |
+|---|---|---|
+| Host | macOS + Homebrew | The section's stated assumption — commands are written for zsh on a Mac |
+| Docker daemon | **Lima** (`template://docker`) | A free, lightweight Linux VM running dockerd; no Docker Desktop license, no conflicts with corporate policy. Same recipe as [Local Development](/start/local-development/) |
+| Docker client | `brew install docker` (CLI only) | The client on your Mac talks to the daemon in the VM over a socket — a useful lesson in itself |
+| Cluster | **kind** | A full multi-component Kubernetes cluster where each "node" is a container; fast to create, trivial to delete, endorsed in [Local Development](/start/local-development/) |
+| Deployment | **Helm** for everything | Real pipelines ship charts, not loose YAML. You'll author one, not just install one — deep dive in [Helm](/helm/overview/) |
+
+Two choices deserve a sentence of defense:
+
+**Why a VM at all?** Docker needs a Linux kernel, and your Mac doesn't have one. Docker Desktop hides that fact behind licensing terms and a settings GUI; Lima gives you the same thing — a small Linux VM running `dockerd` — as a transparent, scriptable, free tool. When your `docker version` output shows a Darwin client talking to a Linux server, you'll understand your own machine better than most Docker Desktop users ever do. The full reasoning lives in [Local Development](/start/local-development/).
+
+**Why everything through Helm?** Because that's how software actually reaches clusters. CI pipelines package charts; platform teams install ingress controllers and databases from charts; your future production deploys will be `helm upgrade`, not `kubectl apply`. We deliberately do **not** use `kubectl apply -f` as the primary deployment method after Lab 0. The moment you have more than one manifest, you have a packaging problem, and Helm is how the industry solved it — see [Helm](/helm/overview/) for the deep dive. Learning it on a laptop, where mistakes cost nothing, is the cheapest Helm education you'll ever get.
+
+## The lab sequence
+
+The labs are strictly ordered — each builds on the artifacts of the previous one. Budget roughly **4–6 hours** for the full sequence, comfortably split across sittings (there's a pause/resume recipe in every lab). Rough per-lab timings: Lab 0 ≈ 30–45 min (mostly waiting on first-time downloads), Labs 1–2 ≈ 60–75 min each, Labs 3–4 ≈ 45–60 min each.
+
+| Lab | Title | What you'll learn | Deep dives |
+|---|---|---|---|
+| 0 | [A Cluster on Your Mac](/labs/lab-0-cluster/) | Lima VM + dockerd, kind cluster `labs` with ingress-ready port mappings, namespace + context setup, smoke tests | [Local Development](/start/local-development/), [How Kubernetes Works](/start/how-kubernetes-works/), [kubectl Survival Kit](/start/kubectl-survival-kit/) |
+| 1 | Ship a Java API with Helm | Multi-stage Dockerfile (Maven build → JRE runtime), `kind load docker-image`, authoring `charts/orders-api` from scratch, install/upgrade/rollback | [Helm Chart Anatomy](/helm/chart-anatomy/), [Template Language](/helm/template-language/), [Java on K8s](/java/overview/) |
+| 2 | Secrets & Config, Every Way | env vars, `envFrom`, ConfigMap/Secret volume mounts, Spring property binding, what a rollout looks like when config changes | [Values and Overrides](/helm/values-and-overrides/), [YAML, Labels, and Namespaces](/start/yaml-labels-and-namespaces/) |
+| 3 | Wire In a Backend | Valkey via Helm (release `cache`), Services and cluster DNS, readiness gating on a dependency, connection config through the chart | [Valkey architecture](/architectures/valkey-shared-vip/), [Service Unreachable](/troubleshooting/service-unreachable/) |
+| 4 | Ingress & End to End | ingress-nginx on kind, host-based routing, `orders.localtest.me:8080` in a real browser, tracing a request hop by hop | [Routing](/routing/overview/), [Front Door architecture](/architectures/front-door/) |
+
+Lab 0 pre-provisions the port mappings and node label that Lab 4's ingress needs, so you create the cluster **once** and keep it for the whole sequence.
+
+## Conventions used in every lab
+
+- **Copy-paste blocks.** Every `bash` block is meant to be run as-is, in order. No placeholders to fill in unless explicitly flagged.
+- **Expected output follows every meaningful command**, in a `console` block. Trivial differences (IDs, timestamps, version patch numbers) will vary; structure and status lines should match. If they don't, stop and check the lab's troubleshooting box before continuing.
+- **One directory for everything:** `~/k8s-labs/`. By the end of the sequence it looks like this:
+
+```console
+~/k8s-labs/
+├── kind-labs.yaml          # cluster config (Lab 0)
+├── app/                    # Java source + Dockerfile (Lab 1)
+└── charts/
+    └── orders-api/         # the Helm chart you author (Lab 1+)
+```
+
+- **Versions are pinned.** `orders-api:0.1.0` in Lab 1, bumped per lab (`0.2.0`, `0.3.0`, …); `valkey/valkey:8`; `busybox:1.37`; Spring Boot 3.3 on Java 21. Pinning is a habit worth building — `latest` is how surprises ship.
+- **Prerequisites are explicit** at the top of each lab, and each lab states *what you'll have at the end* so you know when you're done.
+- **Deep-dive links throughout.** Labs teach the mechanics; when a step touches something with real depth (probes, RBAC, chart templating), there's a link to the reference article. Follow them later — don't break the flow mid-lab.
+- **Troubleshooting boxes** near the end of each lab cover the failure modes we've actually seen (a stopped Lima VM, an unset `DOCKER_HOST`, a port collision). Check there first when output doesn't match.
+
+## When something goes wrong anyway
+
+Labs are where breaking things is cheap, so treat every mismatch as a free debugging rep instead of a setback:
+
+1. Reread the last command you ran — the majority of lab failures are a skipped step or a command run from the wrong directory.
+2. Check the lab's troubleshooting box.
+3. Apply the [triage methodology](/troubleshooting/triage-methodology/) — the same `describe`/`logs`/`events` loop you'd use in production works identically here, and this is precisely the low-stakes place to practice it.
+4. Nuclear option: the teardown command below plus a rerun of Lab 0 takes under fifteen minutes. There is no state worth protecting on this cluster. Delete freely.
+
+## An honest note about scope
+
+These labs teach **mechanics**: how images get into a cluster, how a chart becomes running pods, how a request finds a container. What they deliberately don't teach is production judgment — resource sizing, HA topologies, security hardening, upgrade strategy, multi-tenancy. A kind cluster on a laptop has one node, no real load balancer, and nobody paging you at 3 a.m.
+
+When you're ready to think about production, the reference sections and especially the [Reference Architectures](/architectures/overview/) pick up exactly where the labs stop. A good pattern: finish the labs, then reread the [Golden Service](/architectures/golden-service/) architecture — you'll recognize every building block, now assembled with production stakes.
+
+## The teardown promise
+
+Nothing in these labs escapes containment. The entire footprint is one Lima VM, one kind cluster inside it, and the `~/k8s-labs/` directory. When you're done — or want a clean slate — this removes every trace:
+
+```bash
+kind delete cluster --name labs && limactl delete docker && rm -rf ~/k8s-labs
+```
+
+Each lab also has a lighter **pause** recipe (`limactl stop docker`) that preserves everything for your next sitting.
+
+## Start here
+
+Open a terminal and head to [Lab 0: A Cluster on Your Mac](/labs/lab-0-cluster/). Twenty minutes from now you'll have a Kubernetes cluster you can break with impunity — which is the whole point.

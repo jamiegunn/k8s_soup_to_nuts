@@ -107,6 +107,10 @@ export default defineConfig({
 					items: [{ autogenerate: { directory: 'architectures' } }],
 				},
 				{
+					label: 'Hands-On Labs',
+					items: [{ autogenerate: { directory: 'labs' } }],
+				},
+				{
 					label: 'Knobs & Levers',
 					items: [{ autogenerate: { directory: 'tuning' } }],
 				},

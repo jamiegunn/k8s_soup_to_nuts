@@ -9,6 +9,10 @@ You own the app. The platform team owns the cluster. That arrangement works fine
 
 There's a better inner loop: a disposable cluster on your laptop for 90% of the work, and surgical tools for the 10% that only reproduces on the shared cluster.
 
+:::tip[Want to be walked through it?]
+The [Hands-On Labs](/labs/overview/) section does exactly this as a follow-along series: a kind cluster on your Mac via Lima, a Spring Boot API built in Docker and shipped with a Helm chart you author, secrets and config wired every way, a Valkey backend, and ingress — every command copy-pasteable.
+:::
+
 ## Why bother with a local cluster
 
 Three reasons, in order of payoff:

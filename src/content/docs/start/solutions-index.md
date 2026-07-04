@@ -76,6 +76,7 @@ kubectl logs <pod-name> --previous
 | Deploy a complete, tested build — golden service, zero-downtime, locked-down namespace, canary, KEDA, Valkey, PostgreSQL, IBM MQ, RabbitMQ, Kafka, front door | [Reference Architectures](/architectures/overview/) |
 | Look up an exact error message and jump to its playbook | [Error Message Index](/troubleshooting/error-index/) |
 | Follow a curated track instead of browsing 180 pages | [Learning Paths](/start/learning-paths/) |
+| Build and ship a real Java API on my Mac, step by step (Lima + kind + Helm) | [Hands-On Labs](/labs/overview/) |
 | Write HTTPRoutes on a platform-run Gateway | [Gateway API for App Teams](/networking/gateway-api/) |
 | Finally understand L2/L4/L7 and what a VIP actually is | [Network Layers and VIPs](/networking/layers-and-vips/) |
 | Trace one request end to end — DNS to VIP to pod and back | [Life of a Request](/routing/life-of-a-request/) |
