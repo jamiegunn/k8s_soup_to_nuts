@@ -2,7 +2,7 @@
 title: Ingress and Routing
 description: Ingress resource anatomy, TLS termination, cert-manager, the Gateway API role split, and how to debug 502s and 504s.
 sidebar:
-  order: 5
+  order: 6
 ---
 
 Services get traffic *to* pods; Ingress decides *which* Service based on HTTP — hostnames, paths, TLS. It's the layer where the division of labor between you and the platform team is sharpest: they run the **ingress controller** (the actual proxy pods, usually ingress-nginx, Traefik, HAProxy, or a cloud L7 LB), you write **Ingress resources** in your namespace declaring what you want routed. The controller watches all namespaces and merges everyone's rules into its config.

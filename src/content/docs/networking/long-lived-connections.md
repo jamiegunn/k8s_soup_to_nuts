@@ -2,7 +2,7 @@
 title: gRPC, WebSockets, and Long-Lived Connections
 description: Why Service load balancing breaks for gRPC, WebSockets, and connection pools — one hot pod, disconnect storms on deploy, stale conntrack — and the fixes ranked.
 sidebar:
-  order: 10
+  order: 11
 ---
 
 Every load-balancing promise Kubernetes makes was designed for short-lived HTTP/1.1: open a connection, send a request or a few, close it. gRPC, WebSockets, database pools, and message-queue consumers all break that assumption, and they all break it the same way. This article is the pattern and its fixes — because "one pod at 90% CPU while its two replicas idle" and "every deploy disconnects all our users at once" are the same root cause wearing different costumes.

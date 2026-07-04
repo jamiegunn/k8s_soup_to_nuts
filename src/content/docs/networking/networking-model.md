@@ -2,7 +2,7 @@
 title: The Kubernetes Networking Model
 description: The pod-IP contract, how CNI plugins implement it, packet walks for same-node and cross-node traffic, and where MTU problems come from.
 sidebar:
-  order: 2
+  order: 3
 ---
 
 Everything in Kubernetes networking rests on one deceptively simple contract. Once you internalize it, Services, Ingress, and NetworkPolicies all make sense as layers on top. Skip it, and you'll spend incidents chasing ghosts.

@@ -2,7 +2,7 @@
 title: Gateway API for App Teams
 description: The tenant-seat deep dive on HTTPRoute — anatomy, weighted canaries, status conditions, ReferenceGrant, and migrating off Ingress annotations.
 sidebar:
-  order: 13
+  order: 14
 ---
 
 The Ingress resource is frozen. Not deprecated — it will keep working for years — but the upstream API stopped taking features around 2020, which is why every real-world capability (timeouts, canaries, rewrites, gRPC) lives in controller-specific annotations. You've felt this if you've ever pasted an `nginx.ingress.kubernetes.io/*` annotation into a cluster running Traefik and watched nothing happen. [Gateway API](https://gateway-api.sigs.k8s.io/) is the successor, and for readers of this guide it has one property no ingress API ever had: **it was designed for your seat**. The role split *is* the design:

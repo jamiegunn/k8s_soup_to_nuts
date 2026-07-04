@@ -2,7 +2,7 @@
 title: Network Policies
 description: How NetworkPolicy selection flips pods from default-allow to default-deny, the rules you actually need, and why some clusters silently don't enforce them.
 sidebar:
-  order: 6
+  order: 7
 ---
 
 The Kubernetes pod network is flat and open: by default, **any pod can connect to any pod in any namespace**. NetworkPolicy is the firewall layer you control — namespace-scoped resources you can create without any platform privileges. But it has semantics that trip up nearly everyone the first time, and one production-grade trap: whether policies are enforced *at all* depends on the CNI plugin your platform team runs.

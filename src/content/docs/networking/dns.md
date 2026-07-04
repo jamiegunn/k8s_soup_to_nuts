@@ -2,7 +2,7 @@
 title: DNS Inside the Cluster
 description: How CoreDNS resolves service names, why ndots:5 makes external lookups slow, and the per-pod DNS knobs you control.
 sidebar:
-  order: 4
+  order: 5
 ---
 
 Every service call in your cluster starts with a DNS lookup, and a shocking fraction of "intermittent network issues" are actually DNS. The good news: the resolution path is completely deterministic once you've read one file — your pod's `/etc/resolv.conf`.

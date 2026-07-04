@@ -2,7 +2,7 @@
 title: Service Mesh for App Teams
 description: Living inside a platform-run Istio or Linkerd mesh — what the sidecar actually does to your pod, the CRs you own, and how to debug when the proxy is the problem.
 sidebar:
-  order: 9
+  order: 10
 ---
 
 Your platform team runs a service mesh. You didn't ask for it, you don't administer it, but there is now an extra container in every one of your pods and every byte your app sends or receives passes through it. This article is the tenant's manual: what the mesh does to your workloads, what you get for free, what silently changes, which CRs you're allowed to touch, and how to debug when a 503 comes from the proxy and not your code.

@@ -2,7 +2,7 @@
 title: Services Deep Dive
 description: How ClusterIP, NodePort, LoadBalancer, and headless Services actually work — kube-proxy, EndpointSlices, externalTrafficPolicy, and the debugging chain.
 sidebar:
-  order: 3
+  order: 4
 ---
 
 Pod IPs are ephemeral. Services are the answer: a stable virtual IP and DNS name in front of a shifting set of pods. Simple to use, but the mechanics underneath are where debugging happens — and the number one thing to understand is this:

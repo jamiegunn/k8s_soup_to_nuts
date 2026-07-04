@@ -114,18 +114,19 @@ Six hops, four owners, and at least five distinct failure modes — which is why
 
 Read in order the first time; after that, jump to the layer that's on fire.
 
-1. [The Kubernetes networking model](/networking/networking-model/) — the pod-IP contract, CNI plugins, packet walks, MTU gotchas.
-2. [Services deep dive](/networking/services-deep-dive/) — ClusterIP internals, EndpointSlices, NodePort, headless Services, `externalTrafficPolicy`.
-3. [DNS](/networking/dns/) — CoreDNS, `ndots:5` and its notorious latency tax, search domains, per-pod DNS overrides.
-4. [Ingress and routing](/networking/ingress-and-routing/) — Ingress anatomy, TLS, cert-manager, the Gateway API role split, debugging 502/504.
-5. [Network policies](/networking/network-policies/) — default-allow vs default-deny semantics, the forgotten DNS egress rule, testing.
-6. [External load balancing](/networking/external-load-balancing/) — cloud LBs, MetalLB, F5 CIS, client IP preservation.
-7. [Debugging the network](/networking/debugging-network/) — the hop-by-hop playbook with a printable checklist.
-8. [Service mesh for app teams](/networking/service-mesh/) — living with a platform-run Istio/Linkerd: sidecars, mTLS, tenant CRs, and Envoy-flag debugging.
-9. [gRPC, WebSockets, and long-lived connections](/networking/long-lived-connections/) — why connection-level load balancing breaks for HTTP/2 and hours-long connections, and the fixes.
-10. [ingress-nginx in practice](/networking/ingress-nginx/) — the de facto controller: the annotation toolbox, TLS behavior, canaries, and a symptom→fix table.
-11. [TCP and non-HTTP ingress](/networking/tcp-ingress/) — getting databases, queues, and other raw TCP/UDP traffic into the cluster when Ingress can't help.
-12. [Gateway API for app teams](/networking/gateway-api/) — the Ingress successor: HTTPRoute anatomy, weighted canaries without annotations, and the status conditions that tell the truth.
+1. [Network layers and VIPs](/networking/layers-and-vips/) — the foundation: what L2/L3/L4/L7 mean in your stack, and why every durable address in Kubernetes is a VIP.
+2. [The Kubernetes networking model](/networking/networking-model/) — the pod-IP contract, CNI plugins, packet walks, MTU gotchas.
+3. [Services deep dive](/networking/services-deep-dive/) — ClusterIP internals, EndpointSlices, NodePort, headless Services, `externalTrafficPolicy`.
+4. [DNS](/networking/dns/) — CoreDNS, `ndots:5` and its notorious latency tax, search domains, per-pod DNS overrides.
+5. [Ingress and routing](/networking/ingress-and-routing/) — Ingress anatomy, TLS, cert-manager, the Gateway API role split, debugging 502/504.
+6. [Network policies](/networking/network-policies/) — default-allow vs default-deny semantics, the forgotten DNS egress rule, testing.
+7. [External load balancing](/networking/external-load-balancing/) — cloud LBs, MetalLB, F5 CIS, client IP preservation.
+8. [Debugging the network](/networking/debugging-network/) — the hop-by-hop playbook with a printable checklist.
+9. [Service mesh for app teams](/networking/service-mesh/) — living with a platform-run Istio/Linkerd: sidecars, mTLS, tenant CRs, and Envoy-flag debugging.
+10. [gRPC, WebSockets, and long-lived connections](/networking/long-lived-connections/) — why connection-level load balancing breaks for HTTP/2 and hours-long connections, and the fixes.
+11. [ingress-nginx in practice](/networking/ingress-nginx/) — the de facto controller: the annotation toolbox, TLS behavior, canaries, and a symptom→fix table.
+12. [TCP and non-HTTP ingress](/networking/tcp-ingress/) — getting databases, queues, and other raw TCP/UDP traffic into the cluster when Ingress can't help.
+13. [Gateway API for app teams](/networking/gateway-api/) — the Ingress successor: HTTPRoute anatomy, weighted canaries without annotations, and the status conditions that tell the truth.
 
 When these practical guides aren't deep enough, the [Routing & DNS Deep Dive](/routing/overview/) section traces a request end to end ([Life of a Request](/routing/life-of-a-request/)) and dissects the machinery ([kube-proxy and the dataplane](/routing/kube-proxy-and-the-dataplane/), [CoreDNS](/routing/coredns-deep-dive/), [DNS integration](/routing/dns-integration/)).
 

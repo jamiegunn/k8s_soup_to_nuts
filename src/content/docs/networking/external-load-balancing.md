@@ -2,7 +2,7 @@
 title: External Load Balancing
 description: How traffic enters cloud and on-prem clusters — LoadBalancer Services, MetalLB, F5 CIS, externalTrafficPolicy, and preserving client IPs.
 sidebar:
-  order: 7
+  order: 8
 ---
 
 Everything inside the cluster — Services, DNS, ingress — assumes traffic is already *in*. This article is about the front door: how packets from the outside world reach a node in the first place, and why the answer differs completely between cloud and on-prem clusters even though your manifest looks identical.

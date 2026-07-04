@@ -2,7 +2,7 @@
 title: TCP and Non-HTTP Ingress
 description: Getting raw TCP and UDP into the cluster — LoadBalancer Services, the tcp-services ConfigMap, SNI routing, Gateway API L4 routes, and the timeout traps.
 sidebar:
-  order: 12
+  order: 13
 ---
 
 The Ingress resource is HTTP(S)-only by spec. Host and path rules are HTTP concepts; there is nowhere in the API to express "port 5432 goes to Postgres." For databases, message queues, MQTT, LDAP, SMTP, game servers — anything that isn't HTTP — you need a different door into the cluster.

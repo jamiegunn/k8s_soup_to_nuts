@@ -73,6 +73,7 @@ kubectl logs <pod-name> --previous
 | Look up an exact error message and jump to its playbook | [Error Message Index](/troubleshooting/error-index/) |
 | Follow a curated track instead of browsing 180 pages | [Learning Paths](/start/learning-paths/) |
 | Write HTTPRoutes on a platform-run Gateway | [Gateway API for App Teams](/networking/gateway-api/) |
+| Finally understand L2/L4/L7 and what a VIP actually is | [Network Layers and VIPs](/networking/layers-and-vips/) |
 | Trace one request end to end — DNS to VIP to pod and back | [Life of a Request](/routing/life-of-a-request/) |
 | Understand what actually answers my DNS queries (and tune it) | [CoreDNS Deep Dive](/routing/coredns-deep-dive/) |
 | Get a DNS record pointed at my service the right way | [DNS Integration](/routing/dns-integration/) |
