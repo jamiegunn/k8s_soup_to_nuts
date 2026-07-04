@@ -73,6 +73,11 @@ kubectl logs <pod-name> --previous
 | Look up an exact error message and jump to its playbook | [Error Message Index](/troubleshooting/error-index/) |
 | Follow a curated track instead of browsing 180 pages | [Learning Paths](/start/learning-paths/) |
 | Write HTTPRoutes on a platform-run Gateway | [Gateway API for App Teams](/networking/gateway-api/) |
+| Trace one request end to end — DNS to VIP to pod and back | [Life of a Request](/routing/life-of-a-request/) |
+| Understand what actually answers my DNS queries (and tune it) | [CoreDNS Deep Dive](/routing/coredns-deep-dive/) |
+| Get a DNS record pointed at my service the right way | [DNS Integration](/routing/dns-integration/) |
+| Write, template, and override Helm charts properly | [Helm Deep Dive](/helm/overview/) |
+| Figure out which values file/flag wins in a Helm override fight | [Values and Overrides](/helm/values-and-overrides/) |
 | Cut namespace cost without causing an OOM storm | [Cost and Rightsizing](/operations/cost-and-rightsizing/) |
 | Request GPUs and keep a 40GB model load from killing the pod | [GPUs and AI Workloads](/workloads/gpu-and-ai-workloads/) |
 | See every point where the JVM and Kubernetes interlock | [The JVM–Kubernetes Coupling Map](/java/jvm-kubernetes-coupling/) |

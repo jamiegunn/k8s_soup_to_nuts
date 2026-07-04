@@ -9,6 +9,10 @@ Raw YAML works for one service in one environment. Add a second environment and 
 
 This article is that driving manual. Kustomize first, because it ships inside kubectl and you already have it.
 
+:::tip[There's a whole section on Helm]
+This article is the survival guide for both tools. For the full Helm treatment — [chart anatomy](/helm/chart-anatomy/), [the template language](/helm/template-language/), [values and override precedence](/helm/values-and-overrides/), [authoring best practices](/helm/authoring-best-practices/), and [release lifecycle](/helm/lifecycle-and-operations/) — see the [Helm Deep Dive](/helm/overview/) section.
+:::
+
 ## Kustomize: patching, not templating
 
 Kustomize's core bet: the base manifests are **plain, valid YAML** you can read and apply as-is, and environments are expressed as patches on top. No `{{ }}` anywhere.

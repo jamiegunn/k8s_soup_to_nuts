@@ -79,6 +79,10 @@ export default defineConfig({
 					items: [{ autogenerate: { directory: 'networking' } }],
 				},
 				{
+					label: 'Routing & DNS Deep Dive',
+					items: [{ autogenerate: { directory: 'routing' } }],
+				},
+				{
 					label: 'Controllers, CRDs & Operators',
 					items: [{ autogenerate: { directory: 'controllers' } }],
 				},
@@ -93,6 +97,10 @@ export default defineConfig({
 				{
 					label: 'Day-2 Operations',
 					items: [{ autogenerate: { directory: 'operations' } }],
+				},
+				{
+					label: 'Helm Deep Dive',
+					items: [{ autogenerate: { directory: 'helm' } }],
 				},
 				{
 					label: 'Reference Architectures',

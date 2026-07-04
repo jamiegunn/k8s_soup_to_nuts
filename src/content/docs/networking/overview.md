@@ -127,6 +127,8 @@ Read in order the first time; after that, jump to the layer that's on fire.
 11. [TCP and non-HTTP ingress](/networking/tcp-ingress/) — getting databases, queues, and other raw TCP/UDP traffic into the cluster when Ingress can't help.
 12. [Gateway API for app teams](/networking/gateway-api/) — the Ingress successor: HTTPRoute anatomy, weighted canaries without annotations, and the status conditions that tell the truth.
 
+When these practical guides aren't deep enough, the [Routing & DNS Deep Dive](/routing/overview/) section traces a request end to end ([Life of a Request](/routing/life-of-a-request/)) and dissects the machinery ([kube-proxy and the dataplane](/routing/kube-proxy-and-the-dataplane/), [CoreDNS](/routing/coredns-deep-dive/), [DNS integration](/routing/dns-integration/)).
+
 :::note
 Networking failures often masquerade as application failures — "readiness probe failed" is frequently a NetworkPolicy or DNS problem, not your app. If you landed here mid-incident, [Service unreachable](/troubleshooting/service-unreachable/) in the troubleshooting section is the fastest entry point.
 :::
