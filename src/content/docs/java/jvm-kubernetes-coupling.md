@@ -25,17 +25,12 @@ article. At the end: the whole map compressed into a one-page checklist.
 pod's cgroup. Exceed it and the kernel's OOM killer sends SIGKILL — no
 appeal, no stack trace, exit code 137.
 
-**JVM side.** A container-aware JVM (JDK 10+, on by default) reads
-`memory.max` **once, at startup**, and derives its default heap from it —
-25% of the limit unless you say otherwise. The coupling knob:
-
-```text
--XX:MaxRAMPercentage=75.0
-```
-
-"Heap = 75% of whatever the cgroup allows," leaving 25% for Metaspace,
-thread stacks, code cache, and direct buffers — everything that lives outside
-the heap but inside the limit.
+**JVM side.** A container-aware JVM reads `memory.max` **once, at startup**,
+and sizes its default heap from it — the ergonomics, the defaults, and the
+heap-vs-non-heap split are the story of
+[The JVM in Containers](/java/jvm-in-containers/). The coupling knob is
+`-XX:MaxRAMPercentage`: heap as a percentage of whatever the cgroup allows,
+so the manifest and the JVM can never disagree about the number.
 
 **Failure when misaligned.** Two different deaths on two sides of the same
 line. Heap too large relative to the limit and total process RSS crosses
@@ -56,9 +51,8 @@ restart, whatever the platform allows.
 
 **Alignment rule.** Size heap as a percentage of the limit, never as a fixed
 `-Xmx` divorced from the manifest, and budget the non-heap remainder
-explicitly. Flag-by-flag treatment in
-[JVM Memory Knobs](/tuning/jvm-memory-knobs/); how the JVM discovers the
-cgroup in [The JVM in Containers](/java/jvm-in-containers/).
+explicitly — flag-by-flag treatment in
+[JVM Memory Knobs](/tuning/jvm-memory-knobs/).
 
 ### 2. CPU limit ↔ availableProcessors
 

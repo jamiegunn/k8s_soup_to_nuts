@@ -58,13 +58,7 @@ Set the limit to observed peak plus 20–30% headroom, and set `requests` to typ
 
 The JVM reports 60% heap utilization; the container gets OOMKilled anyway. Not a contradiction: the cgroup counts **everything** — heap *plus* metaspace, thread stacks (~1MB each × hundreds of threads), code cache, GC bookkeeping, direct/NIO buffers, and native library allocations. A `-Xmx3g` JVM routinely occupies 4GB+.
 
-Rules of thumb:
-
-- Heap should be ~50–75% of the container limit, not 100%.
-- Prefer `-XX:MaxRAMPercentage=70` over hard `-Xmx` so heap scales with the limit.
-- If heap is modest but the container still grows: suspect direct buffers, thread count, or a native leak.
-
-Full treatment in [Memory Leaks and OOM](/java/memory-leaks-and-oom/) and [JVM in Containers](/java/jvm-in-containers/). Go, Node, and Python have milder versions of the same story (GC headroom, buffer pools), but the JVM is the repeat offender.
+The fix is sizing the heap as a slice of the limit with the non-heap budget accounted for — the ratios and flags are in [JVM Memory Knobs](/tuning/jvm-memory-knobs/). If heap is modest but the container still grows, suspect direct buffers, thread count, or a native leak — the workflow is in [Memory Leaks and OOM](/java/memory-leaks-and-oom/). Go, Node, and Python have milder versions of the same story (GC headroom, buffer pools), but the JVM is the repeat offender.
 
 ### 3. Memory leak vs legitimate growth
 

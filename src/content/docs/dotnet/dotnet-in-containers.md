@@ -146,12 +146,9 @@ production many times.
 | `DOTNET_GCDynamicAdaptationMode` | 1 = DATAS | 0 in .NET 8; 1 in .NET 9 Server GC | The container-friendly Server GC |
 | `DOTNET_GCgen0size` | Gen0 budget, bytes (hex) | heuristic | Rarely needed once DATAS exists |
 
-The 75% default deserves a highlight for Java readers: the JVM defaults
-`MaxRAMPercentage` to a timid **25%** of the container limit and you tune it
-*up*; the CLR defaults its heap cap to an assertive **75%** and you tune it
-*down* when the non-GC budget is fat. Same equation, opposite starting
-points — see [The JVM in containers](/java/jvm-in-containers/) for the
-mirror image.
+For Java readers: this assertive 75% default is the mirror image of the
+JVM's timid default — same equation, opposite starting points — see
+[The JVM in containers](/java/jvm-in-containers/).
 
 ## The RSS budget: why 75% is not "the app gets 75%"
 

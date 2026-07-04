@@ -226,7 +226,7 @@ The most confusing tuning sessions start with a manifest that omits limits and a
 
 **Requests × HPA.** HPA CPU utilization targets are a percentage **of the request**: `target 70%` on `request 1000m` scales at 700m of usage. Halve the request and the same traffic now reads as 140% utilization — you just retuned your autoscaler to double replicas without touching the HPA object. Change requests and HPA targets *together*, deliberately: [Autoscaling](/workloads/autoscaling/).
 
-**Limits × JVM.** The JVM sizes its heap from the container's memory limit (`-XX:MaxRAMPercentage`, default 25%). Raise the limit and the heap grows into it; set `MaxRAMPercentage=75` without accounting for metaspace, threads, and direct buffers and the container OOMs *below* max heap. The limit and the JVM flags are one handshake, tuned as a pair: [JVM memory knobs](/tuning/jvm-memory-knobs/).
+**Limits × JVM.** The memory limit and the JVM's heap flags are one handshake, tuned as a pair — the percentage derivation and the non-heap budget live in [JVM memory knobs](/tuning/jvm-memory-knobs/).
 
 **Rolling updates × quota.** A Deployment with `maxSurge: 25%` briefly runs extra pods, and each one counts against ResourceQuota at full request. Budget `requests × (replicas + surge)`, not `requests × replicas`. Concretely:
 

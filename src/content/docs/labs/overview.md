@@ -18,13 +18,22 @@ You need no prior Kubernetes experience to start Lab 0, but the labs explain *wh
 
 ## What you'll build
 
-Across five labs you'll stand up a real (if small) delivery pipeline on your Mac:
+Across nine labs you'll stand up a real (if small) delivery pipeline on your Mac — then run it the way production gets run. The first five labs (0–4) build the system:
 
 - A real single-node Kubernetes cluster — k3s in a Linux VM — no Docker Desktop, no cloud account, no admin ticket.
 - `orders-api`, a Spring Boot 3.3 / Java 21 REST service, built entirely inside Docker (you don't need Java or Maven installed) and deployed with a Helm chart you author from scratch.
 - Configuration and secrets injected every way Kubernetes offers, so you can feel the differences instead of memorizing them.
 - A Valkey cache wired in as a backend service, found via DNS the way real services find each other.
 - ingress-nginx routing `http://orders.localtest.me:30080` from your browser all the way to a pod.
+
+The second arc (Labs 5–8) operates it:
+
+- Failures injected on purpose — crash loops, broken probes, missing config — and diagnosed with the same triage loop you'd use on call.
+- A monitoring stack with a dashboard you build and one alert that fires for a reason you caused.
+- The build → import → deploy → verify → rollback loop you've been typing by hand, scripted into a CI pipeline that runs locally.
+- Deploys under sustained load, with the request failures counted before the fix and proven zero after — zero-downtime mechanics measured, not asserted.
+
+A closing bridge page, [From the Lab to the Paved Road](/labs/from-lab-to-prod/), then maps everything you built onto the infrastructure your organization actually runs.
 
 ## Before you start: what the labs assume
 
@@ -61,17 +70,22 @@ Three choices deserve a sentence of defense:
 
 ## The lab sequence
 
-The labs are strictly ordered — each builds on the artifacts of the previous one. Budget roughly **4–6 hours** for the full sequence, comfortably split across sittings (there's a pause/resume recipe in every lab). Rough per-lab timings: Lab 0 ≈ 30–45 min (mostly waiting on first-time downloads), Labs 1–2 ≈ 60–75 min each, Labs 3–4 ≈ 45–60 min each.
+The labs are strictly ordered — each builds on the artifacts of the previous one. Budget roughly **8–11 hours** for the full sequence (**4–6 hours** if you stop after the build arc, Labs 0–4), comfortably split across sittings (there's a pause/resume recipe in every lab). Rough per-lab timings: Lab 0 ≈ 30–45 min (mostly waiting on first-time downloads), Labs 1–2 ≈ 60–75 min each, Labs 3–8 ≈ 45–60 min each.
 
 | Lab | Title | What you'll learn | Deep dives |
 |---|---|---|---|
 | 0 | [A Cluster on Your Mac](/labs/lab-0-cluster/) | Two Lima VMs — dockerd for builds, k3s as the cluster — `KUBECONFIG` wiring, namespace + context setup, smoke tests | [Local Development](/start/local-development/), [How Kubernetes Works](/start/how-kubernetes-works/), [kubectl Survival Kit](/start/kubectl-survival-kit/) |
-| 1 | Ship a Java API with Helm | Multi-stage Dockerfile (Maven build → JRE runtime), streaming the image into k3s's containerd, authoring `charts/orders-api` from scratch, install/upgrade/rollback | [Helm Chart Anatomy](/helm/chart-anatomy/), [Template Language](/helm/template-language/), [Java on K8s](/java/overview/) |
-| 2 | Secrets & Config, Every Way | env vars, `envFrom`, ConfigMap/Secret volume mounts, Spring property binding, what a rollout looks like when config changes | [Values and Overrides](/helm/values-and-overrides/), [YAML, Labels, and Namespaces](/start/yaml-labels-and-namespaces/) |
-| 3 | Wire In a Backend | Valkey via Helm (release `cache`), Services and cluster DNS, readiness gating on a dependency, connection config through the chart | [Valkey architecture](/architectures/valkey-shared-vip/), [Service Unreachable](/troubleshooting/service-unreachable/) |
-| 4 | Ingress & End to End | ingress-nginx on a NodePort (alongside k3s's bundled Traefik), host-based routing, `orders.localtest.me:30080` in a real browser, tracing a request hop by hop | [Routing](/routing/overview/), [Front Door architecture](/architectures/front-door/) |
+| 1 | [Ship a Java API with Helm](/labs/lab-1-java-api/) | Multi-stage Dockerfile (Maven build → JRE runtime), streaming the image into k3s's containerd, authoring `charts/orders-api` from scratch, install/upgrade/rollback | [Helm Chart Anatomy](/helm/chart-anatomy/), [Template Language](/helm/template-language/), [Java on K8s](/java/overview/) |
+| 2 | [Secrets & Config, Every Way](/labs/lab-2-config-and-secrets/) | env vars, `envFrom`, ConfigMap/Secret volume mounts, Spring property binding, what a rollout looks like when config changes | [Values and Overrides](/helm/values-and-overrides/), [YAML, Labels, and Namespaces](/start/yaml-labels-and-namespaces/) |
+| 3 | [Wire In a Backend](/labs/lab-3-backend-service/) | Valkey via Helm (release `cache`), Services and cluster DNS, readiness gating on a dependency, connection config through the chart | [Valkey architecture](/architectures/valkey-shared-vip/), [Service Unreachable](/troubleshooting/service-unreachable/) |
+| 4 | [Ingress & End to End](/labs/lab-4-ingress-end-to-end/) | ingress-nginx on a NodePort (alongside k3s's bundled Traefik), host-based routing, `orders.localtest.me:30080` in a real browser, tracing a request hop by hop | [Routing](/routing/overview/), [Front Door architecture](/architectures/front-door/) |
+| 5 | [Break It, Then Fix It](/labs/lab-5-break-and-fix/) | Injected failures — crash loops, bad probes, broken DNS, missing Secrets — each diagnosed with the triage playbooks instead of guesswork | [Triage Methodology](/troubleshooting/triage-methodology/), [Service Unreachable](/troubleshooting/service-unreachable/) |
+| 6 | [Metrics, Dashboards, and One Real Alert](/labs/lab-6-observability/) | A monitoring stack via Helm, actuator metrics scraped from `orders-api`, a dashboard you assemble, and one alert that fires for a reason you caused | [Metrics](/observability/metrics/), [Alerting](/observability/alerting/) |
+| 7 | [The CI Pipeline, Run Locally](/labs/lab-7-ci-locally/) | The build → tag → import → `helm upgrade` → verify → rollback loop from Labs 1–4, scripted end to end and run on your Mac like a pipeline stage | [CI/CD Pipeline Design](/operations/cicd-pipeline-design/), [Release Lifecycle and Operations](/helm/lifecycle-and-operations/) |
+| 8 | [Deploying Under Load](/labs/lab-8-deploy-under-load/) | An in-cluster fortio load generator, a rollout caught dropping requests, then preStop + grace + surge settings proven zero-downtime by before/after measurement | [Zero-Downtime Deployments](/architectures/zero-downtime/), [Graceful Shutdown](/workloads/graceful-shutdown/), [Rollout & Shutdown Knobs](/tuning/rollout-shutdown-knobs/) |
+| — | [From the Lab to the Paved Road](/labs/from-lab-to-prod/) | The bridge to real org infrastructure: registries, CD systems, locked-down namespaces — what changes at work, and what you already know | [Working Without Admin](/start/working-without-admin/), [Reference Architectures](/architectures/overview/) |
 
-You create the cluster **once** in Lab 0 and keep it for the whole sequence — k3s needs no pre-provisioning for Lab 4's ingress; NodePorts and Lima's automatic port forwarding cover it.
+You create the cluster **once** in Lab 0 and keep it for the whole sequence — k3s needs no pre-provisioning for Lab 4's ingress; NodePorts and Lima's automatic port forwarding cover it. One scheduling note: Lab 4 ends with an *optional* full teardown for people stopping there — if you're continuing to Lab 5, take the pause recipe instead and keep the stack.
 
 ## Conventions used in every lab
 

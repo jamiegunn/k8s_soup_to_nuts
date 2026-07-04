@@ -65,9 +65,7 @@ Rules of thumb from the trenches:
 
 ## JVM apps: coordinate the two knobs
 
-For Java workloads, the container limit and the heap ceiling are **two separate settings that must move together**. Raising the container memory limit does nothing for a JVM whose `-Xmx` still caps the heap at the old size — you've bought RAM the process refuses to use. Worse, raising `-Xmx` *without* raising the limit walks the JVM straight into an OOM kill, because heap is only part of JVM footprint (metaspace, threads, code cache, direct buffers ride on top).
-
-The maintainable pattern is percentage-based, so one knob (the limit) drives both:
+For Java workloads, the container limit and the heap ceiling are **two separate settings that must move together** — raise one without the other and you've either bought RAM the process refuses to use, or walked it straight into an OOM kill. The maintainable pattern is percentage-based, so one knob (the limit) drives both:
 
 ```yaml
 resources:
@@ -78,7 +76,7 @@ env:
     value: "-XX:MaxRAMPercentage=75.0"
 ```
 
-The JVM sees the cgroup limit and sizes the heap to 75% of it, leaving 25% for everything else — adjust the ratio for thread-heavy or off-heap-heavy apps. If your app uses explicit `-Xmx`, every limit change is a two-field change; make them in the same edit and the same PR. Full treatment (including container-awareness flags and how to verify what the JVM actually computed) in [JVM in containers](/java/jvm-in-containers/).
+Why the percentage pattern beats a fixed `-Xmx` — and how the JVM derives its heap from the cgroup limit — is covered in [JVM in containers](/java/jvm-in-containers/). If your app does use explicit `-Xmx`, every limit change is a two-field change; make them in the same edit and the same PR.
 
 ## In-place pod resize (no restart) — on new enough clusters
 

@@ -35,6 +35,7 @@ So the reading order for any tuning question is: symptom → knob reference (the
 | [Rollout & Shutdown Knobs](/tuning/rollout-shutdown-knobs/) | The rollout pacing dials (surge, maxUnavailable, minReadySeconds) and the termination budget (preStop, grace period, drain) — with the combined deploy-under-load math |
 | [Sizing Walkthrough](/tuning/sizing-walkthrough/) | The capstone: one service taken from a cold start to production-tuned, every number derived from a measurement, ending in a 12-step ritual you can reuse |
 | [Requests & Limits on a Running Fleet](/tuning/brownfield-resources/) | The brownfield companion: auditing what's actually deployed, deriving numbers from live traffic (no load tests), and the wave-by-wave rollout that doesn't cause the incident it prevents |
+| [The End-to-End Timeout Budget](/tuning/timeout-budget/) | Request and idle timeouts at every hop of the corporate chain — the shrink-inward/grow-inward rules and a worked 10-second budget |
 | [Health Check Design](/tuning/health-check-design/) | Probes as a design discipline: hard/soft dependency classification, per-archetype endpoint designs, and the fleet retrofit order that never breaks prod |
 
 ## The three rules that govern every knob here

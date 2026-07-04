@@ -194,11 +194,11 @@ all live *outside* `-Xmx` (the full budget is itemized in
 eventually *use* 3 GiB of heap (GC has no reason to hurry below `-Xmx`), and
 RSS lands at 3.4–4 GiB. Kernel: 137.
 
-Budget rule of thumb: heap ≤ 70–75% of the container limit
-(`-XX:MaxRAMPercentage=75` does this automatically), more headroom for
-thread-heavy or Netty-heavy apps. If you're already at 75% and still getting
-OOMKilled with a flat heap, that's the native workflow above, not a reason
-to go to 60% blindly — measure with NMT, then size.
+The heap-to-limit ratios and the full RSS budget are
+[JVM Memory Knobs](/tuning/jvm-memory-knobs/) territory. If you're sized
+sanely and still getting OOMKilled with a flat heap, that's the native
+workflow above, not a reason to shrink the heap blindly — measure with NMT,
+then size.
 
 :::tip[Leaks appear in every replica — use that]
 You rarely need to risk the struggling pod. Run histograms and NMT against a

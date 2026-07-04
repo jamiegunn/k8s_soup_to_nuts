@@ -61,6 +61,7 @@ Each section stands alone and opens with its own overview:
 |---|---|
 | Learn the core mental model | [How Kubernetes Works](/start/how-kubernetes-works/) |
 | Find the right article for any task | [How Do I…? Solutions Index](/start/solutions-index/) |
+| Get ready to ship to a namespace someone else provisioned | [Day-1 Checklist](/start/day-1-checklist/) |
 | Follow a curated reading track | [Learning Paths](/learning-paths/) |
 | Understand what happens when you `kubectl apply` | [Life of a Deployment](/start/life-of-a-deployment/) |
 | Find out what you're allowed to do | [Working Without Admin](/start/working-without-admin/) |

@@ -90,6 +90,8 @@ Find your symptom, go to the playbook. When in doubt, start with [Triage Methodo
 |---|---|
 | Shell into a container with no shell (distroless) | [Debugging Toolbox](/troubleshooting/debugging-toolbox/) |
 | I have an exact error string and want the right playbook | [Error Message Index](/troubleshooting/error-index/) |
+| Everything is green but p99 is on fire | [It's Slow, Not Down](/troubleshooting/its-slow/) |
+| A pod (or namespace, or PVC) won't finish deleting | [Stuck Terminating](/troubleshooting/stuck-terminating/) |
 | I'm exec'd into a pod — what do I run and how do I read it? | [Linux Inside the Pod](/troubleshooting/linux-inside-the-pod/) |
 | No shell in the image / need tools in a locked-down pod | [The BusyBox Toolkit](/troubleshooting/busybox/) and [Debugging Toolbox](/troubleshooting/debugging-toolbox/) |
 | Debug a container that crashes before you can exec | [Debugging Toolbox](/troubleshooting/debugging-toolbox/) (`--copy-to`) |

@@ -98,6 +98,14 @@ kubectl logs <pod-name> --previous
 | Stop dropping requests during deploys — the termination lifecycle | [Graceful Shutdown](/workloads/graceful-shutdown/) |
 | Tune rollout pacing and the shutdown budget (surge, grace, preStop) | [Rollout & Shutdown Knobs](/tuning/rollout-shutdown-knobs/) |
 | Decode a 502/503/504 from the front door, layer by layer | [502, 503, 504 from the Front Door](/troubleshooting/front-door-5xx/) |
+| Triage "it's slow, not down" — latency with everything green | [It's Slow, Not Down](/troubleshooting/its-slow/) |
+| Unstick a pod, PVC, or namespace stuck Terminating | [Stuck Terminating](/troubleshooting/stuck-terminating/) |
+| Trust the corporate CA from my containers (and fix x509 errors) | [TLS and Corporate CAs](/networking/tls-and-corporate-cas/) |
+| Set request and idle timeouts coherently across every hop | [The End-to-End Timeout Budget](/tuning/timeout-budget/) |
+| Connect an in-cluster app to an out-of-cluster database properly | [The External Database](/architectures/external-database/) |
+| Prepare for my first deploy to a real namespace | [Day-1 Checklist](/start/day-1-checklist/) |
+| Practice fixing the classic failures on my lab cluster | [Lab 5: Break It, Then Fix It](/labs/lab-5-break-and-fix/) |
+| Map my lab skills onto the org's real pipeline and registry | [From the Lab to the Paved Road](/labs/from-lab-to-prod/) |
 | Size a new service from zero, step by step | [Sizing Walkthrough](/tuning/sizing-walkthrough/) |
 | Tell whether it's my pod or the node (evictions, `Terminating`, `Unknown`) | [Node Problems](/troubleshooting/node-problems/) |
 | Shell into a distroless container, or debug one that dies before I can exec | [Debugging Toolbox](/troubleshooting/debugging-toolbox/) |

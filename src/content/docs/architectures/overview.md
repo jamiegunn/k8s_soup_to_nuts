@@ -29,6 +29,7 @@ The rest of this site explains *how things work*. This section is different: eac
 | [The Locked-Down Namespace](/architectures/locked-down-namespace/) | PSA restricted + default-deny NetworkPolicy + non-root read-only containers + least-privilege RBAC — with a real app working inside and every diagnostic path preserved |
 | [Event-Driven Autoscaling with KEDA](/architectures/keda-autoscaling/) | Scaling consumers on queue depth/lag (Kafka, RabbitMQ, IBM MQ) with scale-to-zero and the drain-safe scale-in story |
 | [Progressive Delivery](/architectures/progressive-delivery/) | Metric-gated canary with automatic rollback via Argo Rollouts — a bad version caught at 10% traffic by its own error rate |
+| [The External Database](/architectures/external-database/) | The corporate classic: in-cluster app, out-of-cluster Oracle/Postgres — egress identity, firewall-friendly keepalives, and the blip-tolerant health checks |
 
 ## Which build do I need?
 
