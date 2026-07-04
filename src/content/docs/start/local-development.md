@@ -39,6 +39,7 @@ Test *those* things in your dev namespace, deliberately, and treat local as the 
 | **kind** | ~30s | Yes (config file) | `kind load docker-image` | Default choice; CI too |
 | **minikube** | ~1min | Yes | `minikube image load` | Need addons (ingress, metrics-server) |
 | **k3d** | ~15s | Yes | Built-in registry flag | Lightweight, registry-first workflows |
+| **k3s in a VM** | ~1min (VM boot) | Per VM | `docker save \| ctr images import` | Closest to a real single-node install; what the [labs](/labs/lab-0-cluster/) use |
 | **Docker Desktop** | Toggle | No | Shares Docker's image cache | Absolute basics, zero setup |
 
 ### kind — the default recommendation
@@ -91,6 +92,19 @@ k3s (a slimmed Kubernetes) running in Docker. Fastest startup of the bunch, and 
 k3d cluster create myapp --registry-create myapp-registry:5000
 ```
 
+### k3s in a VM — what the labs use
+
+k3s without the Docker wrapper: a certified Kubernetes distribution that packs the entire control plane plus the kubelet into one binary, running in a small Linux VM. On a Mac, Lima's template makes it a one-liner:
+
+```bash
+limactl start template://k3s
+export KUBECONFIG="$HOME/.lima/k3s/copied-from-guest/kubeconfig.yaml"
+```
+
+(On a Linux box, skip the VM: `curl -sfL https://get.k3s.io | sh -` installs it straight onto the host.)
+
+Compared to kind/k3d, you trade a slower first boot for the most production-shaped option on the list — k3s is what actually runs on edge devices and on-prem single-node installs, and your "cluster" is a real Linux machine you can shell into (`limactl shell k3s`) rather than a Docker container pretending to be a node. It's also the setup the [Hands-On Labs](/labs/lab-0-cluster/) build step by step, including the two-VM split between a Docker daemon for builds and k3s for running them.
+
 ### Docker Desktop
 
 One checkbox in settings, and images built locally are just *there* — no loading step. But it's single-node, opaque when it breaks, and the reset button is your only repair tool. Fine for your first week; you'll outgrow it.
@@ -99,7 +113,7 @@ One checkbox in settings, and images built locally are just *there* — no loadi
 
 The rite of passage: you build `myapp:dev`, deploy, and get `ErrImagePull`. Your laptop's Docker daemon and the cluster's container runtime are **different worlds** — kind nodes are containers with their own containerd, and they've never heard of your image. (Full decision tree in [ImagePullBackOff](/troubleshooting/imagepullbackoff/).)
 
-Three fixes:
+The fixes, by cluster flavor:
 
 ```bash
 # kind: copy the image into the node(s)
@@ -107,6 +121,9 @@ kind load docker-image myapp:dev --name myapp
 
 # k3d equivalent
 k3d image import myapp:dev --cluster myapp
+
+# k3s in a Lima VM: stream the image into k3s's containerd
+docker save myapp:dev | limactl shell k3s sudo k3s ctr images import -
 
 # or run a local registry and push/pull like prod does
 docker tag myapp:dev localhost:5000/myapp:dev && docker push localhost:5000/myapp:dev
