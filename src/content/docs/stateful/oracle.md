@@ -7,6 +7,10 @@ sidebar:
 
 Oracle on Kubernetes is rare, and the reasons are mostly not technical. Before we talk pods: the most common correct architecture is **Oracle stays where it is** — on the appliance, the Exadata, the DBA-managed VMs, or a cloud service — **and your Kubernetes workloads connect to it**. Skip to the last section if that's your situation; it's the part you'll actually use.
 
+:::tip[War story]
+If you are running Oracle Database Free in a local VM on Apple Silicon and it crash-loops with `ORA-01012`, check out our Field Note: [The Oracle Database That Hated Time Travel](/blog/the-oracle-database-that-hated-time-travel/) — a deep dive into VM time drift aborts and how to prevent them.
+:::
+
 ## The licensing landmine (read this before scheduling anything)
 
 Oracle's processor licensing counts cores the software **can run on**, and Oracle's position on soft partitioning has historically been hostile: on a virtualized or orchestrated platform, auditors may argue you owe licenses for every node the database *could* be scheduled to — not the one node it's on. On a 60-node shared cluster, "we ran one Oracle pod for a sprint" can become an audit finding priced against the whole cluster's cores.
