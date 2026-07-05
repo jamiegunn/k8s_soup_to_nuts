@@ -134,6 +134,36 @@ spec:
 
 The trap that spans all of these: a pool with **no matching advertisement** happily allocates IPs that nobody announces. Your Service shows an `EXTERNAL-IP`, status looks green, and every packet to it evaporates. If a brand-new pool is unreachable from minute one, ask the platform team whether the advertisement exists before debugging anything else.
 
+## How the network routes to a node: L2 ARP vs. BGP Routing
+
+A common point of confusion when working with MetalLB: if Kubernetes exposes a `LoadBalancer` Service on *every* worker node (via kube-proxy and NodePorts), and you have a single IP (VIP) assigned to it, **how does the physical network decide which node to send the packet to?**
+
+The journey from client to pod happens in two distinct hops:
+
+```mermaid
+graph TD
+    Client[External Client] -->|Step 1: VIP-to-Node| Node[Elected/Routed Worker Node]
+    Node -->|Step 2: Node-to-Pod| Pod[Target Pod]
+```
+
+### Hop 1: External VIP-to-Node (L2 ARP or L3 BGP)
+The physical network switch or router has no awareness of Kubernetes namespaces, services, or pods. It only understands MAC addresses, IP addresses, and routing tables. It determines which node receives the packet based on the MetalLB mode:
+
+* **In Layer 2 Mode**:
+  MetalLB speaker pods run a leader election (using memberlist). Exactly **one worker node** is elected as the leader/announcer for your Service's VIP. That node's speaker responds to ARP (IPv4) or NDP (IPv6) queries for the VIP with its own physical MAC address.
+  * **Routing outcome**: The upstream switch sends *all* traffic for the VIP to that single worker node's network interface.
+  * **Failover**: If that worker node dies, memberlist detects the loss, elects a new leader node, and the new leader broadcasts a **gratuitous ARP (GARP)** to update the upstream switch's MAC tables.
+
+* **In BGP Mode**:
+  Multiple worker nodes (typically all nodes running a speaker pod) peer with your upstream routers via BGP. They advertise the VIP as a `/32` (IPv4) or `/128` (IPv6) host route with their own node IP as the next-hop.
+  * **Routing outcome**: The router sees that the VIP is reachable via multiple worker nodes and uses **ECMP (Equal-Cost Multi-Path)** to hash and load-balance incoming connection flows across those nodes' physical IP addresses.
+  * **Failover**: If a worker node dies, its BGP session terminates. The router withdraws that node's path and redistributes traffic to the remaining healthy nodes.
+
+### Hop 2: Internal Node-to-Pod (kube-proxy / CNI)
+Once the packet reaches the physical NIC of the selected worker node, Kubernetes networking takes over. The kernel's packet-filtering layer (configured by `kube-proxy` or the CNI using `iptables`, `IPVS`, or `eBPF`) intercepts the packet and routes it to a backend pod:
+* **With `externalTrafficPolicy: Cluster`**: The receiving node will load-balance the packet to *any* matching pod in the cluster. If the chosen pod is on another node, the packet is forwarded across the cluster's overlay network (VXLAN, Geneve, etc.).
+* **With `externalTrafficPolicy: Local`**: The node will *only* forward the packet to a pod running locally on that same node. To support this, MetalLB speakers are smart: they only announce the VIP (or reply to ARP requests) from nodes that actually host at least one Ready pod for that service.
+
 ## L2 mode: one node answers ARP
 
 In Layer 2 mode, MetalLB elects **one node** per Service IP. That node's speaker answers ARP requests (IPv4) or NDP (IPv6) for the IP — the IP isn't bound to any interface, the speaker just responds on the wire — so the local network delivers every packet for that IP to that one node. From there, kube-proxy spreads traffic to the backing pods as usual.

@@ -75,6 +75,15 @@ Bare-metal and vSphere clusters have no cloud API. Two fulfillment patterns domi
 
 Either way, your manifest stays a plain `type: LoadBalancer` Service (or an Ingress); the on-prem machinery is the platform team's.
 
+### How the VIP routes to a node (L2 vs. BGP)
+
+Since a `LoadBalancer` Service is defined across all worker nodes in the cluster, how does the upstream physical network know *which* node to deliver the traffic to?
+
+* **In L2 Mode**: MetalLB speaker pods run a leader election. Exactly one worker node is elected to answer ARP requests for the VIP. The upstream switch sends all traffic for the VIP to that node's MAC address.
+* **In BGP Mode**: Nodes announce the VIP as a `/32` host route to the upstream routers. The routers then use ECMP (Equal-Cost Multi-Path) to load-balance connection flows across multiple nodes.
+
+Once the packet arrives at the node's physical network interface, Kubernetes' internal proxying (`kube-proxy` or the CNI) takes over, routing it to the destination pod. The detailed mechanics of this two-hop process are in the [MetalLB Routing Guide](/controllers/metallb/#how-the-network-routes-to-a-node-l2-arp-vs-bgp-routing).
+
 ## externalTrafficPolicy: the trade you must choose
 
 Once the external LB delivers a packet to a node port, kube-proxy takes over — and `externalTrafficPolicy` on your Service decides what happens next.
