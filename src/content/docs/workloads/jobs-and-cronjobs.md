@@ -8,7 +8,7 @@ sidebar:
 Deployments answer "keep this running forever." Jobs answer the other question: "run this until it succeeds, then stop." Migrations, batch imports, report generation, cleanup tasks. The semantics look simple and hide a surprising number of sharp edges — mostly around retries and schedules.
 
 :::tip[War stories]
-Two Field Notes live in this territory: [The CronJob That Fired 137 Times](/blog/the-cronjob-that-fired-137-times/) (missed-run backfill) and [The Migration That Ran Twice](/blog/the-migration-that-ran-twice/) (non-idempotent Job retries).
+Three Field Notes live in this territory: [The CronJob That Fired 137 Times](/blog/the-cronjob-that-fired-137-times/) (missed-run backfill), [The Migration That Ran Twice](/blog/the-migration-that-ran-twice/) (non-idempotent Job retries on MariaDB), and [The Migration Job That Ran Twice](/blog/the-migration-job-that-ran-twice/) (readiness probe failure during Postgres backfill).
 :::
 
 ## Job anatomy
