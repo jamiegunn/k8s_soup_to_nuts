@@ -255,7 +255,7 @@ From your seat you don't manage the Bundle — you *consume* the ConfigMap it pr
 **(d) What never to do.**
 
 :::danger
-Do not disable verification. `curl -k`, `InsecureSkipVerify: true`, `ServerCertificateCustomValidationCallback = ... => true`, Java's copy-pasted `TrustAllX509TrustManager`, `NODE_TLS_REJECT_UNAUTHORIZED=0`, `verify=False`. Every one of these "fixes" the error by turning off the only thing TLS actually provides — you'll happily handshake with anything that answers, including the attacker the corporate proxy exists to catch. It's the cargo-cult fix because it always works and never fails a test. It also never leaves the codebase: grep for these strings in any repo older than two years and you'll find one marked `// TODO: temporary`. The correct fix is always "put the right CA in the right trust store," and it takes maybe an hour longer.
+Do not disable verification. `curl -k`, `InsecureSkipVerify: true`, `ServerCertificateCustomValidationCallback = ... => true`, Java's copy-pasted `TrustAllX509TrustManager`, `NODE_TLS_REJECT_UNAUTHORIZED=0`, `verify=False`. Every one of these "fixes" the error by turning off the only thing TLS actually provides — you'll happily handshake with anything that answers, including the attacker the corporate proxy exists to catch. It's the cargo-cult fix because it always works and never fails a test. It also never leaves the codebase: grep for these strings in any repo older than two years and you'll find one marked `// TO-DO: temporary`. The correct fix is always "put the right CA in the right trust store," and it takes maybe an hour longer.
 :::
 
 ## mTLS, honestly

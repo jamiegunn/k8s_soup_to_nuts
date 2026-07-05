@@ -144,7 +144,7 @@ The rules:
 
 ## Service links: the legacy env you didn't ask for
 
-For Docker-links compatibility circa 2015, the kubelet injects variables for **every Service that exists in your namespace when the pod starts**: `{SVC}_SERVICE_HOST`, `{SVC}_SERVICE_PORT`, plus `{SVC}_PORT_8080_TCP_ADDR`-style variants for each port. Service name uppercased, dashes to underscores.
+To support Docker-links compatibility circa 2015, the kubelet injects variables for **every Service that exists in your namespace when the pod starts**: `{SVC}_SERVICE_HOST`, `{SVC}_SERVICE_PORT`, plus `{SVC}_PORT_8080_TCP_ADDR`-style variants for each port. Service name uppercased, dashes to underscores.
 
 Why this hurts in real namespaces:
 

@@ -180,7 +180,7 @@ kubectl ...
 
 Accept **"Proceed with the current configuration"** again if prompted. That closing message is Step 5's whole job: Lima copied the cluster's admin kubeconfig out of the guest onto your Mac — you just have to point `kubectl` at it.
 
-What's now running in that VM is not a toy or a simulator. **k3s** is a real, certified Kubernetes distribution that packages the entire control plane — API server, scheduler, controller manager, datastore — plus the kubelet into **one binary**, with containerd riding along as the runtime. It's what runs on production edge devices, in retail back rooms, and on on-prem boxes where a full multi-node install would be overkill. One process inside one VM, but every component described in [How Kubernetes Works](/start/how-kubernetes-works/) is genuinely in there.
+What's now running in that VM is not a toy or a simulator. **k3s** is a real, certified Kubernetes distribution that packages the entire control plane — API server, scheduler, controller manager, datastore — plus the kubelet into **one binary**, with containerd riding along as the runtime. It's what runs on production edge devices, in retail back rooms, and on physical on-prem servers where a full multi-node install would be overkill. One process inside one VM, but every component described in [How Kubernetes Works](/start/how-kubernetes-works/) is genuinely in there.
 
 Confirm both VMs are up:
 

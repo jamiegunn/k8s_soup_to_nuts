@@ -332,7 +332,7 @@ This section is why the article exists. A lockdown that survives its first incid
 
 ### Ephemeral debug containers under restricted PSA
 
-`kubectl exec` into orders-api gets you a distroless shell-less non-root container — by design. The tool is `kubectl debug`, but the ephemeral container is admitted through the same PSA gate as everything else. A stock `kubectl debug -it pod/orders-api-xxx --image=busybox` is **rejected**: the busybox container runs as root with no securityContext. Two fixes:
+`kubectl exec` into orders-api gets you a distroless shell-less non-root container — by design. The tool is `kubectl debug`, but the ephemeral container is admitted through the same PSA gate as everything else. A stock `kubectl debug -it pod/orders-api-6f7b9-x2k4p --image=busybox` is **rejected**: the busybox container runs as root with no securityContext. Two fixes:
 
 ```bash
 # Option A (kubectl ≥1.31): the restricted profile flag writes a compliant securityContext for you

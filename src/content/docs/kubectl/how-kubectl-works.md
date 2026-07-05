@@ -76,6 +76,122 @@ KUBECONFIG=~/.kube/config:~/.kube/new.yaml kubectl config view --flatten > ~/.ku
 If you work with prod and non-prod configs, keep them in separate files and set `KUBECONFIG` per terminal instead of merging everything into one file. A fat merged config plus muscle memory is how staging deploys land in prod. More defensive habits in [Tips and Tricks](/kubectl/tips-and-tricks/).
 :::
 
+## Changing contexts
+
+A **context** is simply a user-friendly label that maps a specific cluster API server (`cluster`) to specific credentials (`user`) and a default target namespace (`namespace`).
+
+### 1. The standard built-in way
+To switch your active context permanently (which modifies the `current-context` field in your active kubeconfig file):
+```bash
+# List all available contexts
+kubectl config get-contexts
+
+# Switch the active context
+kubectl config use-context prod-team-a
+```
+
+### 2. Changing the default namespace
+When you switch contexts, your commands target whatever `namespace` was defined in that context. If no namespace was set, it defaults to `default`. To change this default namespace for your *current* context:
+```bash
+kubectl config set-context --current --namespace=team-b
+```
+
+### 3. One-off overrides (the safest route)
+For scripting, automation, or high-security actions, do not rely on your terminal's ambient context. You can override both the context and the namespace for a single command execution:
+```bash
+kubectl --context=prod-team-a -n team-b get pods
+```
+
+### 4. Interactive context switching
+Typing `kubectl config use-context` is tedious and error-prone. Two popular CLI helpers solve this:
+* **[kubectx](https://github.com/ahmetb/kubectx)**: Switch contexts with `kubectx <context-name>`. Running it with no arguments opens an interactive list.
+* **[kubens](https://github.com/ahmetb/kubectx)**: Switch namespaces in the current context with `kubens <namespace-name>`.
+
+If you prefer a native shell solution without installing external binaries, add these lightweight helpers to your shell profile (`~/.zshrc` or `~/.bashrc`) using [fzf](https://github.com/junegunn/fzf) for instant fuzzy matching:
+```bash
+# Switch contexts interactively via fzf
+kctx() {
+  local ctx
+  ctx=$(kubectl config get-contexts -o name | fzf --height=40% --reverse)
+  if [ -n "$ctx" ]; then
+    kubectl config use-context "$ctx"
+  fi
+}
+
+# Switch default namespaces interactively via fzf
+kns() {
+  local ns
+  ns=$(kubectl get namespaces -o jsonpath='{.items[*].metadata.name}' | tr ' ' '\n' | fzf --height=40% --reverse)
+  if [ -n "$ns" ]; then
+    kubectl config set-context --current --namespace="$ns"
+  fi
+}
+```
+
+## Importing new contexts
+
+When a platform team provisions a new namespace, or you build a local cluster (e.g., k3s in a VM), you are handed a raw kubeconfig YAML file. You need to import this context into your local environment.
+
+### Method 1: The merging and flattening workflow (recommended)
+Rather than manually copy-pasting YAML blocks (which is prone to indentation errors), you can use `kubectl` to merge and flatten the configuration files.
+
+Suppose you have your main config (`~/.kube/config`) and a new config file (`~/Downloads/dev-cluster.yaml`):
+
+1. **Load both files temporarily in the `KUBECONFIG` variable:**
+   ```bash
+   export KUBECONFIG=~/.kube/config:~/Downloads/dev-cluster.yaml
+   ```
+2. **Flatten the combined configuration into a clean, unified config file:**
+   ```bash
+   kubectl config view --flatten > ~/.kube/config.new
+   ```
+3. **Replace your old config with the new merged config:**
+   ```bash
+   mv ~/.kube/config.new ~/.kube/config
+   unset KUBECONFIG
+   ```
+This automatically merges all clusters, users, and contexts without duplicates.
+
+### Method 2: Cloud provider CLIs
+If you are using managed Kubernetes, cloud providers provide built-in command utilities to automatically fetch, merge, and import contexts into your default `~/.kube/config` file.
+
+* **AWS (EKS):**
+  ```bash
+  aws eks update-kubeconfig --region us-west-2 --name my-eks-cluster --alias my-eks-context
+  ```
+* **GCP (GKE):**
+  ```bash
+  # Automatically appends the context to ~/.kube/config
+  gcloud container clusters get-credentials my-gke-cluster --zone us-central1-a --project my-project-id
+  ```
+* **Azure (AKS):**
+  ```bash
+  az aks get-credentials --resource-group my-resource-group --name my-aks-cluster
+  ```
+
+### Method 3: Manual context assembly
+If you only have raw endpoint URLs and credentials (such as a ServiceAccount token or a client cert) and want to construct a context from scratch:
+
+```bash
+# 1. Define the cluster endpoint and certificate authority
+kubectl config set-cluster my-custom-cluster \
+  --server=https://k8s-api.example.com:6443 \
+  --certificate-authority=/path/to/ca.crt \
+  --embed-certs=true
+
+# 2. Add the user credentials (token-based example)
+kubectl config set-credentials my-custom-user --token="kubeconfig-user-token-xxxxx"
+
+# 3. Create the context binding the cluster and credentials together
+kubectl config set-context my-custom-context \
+  --cluster=my-custom-cluster \
+  --user=my-custom-user \
+  --namespace=my-default-namespace
+
+# 4. Use the new context
+kubectl config use-context my-custom-context
+```
+
 ## Auth methods you'll actually meet
 
 The `user` entry decides how kubectl proves who you are. Four flavors in the wild:
