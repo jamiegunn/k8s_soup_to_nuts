@@ -70,10 +70,19 @@ spec:
             limits:   { memory: 6Gi }
           volumeMounts:
             - { name: oradata, mountPath: /opt/oracle/oradata }
+            - { name: dshm, mountPath: /dev/shm }
       volumes:
         - name: oradata
           persistentVolumeClaim: { claimName: oracle-free-data }
+        - name: dshm
+          emptyDir: { medium: Memory }
 ```
+
+:::caution[The /dev/shm trap]
+By default, Kubernetes mounts `/dev/shm` (shared memory) inside containers with a limit of only **64Mi**. Oracle Database relies on shared memory to allocate its SGA (System Global Area). If `/dev/shm` is limited to 64Mi, the instance will fail to initialize, and commands like `sqlplus` or internal health checks will fail with `ORA-01012: not logged on`. 
+
+The fix (as shown in the YAML above) is to mount an `emptyDir` volume with `medium: Memory` to `/dev/shm`. Since this shared memory is backed by node RAM, it counts toward your pod's memory limits — ensure your `limits.memory` covers both the SGA and the PGA.
+:::
 
 Note the registry: pulling from `container-registry.oracle.com` requires accepting terms and an `imagePullSecret`. First startup builds the database — give the readiness probe a long leash or you'll kill it mid-`CREATE DATABASE`. See [ImagePullBackOff](/troubleshooting/imagepullbackoff/) if the pull itself fights you.
 
