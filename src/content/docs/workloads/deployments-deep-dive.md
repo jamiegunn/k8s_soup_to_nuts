@@ -13,6 +13,12 @@ keywords:
   - kubectl rollout status non-zero
   - overlapping selectors two deployments
   - which version is this pod
+  - where do tolerations go in a deployment
+  - taints and tolerations untolerated taint pending
+  - poddisruptionbudget for a deployment
+  - pdb blocking node drain maxunavailable
+  - topologyspreadconstraints in pod template
+  - node affinity anti-affinity deployment
 sidebar:
   order: 2
 ---
@@ -147,6 +153,51 @@ ProgressDeadlineExceeded
 ```
 
 Set `progressDeadlineSeconds` a bit above your worst honest startup time × failureThreshold math, and make CI/CD gate on `rollout status`. If probes are why pods never become Ready, that's a [health checks](/workloads/health-checks/) problem.
+
+## Scheduling and disruption: fields that live elsewhere
+
+Two things people expect to find *on* the Deployment aren't Deployment fields at all. Knowing where they actually live saves a lot of confused searching — and a few outages.
+
+**Scheduling constraints ride in the pod template** (`spec.template.spec`), not on the Deployment. Anything that decides *which node* a pod lands on is a template concern, so editing it triggers a rollout like any other template change:
+
+- `nodeSelector` / `affinity` / `podAntiAffinity` — pull pods toward specific nodes/zones, or push replicas apart so one node's death doesn't take them all.
+- `tolerations` — let your pods land on **tainted** nodes (a GPU pool, a dedicated tenant pool). A node taint *repels* every pod that lacks a matching toleration; the toleration doesn't attract, it only cancels the repel. Pods stuck `Pending` with `untolerated taint` in their Events are missing one.
+- `topologySpreadConstraints` — the modern, even way to spread replicas across zones and nodes.
+
+```yaml
+spec:
+  template:
+    spec:
+      tolerations:
+        - key: dedicated
+          operator: Equal
+          value: checkout
+          effect: NoSchedule
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: topology.kubernetes.io/zone
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels: { app: payments }
+      containers: [ ... ]
+```
+
+The full decision tree — required vs preferred affinity, the three taint effects, spread skew and `whenUnsatisfiable` — is its own deep dive: [Scheduling — Affinity, Taints, and Spread](/workloads/scheduling/#taints-and-tolerations-repel-dont-attract).
+
+**A disruption budget is a separate object.** There is no `disruptionBudget` field on a Deployment — a very common thing to go hunting for. A **PodDisruptionBudget** is its own resource that selects the same pods by label and caps how many can be *voluntarily* evicted at once (node drains, cluster upgrades). It does nothing for *involuntary* disruption (a node crashing), and here's the classic trap: a too-strict PDB **blocks a platform-team node drain indefinitely** — `maxUnavailable: 0` on your workload wedges their maintenance and earns you a ticket.
+
+```yaml
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: payments
+spec:
+  minAvailable: 2                    # keep >=2 of 3 Ready during voluntary disruption
+  selector:
+    matchLabels: { app: payments }   # the SAME labels the Deployment selects
+```
+
+Match the PDB's selector to your Deployment's pods, and size it to protect availability *without* freezing maintenance (for `replicas: 3`, `minAvailable: 2` or `maxUnavailable: 1` is the usual sweet spot; a `minAvailable` equal to `replicas` is the wedge). The full treatment — PDB math, anti-affinity vs topology spread, graceful shutdown, and the drain-survival checklist — is in [High Availability](/workloads/high-availability/#poddisruptionbudgets).
 
 ## Reading status like the controller does
 

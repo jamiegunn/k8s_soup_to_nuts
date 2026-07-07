@@ -19,6 +19,10 @@ sidebar:
 
 This is a full reference build: a Valkey **primary** StatefulSet (writes) and a **read replica** StatefulSet (async replication), each fronted by its own `LoadBalancer` Service — but both Services claim the **same MetalLB VIP** via `metallb.io/allow-shared-ip`, separated by port. Clients dial the **corporate VIP** (`valkey.example.internal`) on `:6379` for read-write and `:6380` for read-only; the network team's load-balancer appliance pools both ports to the same MetalLB IP inside the cluster. Every manifest below is complete and applies in order.
 
+:::tip[Two companions to this page]
+This is the raw, copy-paste build. For the **Helm-packaged** treatment — what belongs in values vs a templated ConfigMap vs a Secret, Longhorn distributed storage, cluster-mode sharding, and cross-cluster active/passive DR — see the [Valkey Helm Chart Deep Dive](/architectures/valkey-helm-deep-dive/). To build it by hand on a local cluster, do [Lab 9: Valkey the Hard Way](/labs/lab-9-valkey/).
+:::
+
 :::note[Tuning the numbers]
 The resource blocks and probe timings in this build are starting points. Derive your own from measurements with [Requests & Limits Knobs](/tuning/requests-limits-knobs/) and [Health Check Knobs](/tuning/health-check-knobs/); the method is the [Sizing Walkthrough](/tuning/sizing-walkthrough/).
 :::
