@@ -3,6 +3,7 @@ import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import starlightBlog from 'starlight-blog';
 import { rehypeBaseLinks } from './src/plugins/rehype-base-links.mjs';
+import { remarkMermaid } from './src/plugins/remark-mermaid.mjs';
 
 // GitHub Pages: SITE is your GitHub Pages origin, BASE is the repo name.
 // If you rename the repo or move to a custom domain, update these two lines.
@@ -15,6 +16,9 @@ export default defineConfig({
 	site: SITE,
 	base: BASE,
 	markdown: {
+		// remarkMermaid must run before Expressive Code so ```mermaid fences
+		// become raw <pre class="mermaid"> for client-side rendering.
+		remarkPlugins: [remarkMermaid],
 		rehypePlugins: [rehypeBaseLinks(BASE)],
 	},
 	integrations: [
@@ -22,6 +26,8 @@ export default defineConfig({
 			title: 'K8s Soup to Nuts',
 			description:
 				'A field guide to running, debugging, and surviving Kubernetes when you own the apps but not the cluster.',
+			// Mermaid rendering is bundled (self-hosted) via a client script in the
+			// MarkdownContent override — see src/components/MarkdownContent.astro.
 			// Override the markdown wrapper so per-page `keywords` frontmatter is
 			// injected as hidden, Pagefind-indexed text. See the component and
 			// src/content.config.ts for the full mechanism.

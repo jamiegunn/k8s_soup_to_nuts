@@ -100,6 +100,23 @@ Once a client lives *outside* the cluster, you need an L4 entry point. Here are 
 
 Work down from the top; most on-prem teams stop at row one. All of these are covered generally in [TCP Ingress](/networking/tcp-ingress/) — this page is the Valkey-specific reading.
 
+The primary-pattern path, end to end — client to pod, with the read/write split preserved by port all the way down:
+
+```mermaid
+flowchart LR
+  C["Client app (outside cluster)"]
+  LB["Corporate LB — valkey.example.internal"]
+  VIP["MetalLB VIP 10.40.0.50 (one node answers)"]
+  SVC["Service + kube-proxy"]
+  P[("valkey-primary-0")]
+  R[("valkey-replica-0")]
+  C -->|":6379 rw / :6380 ro"| LB
+  LB -->|"TCP pool member"| VIP
+  VIP --> SVC
+  SVC -->|":6379"| P
+  SVC -->|":6380 to 6379"| R
+```
+
 ### 2a. MetalLB LoadBalancer (shared VIP) — the primary pattern
 
 This is the pattern the whole Valkey family is built on, documented end-to-end in [Valkey: Two StatefulSets, One MetalLB VIP](/architectures/valkey-shared-vip/). The summary: **two** `LoadBalancer` Services share **one** MetalLB IP via `metallb.io/allow-shared-ip`, split by port — `:6379` to the primary (read-write), `:6380` to the replica (read-only) — and a corporate appliance fronts that IP with a DNS name clients actually dial. Don't recreate the manifests; the [raw build's §2](/architectures/valkey-shared-vip/#2-prerequisites-and-the-platform-ask) owns the exact sharing contract. The path:
@@ -208,6 +225,20 @@ and the client is expected to **reconnect to that exact `<ip>:<port>`** and retr
         ▼
   client tries 10.244.2.7:6379  ──✗── UNREACHABLE (pod network, not routable outside)
                                        hang / connection timeout on every cross-shard key
+```
+
+The same trap as a message exchange — the redirect points at an address only in-cluster clients can reach:
+
+```mermaid
+sequenceDiagram
+  participant C as External client
+  participant A as Node A
+  participant B as Node B
+  C->>A: SET user:{42}:name (slot 3999)
+  A-->>C: -MOVED 3999 10.244.2.7:6379 (Node B pod IP)
+  Note over C,B: 10.244.x is the pod network — not routable from outside
+  C-xB: connect 10.244.2.7:6379
+  Note over C: hang / timeout on every cross-shard key
 ```
 
 ### The fix: announce an externally reachable address per node

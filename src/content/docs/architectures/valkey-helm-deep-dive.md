@@ -336,7 +336,40 @@ volumeClaimTemplates:
         storage: {{ .Values.persistence.size }}
 ```
 
+How the StatefulSet's pod, its PVC (from the `volumeClaimTemplate`), and Longhorn's block replicas fit together — the volume is a distributed thing living on *other* nodes, not a directory on the pod's node:
+
+```mermaid
+flowchart TB
+  subgraph N1["Node 1"]
+    POD["valkey-primary-0"]
+    ENG["Longhorn engine"]
+    RA["block replica A"]
+  end
+  subgraph N2["Node 2"]
+    RB["block replica B"]
+  end
+  POD -->|"mount /data (RWO)"| PVC["PVC data-valkey-primary-0"]
+  PVC -->|"CSI attach"| ENG
+  ENG -->|"sync write"| RA
+  ENG -->|"sync write"| RB
+```
+
 **Why it changes failover:** Longhorn replicates the volume at the **block layer** across nodes. When the primary pod is rescheduled to a different node (drain, node loss), the RWO volume *follows the pod* and re-attaches with the same data — because a healthy replica exists elsewhere. Node loss no longer means volume loss. That's the drain test in the raw build's [§4.5](/architectures/valkey-shared-vip/#4-verification-plan) actually passing instead of turning into a manual promotion. Contrast local-path storage, where the PV carries node affinity and the pod can *only* schedule where the disk is.
+
+When the node dies, the StatefulSet recreates the *same* pod identity and Longhorn re-attaches the *same* volume elsewhere — no manual promotion, because the data was never stranded on the dead node:
+
+```mermaid
+sequenceDiagram
+  participant STS as StatefulSet controller
+  participant SCH as kube-scheduler
+  participant LH as Longhorn
+  Note over STS: Node 1 dies — valkey-primary-0 lost
+  STS->>SCH: recreate valkey-primary-0 (same name + PVC)
+  SCH->>SCH: place pod on Node 3
+  SCH->>LH: attach data-valkey-primary-0 to Node 3
+  LH-->>SCH: attached — rebuilt from surviving replica
+  Note over STS,LH: same AOF/RDB, no manual promotion
+```
 
 **`dataLocality: best-effort`** migrates a replica onto the workload's own node so reads skip the network — a real win for a latency-sensitive datastore. The tradeoff is against pure spreading (a node with the local replica dying means both a reschedule *and* a rebuild), but for a read-heavy Valkey it's usually the right call.
 

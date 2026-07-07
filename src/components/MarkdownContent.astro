@@ -21,6 +21,13 @@
 // default. (Note: `starlight-blog/components/MarkdownContent.astro` returns null
 // for non-blog pages, so it must NOT be used here; the `overrides/` entry is the
 // one that handles both.)
+//
+// This component also carries the self-hosted Mermaid renderer (the <script>
+// below). It's the wrapper around all rendered markdown, so it's the natural
+// place to hang a client script that turns <pre class="mermaid"> blocks (emitted
+// by src/plugins/remark-mermaid.mjs) into SVG. Astro bundles the script; the
+// `mermaid` package is dynamically imported ONLY when a diagram is present, so
+// pages without diagrams never download it.
 import BlogAwareMarkdownContent from 'starlight-blog/overrides/MarkdownContent.astro';
 
 const keywords = Astro.locals.starlightRoute.entry.data.keywords as string[] | undefined;
@@ -35,3 +42,24 @@ const keywordText = keywords?.filter(Boolean).join(', ');
 	)
 }
 <BlogAwareMarkdownContent><slot /></BlogAwareMarkdownContent>
+
+<script>
+	// Self-hosted Mermaid. Bundled by Astro; the (large) mermaid module is
+	// dynamically imported only when the page actually contains a diagram.
+	const initMermaid = async () => {
+		if (!document.querySelector('pre.mermaid')) return;
+		const { default: mermaid } = await import('mermaid');
+		const theme = (document.documentElement.dataset.theme || '').includes('dark')
+			? 'dark'
+			: 'default';
+		mermaid.initialize({ startOnLoad: false, securityLevel: 'strict', theme });
+		try {
+			await mermaid.run();
+		} catch (e) {
+			console.error('mermaid', e);
+		}
+	};
+	initMermaid();
+	// Re-run after Starlight client-side navigations (if view transitions are on).
+	document.addEventListener('astro:after-swap', initMermaid);
+</script>
