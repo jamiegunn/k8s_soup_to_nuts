@@ -1,6 +1,18 @@
 ---
 title: The JVM in Containers
 description: How the JVM reads cgroup limits to size its heap and thread pools, and how to set container requests and limits that a JVM can actually live inside.
+keywords:
+  - -XX:+UseContainerSupport
+  - -XX:MaxRAMPercentage heap sizing
+  - cgroup v2 detection JDK 11.0.16
+  - OOMKilled exit 137
+  - Runtime.availableProcessors
+  - -XX:ActiveProcessorCount
+  - ForkJoinPool commonPool sizing
+  - in-place pod resize heap ergonomics
+  - JAVA_TOOL_OPTIONS
+  - RSS non-heap budget
+  - MaxRAMPercentage vs -Xmx
 sidebar:
   order: 2
 ---

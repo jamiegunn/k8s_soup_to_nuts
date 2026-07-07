@@ -1,6 +1,19 @@
 ---
 title: Thread Dumps with a JRE Only
 description: Every way to get a JVM thread dump from a Kubernetes pod without a JDK — SIGQUIT, jattach, ephemeral containers — and how to actually read one.
+keywords:
+  - SIGQUIT kill -3
+  - Full thread dump
+  - jstack alternative
+  - jcmd Thread.print
+  - jattach threaddump
+  - deadlock detection
+  - BLOCKED waiting to lock
+  - connection pool exhaustion
+  - lock convoy synchronized
+  - hot loop cpu spinning thread
+  - fastThread analyzer
+  - Unable to open socket file UID mismatch
 sidebar:
   order: 3
 ---

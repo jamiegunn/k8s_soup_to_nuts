@@ -1,6 +1,19 @@
 ---
 title: "SNAT and DNAT: Every Address Rewrite, and How to Avoid Them"
 description: A census of every source and destination rewrite in the corporate ingress and egress path — why each exists, what it costs, and the realistic options for eliminating or working around each one.
+keywords:
+  - lost client source IP
+  - externalTrafficPolicy Local
+  - PROXY protocol
+  - X-Forwarded-For trusted proxy
+  - MASQUERADE pod egress node IP
+  - conntrack table full dropping packet
+  - port exhaustion EADDRNOTAVAIL insert_failed
+  - NetworkPolicy ipBlock never matches
+  - egress gateway stable IP
+  - headless Service internalTrafficPolicy
+  - hairpin pod own service
+  - DSR direct server return
 sidebar:
   order: 4
 ---

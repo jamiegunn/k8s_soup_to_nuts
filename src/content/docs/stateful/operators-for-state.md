@@ -1,6 +1,19 @@
 ---
 title: Operators for Stateful Workloads
 description: Why databases need operators, how to evaluate one before betting your data on it, and how installation works when you don't have cluster admin.
+keywords:
+  - cloudnativepg cnpg
+  - crd controller admission webhook
+  - reconciliation loop stuck
+  - failover promotion fencing
+  - kubectl explain crd
+  - observedgeneration stale generation
+  - pause reconciliation annotation
+  - rbac can-i create cluster
+  - failed calling webhook
+  - operator maturity evaluation
+  - platform team install crds
+  - reconcilefailed events
 sidebar:
   order: 8
 ---

@@ -1,6 +1,17 @@
 ---
 title: "DaemonSets"
 description: What the platform's per-node agents do to and for your pods, and the rare cases where an app team should run a DaemonSet of its own.
+keywords:
+  - one pod per node
+  - daemonset not running on all nodes
+  - desired less than current daemonset
+  - kubectl drain ignore-daemonsets
+  - fluent-bit node-exporter cilium kube-proxy
+  - failures only on one node
+  - daemonset tolerations taints
+  - onupdate rolling update daemonset
+  - node agent pod
+  - allocatable vs capacity
 sidebar:
   order: 20
 ---

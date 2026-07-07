@@ -1,6 +1,19 @@
 ---
 title: Ingress and Routing
 description: Ingress resource anatomy, TLS termination, cert-manager, the Gateway API role split, and how to debug 502s and 504s.
+keywords:
+  - 502 bad gateway
+  - 504 gateway timeout
+  - ingressClassName ignored
+  - pathType Prefix
+  - TLS termination
+  - cert-manager
+  - Fake Certificate
+  - reverse proxy
+  - annotation silently ignored
+  - empty endpoints
+  - X-Forwarded-Proto
+  - default backend 404
 sidebar:
   order: 6
 ---

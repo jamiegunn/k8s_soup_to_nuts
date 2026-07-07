@@ -1,6 +1,16 @@
 ---
 title: "Lab 8: Deploying Under Load"
 description: Run a fortio load generator inside the cluster, catch a rolling deploy dropping requests, then add preStop, grace, and surge settings to the chart until the same deploy is measurably zero-downtime.
+keywords:
+  - measure zero-downtime deployment under load
+  - run a fortio load generator inside the cluster
+  - catch a rollout dropping requests
+  - prestop hook and termination grace period
+  - maxunavailable and maxsurge rollout settings
+  - poddisruptionbudget for evictions
+  - connection refused during a rolling deploy
+  - why scaling out did not spread traffic
+  - keep-alive connections pin to pods
 sidebar:
   order: 10
 ---

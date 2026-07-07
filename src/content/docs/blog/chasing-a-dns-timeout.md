@@ -1,6 +1,15 @@
 ---
 title: "Field Notes: Chasing a DNS Timeout"
 description: Intermittent 2-second latency spikes on calls to an external API, and the trail that led through tcpdump to ndots:5, search-domain expansion, and conntrack pressure.
+keywords:
+  - ndots:5
+  - /etc/resolv.conf search domains
+  - conntrack insert failures
+  - p99 latency +2000ms outlier
+  - NXDOMAIN query amplification
+  - CoreDNS UDP packet drop
+  - NodeLocal DNSCache
+  - dnsConfig fully qualified trailing dot
 date: 2026-04-01
 authors: editor
 tags:

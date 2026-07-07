@@ -1,6 +1,19 @@
 ---
 title: Logging Fundamentals
 description: The stdout contract, kubectl logs mastery, where logs physically live and why they vanish, and fixing multiline stack traces with JSON logging.
+keywords:
+  - kubectl logs --previous crashed container
+  - stdout stderr contract
+  - log rotation containerLogMaxSize
+  - multiline stack traces
+  - /var/log/pods node files
+  - kubectl logs --since --tail --timestamps
+  - stern multi-pod tailing
+  - sidecar logging emptyDir
+  - changing log levels at runtime
+  - Spring Boot actuator loggers
+  - structured JSON logging
+  - capture logs before deleting pod
 sidebar:
   order: 2
 ---

@@ -1,6 +1,18 @@
 ---
 title: "Kafka: Production Reference Architecture (Strimzi)"
 description: A complete, copy-paste-deployable 3-broker KRaft-mode Kafka cluster on Strimzi — node pools, the acks=all durability triangle, per-broker LoadBalancers over MetalLB, topics and users as CRs, alerts, and failure drills.
+keywords:
+  - KRaft mode no ZooKeeper
+  - acks=all min.insync.replicas durability
+  - advertised listeners bootstrap then direct
+  - under-replicated partitions
+  - KafkaNodePool dual-role
+  - external clients time out after bootstrap
+  - rack awareness zone spread
+  - page cache heap small
+  - KafkaTopic KafkaUser CRD
+  - consumer group lag
+  - NotEnoughReplicas offline partitions
 sidebar:
   order: 7
 ---

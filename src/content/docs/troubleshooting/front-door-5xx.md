@@ -1,6 +1,19 @@
 ---
 title: "502, 503, 504 from the Front Door"
 description: Symptom-first playbook for gateway errors at the corporate edge — fingerprint who minted the error, decode the code, bisect the layer in three curls, and fix the cause.
+keywords:
+  - 502 bad gateway
+  - 503 service unavailable
+  - 504 gateway timeout
+  - ingress-nginx upstream error
+  - no active endpoint behind service
+  - 5xx errors during deploy rollout
+  - upstream prematurely closed connection
+  - proxy-read-timeout 60 seconds
+  - which layer returned the error
+  - F5 NetScaler VIP block page
+  - readiness probe zeroed endpoints
+  - shutdown race preStop drain
 sidebar:
   order: 8
 ---

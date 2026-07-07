@@ -1,6 +1,19 @@
 ---
 title: GitHub Actions for K8s App Teams
 description: The GitHub Actions foundations a Kubernetes app team actually needs — triggers, permissions, Artifactory auth, and the complete annotated build-test-push pipeline for orders-api.
+keywords:
+  - github actions workflow yaml for kubernetes
+  - GITHUB_TOKEN permissions least privilege
+  - pull_request_target secrets exfiltration
+  - pin actions by commit sha
+  - concurrency cancel-in-progress
+  - oidc token id-token write artifactory
+  - docker buildx cache type=gha
+  - matrix build fail-fast
+  - actions/upload-artifact if always
+  - self-hosted runners actions-runner-controller arc
+  - act run workflows locally
+  - environment required reviewers prod approval gate
 sidebar:
   order: 2
 ---

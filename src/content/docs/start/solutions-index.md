@@ -1,6 +1,16 @@
 ---
 title: "How Do I…? — Solutions Index"
 description: A task-based index — route from what you're trying to do to the article that covers it.
+keywords:
+  - which article covers my problem
+  - kubernetes task to documentation map
+  - symptom to fix mapping
+  - index of all articles
+  - what page do I need
+  - deploy debug scale configure
+  - emergency playbook shortcut
+  - find the right guide by task
+  - kubernetes how do I
 sidebar:
   order: 9
 ---

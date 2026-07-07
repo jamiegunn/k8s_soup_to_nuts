@@ -1,6 +1,18 @@
 ---
 title: "The External Database: In-Cluster App, Out-of-Cluster Data"
 description: A complete reference build for the most common corporate topology — the app runs in Kubernetes while the database stays outside — covering naming, egress identity, NetworkPolicy, keepalive alignment, dependency-aware health checks, and the drills that prove each piece.
+keywords:
+  - ExternalName service
+  - ORA-12516 ORA-00018
+  - HikariCP connection pool exhaustion
+  - egress gateway stable source IP
+  - SNAT firewall rule
+  - database connect hangs then times out
+  - stale JVM DNS cache after failover
+  - oracle jdbc keepalive
+  - TCPS corporate CA truststore
+  - Monday morning first query hangs
+  - Postgres on VMs egress identity
 sidebar:
   order: 13
 ---

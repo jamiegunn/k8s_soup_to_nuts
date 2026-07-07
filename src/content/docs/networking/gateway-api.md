@@ -1,6 +1,19 @@
 ---
 title: Gateway API for App Teams
 description: The tenant-seat deep dive on HTTPRoute — anatomy, weighted canaries, status conditions, ReferenceGrant, and migrating off Ingress annotations.
+keywords:
+  - HTTPRoute
+  - my route does nothing
+  - Accepted False
+  - NotAllowedByListeners
+  - NoMatchingListenerHostname
+  - ResolvedRefs
+  - RefNotPermitted
+  - ReferenceGrant
+  - weighted traffic split canary
+  - gRPCRoute
+  - allowedRoutes
+  - ingress2gateway migration
 sidebar:
   order: 7
 ---

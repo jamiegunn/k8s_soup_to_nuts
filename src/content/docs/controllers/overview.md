@@ -1,6 +1,17 @@
 ---
 title: Controllers & Extensions Overview
 description: Why everything in Kubernetes is a controller, and how to work with the CRDs, operators, and platform-installed extensions you consume but don't operate.
+keywords:
+  - everything is a controller
+  - reconcile loop
+  - ownerReferences chain
+  - who keeps changing my replicas
+  - --show-managed-fields field manager
+  - spec vs status
+  - observedGeneration vs generation
+  - kubectl delete pod comes back
+  - platform team vs app team ownership
+  - endpointslice controller ready pods
 sidebar:
   order: 1
 ---

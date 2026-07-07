@@ -1,6 +1,19 @@
 ---
 title: RBAC Denied (Forbidden)
 description: Decode "Error from server (Forbidden)", test permissions with kubectl auth can-i, and write access requests platform can approve fast.
+keywords:
+  - Error from server Forbidden
+  - 403 in-cluster api call
+  - kubectl auth can-i
+  - cannot list resource in API group
+  - service account permission denied
+  - pods/exec forbidden
+  - role vs clusterrole
+  - rolebinding
+  - wrong apiGroup deployments.apps
+  - default service account no permissions
+  - write an access request
+  - kubectl exec permission denied
 sidebar:
   order: 13
 ---

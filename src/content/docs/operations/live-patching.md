@@ -1,6 +1,18 @@
 ---
 title: Live Patching
 description: The emergency kubectl toolkit — scale, set image, edit, and the three patch flavors — plus how to record what you did so it survives the morning.
+keywords:
+  - kubectl scale replicas
+  - kubectl set image hotfix
+  - json patch rfc 6902
+  - managedfields who changed what
+  - last-applied-configuration annotation
+  - server-side apply conflict force
+  - hpa fighting manual scale
+  - kubectl set env feature flag
+  - the object has been modified
+  - 2 am incident hotfix image
+  - kubectl annotate incident logbook
 sidebar:
   order: 2
 ---

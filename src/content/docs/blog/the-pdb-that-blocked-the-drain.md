@@ -1,6 +1,15 @@
 ---
 title: "Field Notes: The PDB That Blocked the Drain"
 description: Our PodDisruptionBudget was supposed to protect availability. Instead it held a node hostage for six hours and taught us that HA config is a negotiation, not armor.
+keywords:
+  - maxUnavailable 0
+  - eviction violates disruption budget
+  - kubectl drain stuck
+  - volume node affinity conflict
+  - ReadWriteOnce zone-pinned volume
+  - status.disruptionsAllowed 0
+  - minAvailable percentage rounding
+  - kernel patching node drain window
 date: 2026-05-20
 authors: editor
 tags:

@@ -1,6 +1,18 @@
 ---
 title: Resource Tuning in Prod
 description: Changing CPU and memory requests/limits on live workloads — evidence first, rolling-restart planning, JVM coordination, and in-place resize on newer clusters.
+keywords:
+  - requests and limits
+  - kubectl set resources
+  - in-place pod resize subresource
+  - resourcequota exceeded quota rollout
+  - limitrange default injection
+  - jvm maxrampercentage heap
+  - oomkilled memory headroom
+  - cpu throttling cfs periods
+  - vpa recommendation mode
+  - p99 working set sizing
+  - failedcreate exceeded quota
 sidebar:
   order: 6
 ---

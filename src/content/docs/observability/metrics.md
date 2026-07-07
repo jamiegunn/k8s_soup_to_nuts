@@ -1,6 +1,19 @@
 ---
 title: Metrics
 description: metrics-server vs the Prometheus stack, exposing app metrics, the essential PromQL for app teams, and dashboards worth building.
+keywords:
+  - metrics-server kubectl top
+  - Prometheus stack Grafana
+  - PromQL rate() counters
+  - ServiceMonitor PodMonitor
+  - kube-state-metrics cAdvisor
+  - container_memory_working_set_bytes
+  - CPU throttling cfs periods
+  - prometheus.io/scrape annotation
+  - Prometheus not scraping me
+  - USE and RED method
+  - kube-prometheus-stack dashboards
+  - cardinality budget
 sidebar:
   order: 4
 ---

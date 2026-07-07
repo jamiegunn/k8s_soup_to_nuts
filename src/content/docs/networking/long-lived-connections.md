@@ -1,6 +1,19 @@
 ---
 title: gRPC, WebSockets, and Long-Lived Connections
 description: Why Service load balancing breaks for gRPC, WebSockets, and connection pools — one hot pod, disconnect storms on deploy, stale conntrack — and the fixes ranked.
+keywords:
+  - one pod gets all the traffic
+  - uneven load balancing
+  - gRPC hot pod
+  - HTTP/2 multiplexing
+  - WebSocket disconnect
+  - idle timeout
+  - MaxConnectionAge GOAWAY
+  - headless service round_robin
+  - connection reset by peer
+  - upstream prematurely closed connection
+  - keepAliveTimeout 502
+  - graceful drain preStop
 sidebar:
   order: 12
 ---

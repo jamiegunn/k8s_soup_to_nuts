@@ -1,6 +1,17 @@
 ---
 title: Start Here
 description: What this field guide covers, who it's for, and how to navigate it when you own the apps but not the cluster.
+keywords:
+  - application developer not cluster admin
+  - namespace-scoped kubeconfig
+  - who owns what platform team split
+  - getting started with kubernetes for app teams
+  - two-minute access check
+  - kubectl auth can-i --list
+  - kubernetes vocabulary glossary
+  - suggested first week onboarding
+  - deploy apps but don't run kubernetes
+  - how the guide is organized
 sidebar:
   order: 1
 ---

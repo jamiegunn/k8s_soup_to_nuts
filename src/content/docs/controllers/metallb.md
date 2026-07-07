@@ -1,6 +1,17 @@
 ---
 title: MetalLB
 description: How MetalLB gives type LoadBalancer Services real IPs on bare metal — architecture, L2 vs BGP modes, the CR family, IP sharing, and the playbook for pending or unreachable external IPs.
+keywords:
+  - type loadbalancer external-ip pending
+  - bare metal load balancer
+  - ipaddresspool
+  - bgppeer bfd
+  - allocationfailed no available ips in pool
+  - metallb.io/loadBalancerIPs annotation
+  - allow-shared-ip
+  - ip allocated but unreachable
+  - autoAssign false pool
+  - l2advertisement bgpadvertisement
 sidebar:
   order: 5
 ---

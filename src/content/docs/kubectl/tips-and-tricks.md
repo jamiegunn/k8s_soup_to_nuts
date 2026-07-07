@@ -1,6 +1,19 @@
 ---
 title: Tips and Tricks
 description: Shell setup, krew plugins, manifest scaffolding, the export–edit–reapply round trip, kubectl wait, and the safety habits that keep prod incidents from starting at your keyboard.
+keywords:
+  - k alias kubectl completion zsh bash
+  - kube-ps1 red prompt prod context
+  - kubecolor stern neat view-secret get-all
+  - krew plugin manager install
+  - scaffold yaml dry-run=client -o yaml
+  - kubectl run --rm -it --restart=Never busybox debug pod
+  - kubectl explain --recursive crd fields
+  - kubectl diff before apply KUBECTL_EXTERNAL_DIFF dyff
+  - kubectl wait --for=condition=Ready --for=create timeout
+  - kubectl auth whoami can-i
+  - kubectl scale --current-replicas compare and swap
+  - backup before mutate rollback yaml
 sidebar:
   order: 4
 ---

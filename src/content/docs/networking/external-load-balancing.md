@@ -1,6 +1,19 @@
 ---
 title: External Load Balancing
 description: How traffic enters cloud and on-prem clusters — LoadBalancer Services, MetalLB, F5 CIS, externalTrafficPolicy, and preserving client IPs.
+keywords:
+  - EXTERNAL-IP pending
+  - LoadBalancer service stuck
+  - north-south traffic
+  - client IP lost
+  - PROXY protocol
+  - X-Forwarded-For
+  - healthCheckNodePort
+  - NodePort
+  - MetalLB
+  - F5 BIG-IP CIS
+  - LB says all nodes down
+  - static IP reservation
 sidebar:
   order: 9
 ---

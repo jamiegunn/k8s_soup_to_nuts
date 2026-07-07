@@ -1,6 +1,16 @@
 ---
 title: "Lab 0: A Cluster on Your Mac"
 description: Build the lab foundation — CLI tools via Homebrew, a Lima VM running dockerd for builds, a second Lima VM running k3s as the cluster, and a smoke-tested labs namespace.
+keywords:
+  - set up a local kubernetes cluster on mac
+  - install lima and k3s
+  - run kubernetes without docker desktop
+  - configure kubeconfig and point kubectl at the cluster
+  - docker cli talking to a lima vm over a socket
+  - install kubectl helm docker with homebrew
+  - create and default the labs namespace
+  - smoke test a pod on k3s
+  - pause and tear down a local cluster
 sidebar:
   order: 2
 ---

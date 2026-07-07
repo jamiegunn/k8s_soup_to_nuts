@@ -1,6 +1,18 @@
 ---
 title: Networking Overview
 description: A layered mental model for Kubernetes networking — pod network, Services, Ingress, external load balancers — and who owns which layer.
+keywords:
+  - how kubernetes networking works
+  - which layer is failing
+  - pod to pod communication
+  - connection refused from a service
+  - who owns the network
+  - ClusterIP unreachable
+  - 502 504 from ingress
+  - netshoot debug container
+  - service has no endpoints
+  - platform team vs app team
+  - DNS timeout in pod
 sidebar:
   order: 1
 ---

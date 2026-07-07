@@ -1,6 +1,18 @@
 ---
 title: .NET on Kubernetes
 description: Diagnosing and operating .NET services in runtime-only containers — the EventPipe toolbox, dotnet-monitor, and how the story differs from Java's.
+keywords:
+  - runtime-only aspnet image no SDK
+  - EventPipe diagnostic socket
+  - dotnet-monitor sidecar
+  - DOTNET_DbgEnableMiniDump
+  - chiseled distroless no shell
+  - dotnet-dump dotnet-trace missing
+  - UID 1654 socket ownership
+  - DOTNET_EnableDiagnostics=0
+  - kubectl debug ephemeral container
+  - diagnosing .NET without SDK
+  - GCHeapHardLimitPercent 75 percent default
 sidebar:
   order: 1
 ---

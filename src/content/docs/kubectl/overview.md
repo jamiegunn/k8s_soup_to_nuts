@@ -1,6 +1,18 @@
 ---
 title: kubectl Mastery
 description: Why kubectl is an API client, not a magic wand — and a map of the deep dives that will make every command make sense.
+keywords:
+  - kubectl is a fancy curl
+  - kubectl is an API client
+  - forbidden cannot list resource pods rbac
+  - kubectl proxy curl api server
+  - pods vs pods/exec subresource rbac
+  - get vs list verb difference
+  - kubectl command maps to http request
+  - cluster state is the only state no undo
+  - scaffold cronjob dry-run
+  - kubectl wait rollout status ready
+  - self-assessment kubectl skills
 sidebar:
   order: 1
 ---

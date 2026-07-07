@@ -1,6 +1,18 @@
 ---
 title: CSI Drivers
 description: How the Container Storage Interface provisions, attaches, and mounts your volumes — and where each stage fails when a PVC or pod gets stuck.
+keywords:
+  - container storage interface
+  - pvc stuck pending
+  - pod stuck containercreating
+  - multi-attach error for volume
+  - failedattachvolume
+  - failedmount unable to attach or mount volumes
+  - volumeattachment object
+  - waitforfirstconsumer
+  - filesystemresizepending volume expansion
+  - fsgroup permission denied volume
+  - volumesnapshot from pvc
 sidebar:
   order: 7
 ---

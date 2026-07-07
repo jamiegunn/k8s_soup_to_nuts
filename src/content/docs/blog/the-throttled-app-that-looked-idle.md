@@ -1,6 +1,15 @@
 ---
 title: "Field Notes: The Throttled App That Looked Idle"
 description: p99 latency tripled at peak every day while kubectl top swore we were at 40% CPU. We spent a week blaming GC, the database, and the network before finding the one metric that mattered.
+keywords:
+  - container_cpu_cfs_throttled_periods_total
+  - CFS bandwidth controller 100ms quota
+  - CPU limit throttling
+  - low CPU usage high tail latency
+  - kubectl top hides throttling
+  - remove CPU limit honest request
+  - throttle ratio PromQL
+  - availableProcessors JVM sizing ActiveProcessorCount
 date: 2026-03-18
 authors: editor
 tags:

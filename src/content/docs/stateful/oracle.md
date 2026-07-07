@@ -1,6 +1,19 @@
 ---
 title: Oracle on Kubernetes
 description: The honest take on Oracle Database and Kubernetes — licensing landmines, the OraOperator, and the connection patterns for keeping Oracle off-cluster.
+keywords:
+  - ORA-01012 not logged on
+  - /dev/shm shared memory sga
+  - oraoperator singleinstancedatabase
+  - database free 23ai
+  - processor licensing cores audit
+  - hugepages pending pod
+  - externalname service
+  - endpointslice off-cluster
+  - data guard standby
+  - tns easy connect string
+  - connection pool ucp hikaricp
+  - pinned node pool taints tolerations
 sidebar:
   order: 6
 ---

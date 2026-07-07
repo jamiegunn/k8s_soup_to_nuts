@@ -1,6 +1,19 @@
 ---
 title: PromQL for CPU and Memory
 description: The working query cookbook for consumed vs requested vs limited — CPU throttling, memory-to-OOM distance, right-sizing percentiles, and restart forensics.
+keywords:
+  - container_cpu_usage_seconds_total rate
+  - container_memory_working_set_bytes
+  - kube_pod_container_resource_requests limits
+  - group_left join label mismatch
+  - throttle ratio cfs_throttled_periods
+  - predict_linear time-to-OOM
+  - quantile_over_time right-sizing
+  - OOMKilled last_terminated_reason
+  - topk top consumers
+  - HPA averageUtilization denominator
+  - cAdvisor pause container POD filter
+  - Grafana Explore resource dashboard
 sidebar:
   order: 8
 ---

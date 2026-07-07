@@ -1,6 +1,18 @@
 ---
 title: Operations Overview
 description: How to make live changes in production Kubernetes without getting clobbered by your own CI/CD pipeline.
+keywords:
+  - drift management
+  - live edit clobbered by pipeline
+  - self-heal reconciler
+  - argo cd flux revert edit
+  - gitops source of truth
+  - kubectl edit reverted on deploy
+  - helm upgrade overwrites live change
+  - oomkilled 2am incident fix
+  - match live state pull request
+  - managed-by helm fingerprint
+  - emergency production change
 sidebar:
   order: 1
 ---

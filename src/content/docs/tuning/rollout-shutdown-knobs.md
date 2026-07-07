@@ -1,6 +1,19 @@
 ---
 title: "Rollout & Shutdown Knobs"
 description: Every deploy-time and termination dial in one place — surge and unavailability math, the grace-period budget, the combined deploy timeline, recipes, and the anti-pattern table.
+keywords:
+  - zero downtime deployment
+  - maxsurge maxunavailable
+  - terminationgraceperiodseconds
+  - prestop hook sleep
+  - exit code 137 graceful shutdown
+  - progressdeadlineseconds progressdeadlineexceeded
+  - kubectl rollout status undo
+  - 502 errors during deploy
+  - dropped requests rolling update
+  - minreadyseconds soak
+  - distroless no sleep binary
+  - failedprestophook event
 sidebar:
   order: 8
 ---

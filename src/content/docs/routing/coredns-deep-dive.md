@@ -1,6 +1,19 @@
 ---
 title: CoreDNS Deep Dive
 description: The Corefile line by line, how cluster records are synthesized from the API watch, where your external lookups go, and the cache semantics that explain "I fixed DNS but pods still fail."
+keywords:
+  - Corefile plugin chain
+  - kube-dns ClusterIP 10.96.0.10
+  - forward plugin upstream resolvers
+  - negative caching NXDOMAIN
+  - stub domain internal zone
+  - NodeLocal DNSCache 5-second latency
+  - autopath ndots search domains
+  - SERVFAIL DNS flaky
+  - I fixed DNS but pods still fail
+  - CoreDNS CrashLoopBackOff loop detected
+  - coredns_cache_hits_total metrics
+  - split-horizon rewrite hosts plugin
 sidebar:
   order: 5
 ---

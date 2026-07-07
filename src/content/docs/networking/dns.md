@@ -1,6 +1,19 @@
 ---
 title: DNS Inside the Cluster
 description: How CoreDNS resolves service names, why ndots:5 makes external lookups slow, and the per-pod DNS knobs you control.
+keywords:
+  - can't resolve service name
+  - NXDOMAIN
+  - CoreDNS
+  - kube-dns
+  - resolv.conf
+  - search domains
+  - dnsPolicy
+  - dnsConfig
+  - every Nth request takes 5 seconds
+  - FQDN
+  - name resolution slow
+  - netshoot dig
 sidebar:
   order: 5
 ---

@@ -1,6 +1,19 @@
 ---
 title: Values and Overrides
 description: The precedence chain, merge semantics, --set traps, environment values-file architecture, and how to design a values API that survives its consumers.
+keywords:
+  - values precedence order
+  - --set type coercion big number
+  - lists replace maps deep-merge
+  - helm get values -a
+  - values.schema.json additionalproperties
+  - null deletes default key
+  - global subchart values plumbing
+  - --set-string --set-json --set-file
+  - silently ignored values typo
+  - per-environment delta values files
+  - escape dots in --set annotations
+  - helm show values third-party chart
 sidebar:
   order: 4
 ---

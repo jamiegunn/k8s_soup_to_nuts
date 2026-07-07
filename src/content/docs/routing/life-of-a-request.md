@@ -1,6 +1,19 @@
 ---
 title: Life of a Request
 description: One HTTPS request traced hop by hop from a corporate laptop to a pod and back — every component named, every rewrite shown, with the evidence command at each step.
+keywords:
+  - packet trace hop by hop
+  - F5 NetScaler appliance VIP
+  - MetalLB DNAT SNAT
+  - conntrack asymmetric return
+  - X-Forwarded-For client IP
+  - ingress-nginx upstream pod IP
+  - veth pair pod netns
+  - request arrives but response doesn't
+  - corporate DNS CNAME chain
+  - kube-proxy PREROUTING DNAT
+  - east-west pod to pod trace
+  - trace-anything checklist
 sidebar:
   order: 2
 ---

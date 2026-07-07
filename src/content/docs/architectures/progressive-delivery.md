@@ -1,6 +1,18 @@
 ---
 title: "Progressive Delivery: Metric-Gated Canary"
 description: A complete Argo Rollouts build — canary steps over ingress-nginx, Prometheus-backed AnalysisTemplates that judge the new version on real traffic, and automatic rollback with the GitOps interplay spelled out.
+keywords:
+  - Argo Rollouts canary
+  - AnalysisTemplate Prometheus gate
+  - automatic rollback abort
+  - canary weight ingress-nginx
+  - Flagger comparison
+  - RolloutAborted git revert self-heal
+  - error budget burn rate
+  - blue/green preview strategy
+  - success-rate latency p99 analysis
+  - Deployment to Rollout conversion
+  - Gateway API traffic router
 sidebar:
   order: 12
 ---

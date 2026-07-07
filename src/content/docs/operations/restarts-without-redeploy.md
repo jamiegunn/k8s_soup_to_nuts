@@ -1,6 +1,18 @@
 ---
 title: Restarts Without Redeploy
 description: How kubectl rollout restart actually works, when deleting pods is fine, how to avoid restart storms, and why "it needed a restart" still needs a root cause.
+keywords:
+  - kubectl rollout restart
+  - restartedat annotation
+  - delete pod replacement replicaset
+  - poddisruptionbudget eviction budget
+  - restart storm thundering herd
+  - statefulset restart reverse ordinal
+  - turn it off and on again
+  - memory leak fresh heap
+  - cronjob manual rerun
+  - startupprobe crashloopbackoff
+  - cold start cache spike
 sidebar:
   order: 5
 ---

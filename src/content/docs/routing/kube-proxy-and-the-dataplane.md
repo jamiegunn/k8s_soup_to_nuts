@@ -1,6 +1,19 @@
 ---
 title: kube-proxy and the Dataplane
 description: The machinery that makes a ClusterIP real — the iptables chain walk, IPVS tables, eBPF replacements, and conntrack as the hidden state machine behind every Service connection.
+keywords:
+  - iptables KUBE-SVC KUBE-SEP chains
+  - conntrack table full dropping packet
+  - IPVS ipvsadm scheduler
+  - eBPF Cilium dataplane
+  - nf_conntrack_max exhaustion
+  - 5-second DNS latency UDP race
+  - connection resets during rollout
+  - DNAT ClusterIP to pod IP
+  - externalTrafficPolicy Local source IP
+  - sessionAffinity ClientIP
+  - intermittent connection failures 1 in N
+  - stale conntrack entries endpoint churn
 sidebar:
   order: 3
 ---

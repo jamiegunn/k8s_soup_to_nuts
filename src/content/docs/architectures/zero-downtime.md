@@ -1,6 +1,18 @@
 ---
 title: "Zero-Downtime Deploys: The Complete Build"
 description: The end-to-end zero-dropped-requests build — timeline math, annotated manifests, and a load-test harness that proves deploys, pod kills, node drains, and scale-downs never return a non-2xx.
+keywords:
+  - preStop sleep shutdown race
+  - terminationGracePeriodSeconds grace budget
+  - 502 during deploy or pod termination
+  - maxSurge maxUnavailable rolling update
+  - endpoint propagation eventual consistency
+  - graceful shutdown SIGTERM drain
+  - FailedPreStopHook distroless image
+  - vegeta load-test harness
+  - HPA scale-down 502s
+  - minReadySeconds soak
+  - connection refused dropped requests
 sidebar:
   order: 9
 ---

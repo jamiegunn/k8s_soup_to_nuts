@@ -1,6 +1,18 @@
 ---
 title: "The Golden Service: Production Stateless Reference"
 description: The complete production-grade stateless web service — orders-api assembled end to end, every manifest included and every number traced back to the knob that set it.
+keywords:
+  - Spring Boot deployment reference
+  - HPA replicas field conflict drift
+  - PodDisruptionBudget maxUnavailable
+  - topology spread zone and host
+  - readOnlyRootFilesystem emptyDir
+  - automountServiceAccountToken false
+  - checksum config rollout annotation
+  - no CPU limit CFS throttling
+  - image digest pinning
+  - liveness must not check dependencies
+  - NetworkPolicy default-deny egress DNS
 sidebar:
   order: 6
 ---

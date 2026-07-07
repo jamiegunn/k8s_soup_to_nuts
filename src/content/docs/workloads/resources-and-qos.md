@@ -1,6 +1,18 @@
 ---
 title: Resources and QoS
 description: Requests vs limits precisely, QoS classes and eviction order, detecting CPU throttling, and a sizing methodology that survives contact with production.
+keywords:
+  - oomkilled exit code 137
+  - cpu throttling latency
+  - cfs quota nr_throttled
+  - guaranteed burstable besteffort qos
+  - requests vs limits
+  - exceeded quota failedcreate
+  - resourcequota limitrange
+  - pod evicted memory pressure
+  - insufficient cpu memory pending
+  - how to size requests
+  - container_cpu_cfs_throttled_periods_total
 sidebar:
   order: 9
 ---

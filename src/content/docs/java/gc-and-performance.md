@@ -1,6 +1,19 @@
 ---
 title: GC and JVM Performance in Pods
 description: Choosing a garbage collector for containerized JVMs, capturing and reading GC logs with unified logging, and telling real GC problems from CPU throttling.
+keywords:
+  - garbage collector selection
+  - -XX:+UseG1GC
+  - unified logging -Xlog:gc
+  - To-space exhausted
+  - Pause Full G1
+  - humongous allocations
+  - allocation rate
+  - cpu throttling nr_throttled
+  - cpu.stat cgroup
+  - JDK Flight Recorder allocation profiling
+  - p99 latency spikes
+  - Metadata GC Threshold metaspace
 sidebar:
   order: 7
 ---

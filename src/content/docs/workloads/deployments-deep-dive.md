@@ -1,6 +1,18 @@
 ---
 title: Deployments Deep Dive
 description: Deployment spec anatomy — the selector/labels contract, ReplicaSets and pod-template-hash, revision history, and the timing fields that control rollout health.
+keywords:
+  - selector field is immutable
+  - orphaned pods
+  - pod-template-hash
+  - replicaset naming
+  - progressdeadlineexceeded
+  - rollout stuck up-to-date
+  - minreadyseconds soak time
+  - revisionhistorylimit
+  - kubectl rollout status non-zero
+  - overlapping selectors two deployments
+  - which version is this pod
 sidebar:
   order: 2
 ---

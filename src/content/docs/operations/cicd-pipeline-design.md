@@ -1,6 +1,19 @@
 ---
 title: CI/CD Pipeline Design
 description: The reference build-to-deploy pipeline for a Kubernetes app — immutable artifacts, per-env config, validation gates, safe rollouts, and rollback that doesn't lie.
+keywords:
+  - deploy by digest
+  - immutable image tag
+  - never deploy latest
+  - trivy image scan
+  - expand contract migration
+  - git revert rollback
+  - kubectl rollout status
+  - promotion across environments
+  - kustomize overlay
+  - helm upgrade install
+  - progressdeadlineseconds
+  - namespace-scoped serviceaccount
 sidebar:
   order: 13
 ---

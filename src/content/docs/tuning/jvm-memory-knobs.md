@@ -1,6 +1,19 @@
 ---
 title: "JVM Memory Knobs"
 description: Every JVM memory flag that matters in a container — heap, metaspace, code cache, stacks, direct memory — with the RSS budget math and copy-paste recipes.
+keywords:
+  - oomkilled exit code 137
+  - maxrampercentage default 25
+  - why is my java heap so small
+  - xms equals xmx container
+  - java_tool_options
+  - maxmetaspacesize classloader leak
+  - maxdirectmemorysize netty nio
+  - malloc_arena_max glibc rss growth
+  - container_memory_working_set_bytes
+  - nativememorytracking jcmd
+  - usecontainersupport cgroup v2
+  - reservedcodecachesize
 sidebar:
   order: 7
 ---

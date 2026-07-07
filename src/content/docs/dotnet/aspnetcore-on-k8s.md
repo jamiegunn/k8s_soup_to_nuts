@@ -1,6 +1,19 @@
 ---
 title: ASP.NET Core on Kubernetes
 description: Health checks, graceful shutdown, configuration reload, Kestrel behind an ingress, and observability — the production checklist for ASP.NET Core pods.
+keywords:
+  - health checks liveness readiness tags
+  - MapHealthChecks predicate
+  - HostOptions ShutdownTimeout
+  - shell-form ENTRYPOINT SIGTERM dropped requests
+  - IOptionsMonitor reloadOnChange
+  - subPath configmap never reloads
+  - DOTNET_USE_POLLING_FILE_WATCHER
+  - Kestrel port 8080 non-root
+  - ASPNETCORE_FORWARDEDHEADERS_ENABLED redirect loop
+  - gRPC h2c HTTP2 without TLS
+  - OpenTelemetry .NET instrumentation
+  - request header 431 too large
 sidebar:
   order: 4
 ---

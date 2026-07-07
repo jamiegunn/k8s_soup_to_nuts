@@ -1,6 +1,17 @@
 ---
 title: How Kubernetes Works
 description: The Kubernetes control plane from the app team's seat — API server, etcd, controllers, kubelet, and the reconciliation loop that explains everything.
+keywords:
+  - reconciliation loop
+  - why does my deleted pod come back
+  - desired state vs actual state
+  - kube-apiserver etcd controllers scheduler
+  - kubelet kube-proxy node agent
+  - namespaced vs cluster-scoped resources
+  - control plane components explained
+  - level-triggered self-healing
+  - kubectl get events reconciliation
+  - which controller is stuck
 sidebar:
   order: 2
 ---

@@ -1,6 +1,18 @@
 ---
 title: Health Checks
 description: Startup, readiness, and liveness probes — exact semantics, tuning math, and the classic misconfigurations that turn probes into outage amplifiers.
+keywords:
+  - liveness probe restarting healthy pod
+  - readiness probe failed 503
+  - startupprobe slow boot
+  - probe context deadline exceeded
+  - timeoutseconds too aggressive
+  - pod not receiving traffic
+  - failurethreshold periodseconds math
+  - unhealthy killing container
+  - grpc health probe
+  - readiness checking database dependency cascade
+  - initialdelayseconds
 sidebar:
   order: 7
 ---

@@ -1,6 +1,17 @@
 ---
 title: CrashLoopBackOff
 description: Diagnose containers that start, die, and restart — from missing config to liveness-probe kills to OOM inside the loop.
+keywords:
+  - container keeps restarting
+  - pod restart loop
+  - restart count climbing
+  - exit code 1
+  - exit code 137
+  - exit code 143
+  - back-off restarting failed container
+  - liveness probe killing container
+  - app crashes on startup
+  - pod won't stay running
 sidebar:
   order: 4
 ---

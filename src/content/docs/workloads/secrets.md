@@ -1,6 +1,18 @@
 ---
 title: Secrets
 description: What Kubernetes Secrets actually protect, how to create and consume them safely, and how to keep them out of git without breaking your pipeline.
+keywords:
+  - base64 is not encryption
+  - decode secret value
+  - etcd encryption at rest
+  - createcontainerconfigerror couldnt find key
+  - sealed secrets sops external secrets operator
+  - keep secrets out of git
+  - imagepullsecrets dockerconfigjson
+  - secret file vs env var leak
+  - last-applied-configuration leak
+  - immutable secret rotation
+  - gitleaks trufflehog scanning
 sidebar:
   order: 13
 ---

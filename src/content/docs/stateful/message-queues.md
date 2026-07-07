@@ -1,6 +1,19 @@
 ---
 title: Message Queues on Kubernetes
 description: Running IBM MQ, RabbitMQ, ActiveMQ Artemis, and Kafka on Kubernetes — persistence, quorum safety, PDBs, and client reconnect behavior.
+keywords:
+  - ibm mq native ha
+  - rabbitmq quorum queues
+  - activemq artemis
+  - kafka strimzi kraft
+  - queue manager dspmq
+  - broker failover reconnect
+  - poddisruptionbudget node drain
+  - at-least-once redelivery idempotent
+  - terminationgraceperiodseconds graceful shutdown
+  - consumer lag queue depth
+  - split-brain force delete
+  - reconnect stampede backoff jitter
 sidebar:
   order: 7
 ---

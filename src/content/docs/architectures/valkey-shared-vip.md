@@ -1,6 +1,18 @@
 ---
 title: "Valkey: Two StatefulSets, One MetalLB VIP"
 description: A complete, deployable Valkey primary/replica build where two LoadBalancer Services share a single MetalLB VIP, split by port for read-write and read-only traffic.
+keywords:
+  - Redis primary replica StatefulSet
+  - metallb.io/allow-shared-ip shared VIP
+  - manual failover promotion runbook
+  - REPLICAOF NO ONE promote
+  - async replication data-loss window
+  - role-aware readiness probe
+  - master_link_status up
+  - externalTrafficPolicy Cluster shared IP
+  - split-brain fence old primary
+  - AOF appendfsync everysec durability
+  - read write split by port
 sidebar:
   order: 2
 ---

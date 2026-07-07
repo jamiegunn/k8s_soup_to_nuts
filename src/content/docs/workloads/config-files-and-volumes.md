@@ -1,6 +1,18 @@
 ---
 title: Config as Files (Volumes)
 description: How ConfigMap and Secret volumes actually land on disk — atomic symlink swaps, items and modes, subPath traps, projected volumes, permissions, and debugging FailedMount.
+keywords:
+  - configmap not updating in pod
+  - failedmount configmap not found
+  - read-only file system config
+  - permission denied reading secret file
+  - mounted files replaced directory contents
+  - fsgroup file permissions
+  - defaultmode octal
+  - bound service account token
+  - createcontainerconfigerror
+  - configmap 1mib limit
+  - downward api volume
 sidebar:
   order: 12
 ---

@@ -1,6 +1,17 @@
 ---
 title: Configuration
 description: ConfigMaps and Secrets in practice — env vs volume mounts, update propagation rules, immutability, projected volumes, and forcing rollouts on config change.
+keywords:
+  - configmap changes not taking effect
+  - pod reading old config values
+  - env var not updating after configmap edit
+  - checksum annotation force rollout
+  - base64 is not encryption
+  - kubectl rollout restart deploy
+  - immutable configmap
+  - configmapgenerator kustomize
+  - downward api pod name
+  - secret in etcd not encrypted
 sidebar:
   order: 10
 ---

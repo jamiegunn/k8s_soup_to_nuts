@@ -1,6 +1,19 @@
 ---
 title: Valkey and Redis
 description: Running Valkey (the open-source Redis fork) on Kubernetes — persistence tradeoffs, Sentinel and Cluster topologies, and the memory-limit math that prevents OOM kills.
+keywords:
+  - maxmemory oomkilled
+  - cache vs store
+  - rdb aof persistence
+  - sentinel failover promotion
+  - cluster mode sharding slots
+  - allkeys-lru eviction policy
+  - moved redirect cluster-aware client
+  - fork copy-on-write memory spike
+  - bitnami licensing broadcom
+  - ot-container-kit operator
+  - appendfsync everysec
+  - terminationgraceperiodseconds graceful shutdown
 sidebar:
   order: 4
 ---

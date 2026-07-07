@@ -1,6 +1,19 @@
 ---
 title: .NET in Containers
 description: How the CLR sees cgroup limits, why Server GC is the decision that sizes your pod, and the memory knobs that keep .NET inside its container limit.
+keywords:
+  - Server GC vs Workstation GC
+  - DOTNET_gcServer
+  - DOTNET_GCHeapHardLimitPercent hex
+  - DATAS GCDynamicAdaptationMode
+  - Environment.ProcessorCount cgroup
+  - DOTNET_PROCESSOR_COUNT
+  - thread pool starvation
+  - ReadyToRun Native AOT
+  - cgroup v2 .NET Core 3.1 OOMKilled
+  - GC env var hexadecimal trap
+  - container_memory_working_set_bytes
+  - OutOfMemoryException heap hard limit
 sidebar:
   order: 2
 ---

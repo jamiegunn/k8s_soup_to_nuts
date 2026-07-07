@@ -1,6 +1,18 @@
 ---
 title: Helm and Kustomize
 description: Driving the two manifest machines you'll meet in a paved-road pipeline — Kustomize overlays and Helm charts, from the consumer and author seat.
+keywords:
+  - base and overlays layout
+  - configmapgenerator content hash
+  - strategic merge vs json6902 patch
+  - values.schema.json validation
+  - helm rollback release history
+  - post-renderer
+  - spec.selector is immutable
+  - createcontainerconfigerror configmap not found
+  - helm upgrade three-way merge
+  - kubectl kustomize render and diff
+  - values silently ignored typo
 sidebar:
   order: 9
 ---

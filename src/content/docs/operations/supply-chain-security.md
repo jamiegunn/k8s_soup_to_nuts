@@ -1,6 +1,18 @@
 ---
 title: Image and Supply-Chain Security
 description: Securing the images you ship — base image strategy, digest pinning, CI scanning, SBOMs, and signing, with an honest split between what you own and what the platform enforces.
+keywords:
+  - digest pinning sha256
+  - trivy scan cve gate
+  - cosign keyless signing
+  - sbom syft cyclonedx
+  - distroless wolfi base image
+  - typosquat malicious image
+  - mutable tag drifted
+  - multi-stage dockerfile
+  - dockerignore leaked secret layer
+  - renovate dependabot from digest
+  - kyverno verifyimages admission denial
 sidebar:
   order: 11
 ---

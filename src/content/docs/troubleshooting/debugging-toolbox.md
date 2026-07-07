@@ -1,6 +1,18 @@
 ---
 title: Debugging Toolbox
 description: kubectl debug, ephemeral containers, pod copies, port-forward, kubectl cp, and the debug images worth memorizing.
+keywords:
+  - exec into distroless pod no shell
+  - executable file not found in $PATH
+  - kubectl debug --target share process namespace
+  - kubectl debug --copy-to crash looping pod
+  - debug crashloopbackoff without crash
+  - netshoot debug image
+  - kubectl port-forward to service
+  - kubectl cp tar not found
+  - copy file out of pod
+  - kubectl debug node host filesystem
+  - ephemeral container rbac forbidden
 sidebar:
   order: 14
 ---

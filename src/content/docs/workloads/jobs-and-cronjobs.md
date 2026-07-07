@@ -1,6 +1,18 @@
 ---
 title: Jobs and CronJobs
 description: Run-to-completion workloads — Job retry and parallelism semantics, CronJob scheduling and missed-run behavior, and debugging jobs that failed at 3 a.m.
+keywords:
+  - backofflimitexceeded
+  - job ran twice not idempotent
+  - cronjob not firing
+  - toomanymissedtimes
+  - concurrencypolicy forbid overlap
+  - activedeadlineseconds hung job
+  - ttlsecondsafterfinished cleanup
+  - cronjob timezone dst
+  - restartpolicy never onfailure
+  - manually trigger cronjob now
+  - deadlineexceeded vs backofflimitexceeded
 sidebar:
   order: 14
 ---

@@ -1,6 +1,17 @@
 ---
 title: "How MetalLB Chooses Which Node Answers for a VIP"
 description: The mental model and the mechanism behind the "magic" — why one node (L2) or several nodes (BGP) start answering for a LoadBalancer IP that isn't bound to any interface, how the choice is made, and how to see which node is chosen right now.
+keywords:
+  - which node answers for loadbalancer ip
+  - gratuitous arp failover
+  - memberlist leader election
+  - ecmp equal-cost multi-path
+  - arping vip mac address
+  - externaltrafficpolicy local cluster
+  - bgp /32 host route
+  - split-brain two nodes claim vip
+  - node selector l2advertisement
+  - nodeAssigned announcing from node
 sidebar:
   order: 5.5
 ---

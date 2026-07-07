@@ -1,6 +1,18 @@
 ---
 title: "Event-Driven Autoscaling with KEDA"
 description: Scaling a queue consumer on backlog instead of CPU — a complete KEDA build with Kafka lag scaling, scale-to-zero, RabbitMQ and IBM MQ variants, fallback, and drain-safe scale-in.
+keywords:
+  - ScaledObject ScaledJob
+  - scale to zero queue consumer
+  - Kafka consumer lag scaling
+  - lagThreshold activationLagThreshold
+  - TriggerAuthentication scaler credentials
+  - keda-hpa flapping duplicate HPA
+  - RabbitMQ queue length trigger
+  - IBM MQ queue depth trigger
+  - fallback replicas broker unreachable
+  - partition ceiling max replicas
+  - drain-safe scale-in idempotent consumer
 sidebar:
   order: 11
 ---

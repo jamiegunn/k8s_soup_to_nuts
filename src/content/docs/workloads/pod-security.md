@@ -1,6 +1,18 @@
 ---
 title: Pod Security
 description: The securityContext fields app teams own, how Pod Security Admission rejects your workloads, and a hardening path that won't break the app.
+keywords:
+  - runasnonroot image will run as root
+  - violates podsecurity restricted
+  - deployment applied but no pods
+  - failedcreate forbidden replicaset
+  - readonlyrootfilesystem erofs
+  - bind permission denied port 80
+  - capabilities drop all net_bind_service
+  - securitycontext fsgroup
+  - seccompprofile runtimedefault
+  - pod security admission namespace label
+  - kyverno gatekeeper policy denied
 sidebar:
   order: 16
 ---

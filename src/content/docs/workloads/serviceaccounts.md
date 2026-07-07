@@ -1,6 +1,18 @@
 ---
 title: ServiceAccounts
 description: Workload identity — how your pods (not you) authenticate to the Kubernetes API and cloud services, and how to debug it when they can't.
+keywords:
+  - pod 403 forbidden calling api
+  - automountserviceaccounttoken false
+  - system:serviceaccount default
+  - bound projected token
+  - 401 unauthorized long-running pod
+  - irsa gke workload identity
+  - unable to locate credentials
+  - kubectl auth can-i --as
+  - role rolebinding serviceaccount
+  - kubectl create token
+  - unable to locate credentials aws
 sidebar:
   order: 17
 ---

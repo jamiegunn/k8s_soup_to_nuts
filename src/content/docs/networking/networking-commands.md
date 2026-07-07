@@ -1,6 +1,19 @@
 ---
 title: "Networking Commands: A Cross-Platform Field Reference"
 description: The host-side networking toolkit — arp, ip/ifconfig, ss/netstat, ps, dig, ping, traceroute, nc, tcpdump — with the flags that matter and a task-by-task table of the equivalents on Linux, macOS, and Windows.
+keywords:
+  - which process is using a port
+  - test if a port is open
+  - connection refused vs timeout
+  - traceroute vs tracert
+  - ss vs netstat
+  - flush DNS cache
+  - flush ARP cache
+  - Test-NetConnection
+  - ip neigh
+  - tcpdump packet capture
+  - macOS vs Linux command differences
+  - IP to MAC address lookup
 sidebar:
   order: 10.5
 ---

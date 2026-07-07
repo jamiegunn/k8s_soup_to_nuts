@@ -1,6 +1,18 @@
 ---
 title: Java on Kubernetes, JRE-Only
 description: How to diagnose JVM problems in production pods that ship a JRE without JDK tools — the constraint, the toolbox, and where to find each technique.
+keywords:
+  - jstack jmap jcmd not found
+  - jlink minimized runtime
+  - distroless no shell
+  - kill -3 thread dump
+  - jattach static binary
+  - kubectl debug ephemeral container
+  - jdk.jcmd module check
+  - java --list-modules
+  - pods/ephemeralcontainers RBAC
+  - diagnosing production JVM without JDK
+  - Temurin OpenJDK
 sidebar:
   order: 1
 ---

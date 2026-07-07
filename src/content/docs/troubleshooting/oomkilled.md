@@ -1,6 +1,19 @@
 ---
 title: OOMKilled
 description: Diagnose exit code 137 — confirm it's really OOM, tell container-limit kills from evictions, and right-size memory with real data.
+keywords:
+  - exit code 137
+  - container killed out of memory
+  - SIGKILL
+  - memory limit exceeded
+  - container_memory_working_set_bytes
+  - JVM heap fine but pod dies
+  - memory leak vs growth
+  - QoS class eviction order
+  - kubectl top pods
+  - right-size memory requests limits
+  - startup memory spike crashloop
+  - sidecar OOMKilled
 sidebar:
   order: 6
 ---

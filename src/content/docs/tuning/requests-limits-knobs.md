@@ -1,6 +1,19 @@
 ---
 title: "Requests & Limits Knobs"
 description: Every requests-and-limits dial in one reference — precise cgroup semantics, unit traps, CFS throttle math, sizing workflow, and copy-paste recipes per workload archetype.
+keywords:
+  - oomkilled exit code 137
+  - why is my app throttled but cpu looks idle
+  - cfs quota bandwidth throttling
+  - container_cpu_cfs_throttled_periods_total
+  - besteffort burstable guaranteed qos
+  - memory 512m milli byte bug
+  - limitrange default limits
+  - resourcequota exceeded rollout wedge
+  - in-place pod resize resizepolicy
+  - hpa utilization target percentage of request
+  - pod pending insufficient cpu
+  - cpu request no limit
 sidebar:
   order: 4
 ---

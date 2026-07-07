@@ -1,6 +1,19 @@
 ---
 title: Routing & DNS Deep Dive
 description: End-to-end packet traces and the machinery underneath — how a request actually moves from a corporate laptop through DNS, the edge, the node dataplane, and into a pod.
+keywords:
+  - packet trace end to end
+  - request times out debugging
+  - conntrack ARP stale NAT tuple
+  - corporate laptop to pod
+  - kube-proxy node dataplane
+  - CoreDNS resolution
+  - MetalLB VIP edge
+  - platform team ticket evidence
+  - trace first then zoom methodology
+  - sporadic 504 errors
+  - source IP address rewrites
+  - which article for which question
 sidebar:
   order: 1
 ---

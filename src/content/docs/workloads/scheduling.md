@@ -1,6 +1,18 @@
 ---
 title: Scheduling — Affinity, Taints, and Spread
 description: How the scheduler actually places your pods — nodeSelector, affinity, taints, topology spread, and priority, from the tenant seat.
+keywords:
+  - failedscheduling 0 nodes available
+  - untolerated taint
+  - pod stuck pending scheduling
+  - nodeselector node affinity
+  - taints and tolerations
+  - volume node affinity conflict
+  - topologyspreadconstraints maxskew
+  - preemption preempted pod
+  - waitforfirstconsumer zonal disk
+  - noexecute tolerationseconds
+  - exec format error wrong arch
 sidebar:
   order: 18
 ---

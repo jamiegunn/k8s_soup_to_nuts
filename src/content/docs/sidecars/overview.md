@@ -1,6 +1,17 @@
 ---
 title: Sidecars
 description: When a helper container belongs in your pod, when it belongs elsewhere, and what every sidecar really costs at fleet scale.
+keywords:
+  - helper container decision framework
+  - sidecar vs DaemonSet vs app
+  - mutating admission webhook injection
+  - Istio proxy injected container
+  - resource cost multiplied by replicas
+  - exceeded quota injected mesh proxy
+  - native sidecar initContainers restartPolicy
+  - log to stdout vs file shipping
+  - per-pod identity and credentials
+  - sidecar review checklist
 sidebar:
   order: 1
 ---

@@ -1,6 +1,16 @@
 ---
 title: "Lab 7: The CI Pipeline, Run Locally"
 description: Run the CI section's whole testing ladder on your laptop — unit tests in a Maven container, a values schema, helm-unittest, kubeconform, golden diffs, and an install test on your own k3s — then wire it into one ci-local.sh.
+keywords:
+  - run a ci pipeline locally without github
+  - helm chart unit tests with helm-unittest
+  - validate rendered manifests with kubeconform
+  - values.schema.json catches value typos
+  - golden file diff for helm templates
+  - install test in a throwaway namespace
+  - write a ci-local.sh script
+  - the testing ladder on your laptop
+  - run maven tests in a container
 sidebar:
   order: 9
 ---

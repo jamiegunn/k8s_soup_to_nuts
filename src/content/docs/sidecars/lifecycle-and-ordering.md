@@ -1,6 +1,18 @@
 ---
 title: Lifecycle and Ordering
 description: The precise startup, restart, and termination semantics of native and classic sidecars — and how to debug a pod when one of several containers is the problem.
+keywords:
+  - native sidecar restartPolicy Always
+  - init container startup ordering
+  - startupProbe as ordering gate
+  - sidecar termination reverse order
+  - Job stuck 1/2 Running sidecar
+  - shareProcessNamespace signal app process
+  - exit code 137 143 OOMKilled SIGTERM
+  - effective resource request formula
+  - sidecar readinessProbe NotReady whole fleet
+  - shared terminationGracePeriodSeconds budget
+  - kubectl debug --target ephemeral container
 sidebar:
   order: 2
 ---

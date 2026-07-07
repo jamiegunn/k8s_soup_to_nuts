@@ -1,6 +1,16 @@
 ---
 title: "Lab 1: A Java API, Shipped with Helm"
 description: Build a Spring Boot 3.3 / Java 21 API entirely inside Docker, stream it into your k3s cluster, and deploy it with a Helm chart you author from scratch — probes, resources, upgrades and all.
+keywords:
+  - build a spring boot image without java installed
+  - multi-stage dockerfile for a java app
+  - write a helm chart from an empty directory
+  - deploy a java api to kubernetes with helm
+  - stream a docker image into k3s containerd
+  - helm install upgrade rollback walkthrough
+  - liveness and readiness probes on a management port
+  - helm --set versus values file discipline
+  - fullnameoverride and chart helpers
 sidebar:
   order: 3
 ---

@@ -1,6 +1,16 @@
 ---
 title: "Lab 5: Break It, Then Fix It"
 description: Six one-command breakages injected into your own lab stack — read each symptom cold, run the matching troubleshooting playbook, fix the cluster, and prove it whole again.
+keywords:
+  - hands-on kubernetes troubleshooting drills
+  - diagnose imagepullbackoff from a bad tag
+  - fix createcontainerconfigerror missing secret
+  - debug 503 no healthy upstream at the edge
+  - oomkilled and exit 137 explained
+  - service selector label mismatch outage
+  - stuck init container triage
+  - practice on-call triage methodology
+  - inject observe triage fix verify
 sidebar:
   order: 7
 ---

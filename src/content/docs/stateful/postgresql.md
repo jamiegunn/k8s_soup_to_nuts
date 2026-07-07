@@ -1,6 +1,19 @@
 ---
 title: PostgreSQL on Kubernetes
 description: Run Postgres with an operator — CloudNativePG as the modern default — plus pooling, tuning, upgrades, and the day-2 items that actually page you.
+keywords:
+  - cloudnativepg cnpg cluster
+  - streaming replication failover fencing
+  - split-brain two primaries
+  - pgbouncer connection pooling
+  - wal bloat disk full
+  - replication lag stale reads
+  - pg_upgrade major version
+  - shared_buffers tuning
+  - postgres oomkilled
+  - barman s3 wal archiving
+  - kubectl cnpg status plugin
+  - patroni zalando crunchy pgo
 sidebar:
   order: 5
 ---

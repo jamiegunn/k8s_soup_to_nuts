@@ -1,6 +1,17 @@
 ---
 title: From the Lab to the Paved Road
 description: Every move you made in the labs, mapped to its production equivalent — what the CI pipeline does for you now, which habits transfer intact, and which three you must unlearn before Monday.
+keywords:
+  - what changes moving from lab to production
+  - docker build becomes a ci job
+  - helm install becomes gitops or a pipeline
+  - habits to unlearn in production
+  - why kubectl apply to prod is dangerous
+  - from laptop to real corporate cluster
+  - imagepullsecret artifactory registry path
+  - namespace quotas rbac and psa on monday
+  - first week on the production cluster
+  - which lab skills transfer to work
 sidebar:
   order: 11
 ---

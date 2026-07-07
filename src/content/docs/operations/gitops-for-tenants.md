@@ -1,6 +1,19 @@
 ---
 title: GitOps for Tenants
 description: Living with Argo CD or Flux when the platform team runs it — git is the API now, and this is the day-to-day driving manual.
+keywords:
+  - argo cd application
+  - flux reconciler
+  - outofsync
+  - selfheal
+  - prune deleted resource
+  - sync waves and hooks
+  - ignoredifferences hpa
+  - kustomization crd
+  - helmrelease
+  - suspend resume reconciliation
+  - my change merged but nothing happened
+  - tracking-id annotation
 sidebar:
   order: 10
 ---

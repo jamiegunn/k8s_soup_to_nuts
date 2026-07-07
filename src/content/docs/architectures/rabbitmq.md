@@ -1,6 +1,18 @@
 ---
 title: "RabbitMQ: Production Reference Architecture"
 description: A complete, copy-paste-deployable 3-node RabbitMQ cluster on the cluster-operator — quorum queues, the memory-watermark handshake, TLS over a MetalLB VIP, poison-message policies, alerts, and failure drills.
+keywords:
+  - RabbitMQ Cluster Operator RabbitmqCluster
+  - quorum queues Raft
+  - vm_memory_high_watermark publishers blocked
+  - memory alarm producers hang silently
+  - classic queue mirroring removed 4.x
+  - pause_minority network partition
+  - poison message delivery-limit dead-letter
+  - AMQPS TLS over MetalLB VIP
+  - Messaging Topology Operator policy
+  - heartbeat below idle timeout
+  - perf-test verification drill
 sidebar:
   order: 5
 ---

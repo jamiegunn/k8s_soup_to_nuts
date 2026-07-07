@@ -1,6 +1,16 @@
 ---
 title: About & Methodology
 description: What this site is, how its content is written and verified, which Kubernetes versions it assumes, and how to report an error.
+keywords:
+  - what is this site about
+  - who this kubernetes guide is for
+  - how the content is written and verified
+  - which kubernetes versions are assumed
+  - how to report an error or mistake
+  - license and content reuse
+  - the orders-api running example
+  - written for namespace tenants not cluster admins
+  - how this guide is organized
 ---
 
 ## What this site is

@@ -1,6 +1,19 @@
 ---
 title: Tracing
 description: Distributed tracing with OpenTelemetry — context propagation, the Java auto-instrumentation agent, collector patterns, sampling, and log correlation.
+keywords:
+  - OpenTelemetry OTLP collector
+  - traceparent W3C context propagation
+  - Java javaagent auto-instrumentation
+  - Jaeger Grafana Tempo
+  - head vs tail sampling
+  - OTEL_EXPORTER_OTLP_ENDPOINT
+  - spans and traces
+  - trace_id span_id log correlation
+  - my traces aren't showing up
+  - unknown_service:java service name
+  - gRPC 4317 HTTP 4318
+  - broken fragmented traces propagation gap
 sidebar:
   order: 6
 ---

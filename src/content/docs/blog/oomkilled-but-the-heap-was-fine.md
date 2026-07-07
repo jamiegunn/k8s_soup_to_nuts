@@ -1,6 +1,16 @@
 ---
 title: "Field Notes: OOMKilled, but the Heap Was Fine"
 description: The container kept dying at its memory limit while every heap dump showed a healthy 60% heap — the missing gigabyte was direct buffers, metaspace, and thread stacks.
+keywords:
+  - exit code 137
+  - NativeMemoryTracking jcmd VM.native_memory
+  - netty direct buffers off-heap
+  - metaspace classloader leak
+  - MaxDirectMemorySize cap
+  - unbounded newCachedThreadPool
+  - container_memory_working_set_bytes
+  - MALLOC_ARENA_MAX glibc arenas
+  - RSS exceeds committed memory
 date: 2026-04-28
 authors: editor
 tags:

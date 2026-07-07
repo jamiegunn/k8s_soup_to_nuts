@@ -1,6 +1,19 @@
 ---
 title: Reusable Workflows and Templates
 description: The paved-road CI pattern — platform-published golden workflows, the three GitHub reuse mechanisms, template versioning discipline, and what belongs in the template vs the caller.
+keywords:
+  - workflow_call reusable workflow
+  - composite action shared steps
+  - starter workflow template new repo
+  - secrets inherit vs explicit passing
+  - pinning template version @v2 vs @main
+  - permissions can only shrink across boundary
+  - copy-paste ci.yml rots
+  - canary caller test template before retag
+  - required workflows org rulesets
+  - stop forking the pipeline template
+  - deprecation window changelog for callers
+  - composite run steps must declare a shell
 sidebar:
   order: 3
 ---

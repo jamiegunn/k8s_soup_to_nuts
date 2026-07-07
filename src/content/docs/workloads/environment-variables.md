@@ -1,6 +1,18 @@
 ---
 title: Environment Variables
 description: Every way env vars get into a container, precedence and collision rules, $(VAR) expansion, service links, JVM options variables, and how to debug what a container actually sees.
+keywords:
+  - env var shows literal $(VAR)
+  - createcontainerconfigerror configmap not found
+  - envfrom keys skipped invalid
+  - invalidenvironmentvariablenames
+  - enableservicelinks
+  - kubectl set env deployment
+  - java_tool_options
+  - argument list too long
+  - which env vars does my container have
+  - envfrom precedence order
+  - variable overwritten by service
 sidebar:
   order: 11
 ---

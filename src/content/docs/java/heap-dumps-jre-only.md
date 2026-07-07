@@ -1,6 +1,18 @@
 ---
 title: Heap Dumps with a JRE Only
 description: Five ways to capture a JVM heap dump from a Kubernetes pod without jmap — automatic on OOM, jattach, ephemeral JDK containers, JMX, and Actuator.
+keywords:
+  - .hprof without jmap
+  - -XX:+HeapDumpOnOutOfMemoryError
+  - jattach dumpheap
+  - jcmd GC.heap_dump
+  - HotSpotDiagnosticMXBean dumpHeap JMX
+  - class histogram GC.class_histogram
+  - Eclipse Memory Analyzer dominator tree
+  - path to GC roots
+  - distroless ephemeral JDK container
+  - OutOfMemoryError heap dump on exit
+  - leak suspects report
 sidebar:
   order: 4
 ---

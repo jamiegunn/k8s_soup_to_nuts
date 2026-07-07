@@ -1,6 +1,15 @@
 ---
 title: "Field Notes: The VIP That Two Nodes Claimed"
 description: Intermittent connection resets on a MetalLB LoadBalancer IP that worked from half the clients and failed from the other half — and the arping capture that revealed two nodes answering for the same virtual IP.
+keywords:
+  - MetalLB L2 mode split-brain
+  - memberlist port 7946 blocked
+  - gratuitous ARP two owners
+  - ip neigh two MACs one IP
+  - arping -D duplicate address probe
+  - connection reset RST half of clients
+  - LoadBalancer VIP flaky after maintenance
+  - firewall between node subnets
 date: 2026-07-06
 authors: editor
 tags:

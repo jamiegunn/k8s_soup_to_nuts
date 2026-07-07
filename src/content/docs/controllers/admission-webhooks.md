@@ -1,6 +1,17 @@
 ---
 title: Admission Webhooks
 description: How mutating and validating webhooks intercept your manifests before etcd, why valid YAML gets rejected, and the dead-webhook outage that blocks all deploys.
+keywords:
+  - admission webhook denied the request
+  - context deadline exceeded calling webhook
+  - kyverno policy blocked deployment
+  - opa gatekeeper constraint
+  - mutating webhook sidecar injection
+  - failurePolicy fail vs ignore
+  - kubectl apply --dry-run=server
+  - validatingwebhookconfiguration
+  - istio sidecar job never completes
+  - namespaceSelector istio-injection
 sidebar:
   order: 8
 ---

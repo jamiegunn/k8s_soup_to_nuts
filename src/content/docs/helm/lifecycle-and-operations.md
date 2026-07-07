@@ -1,6 +1,20 @@
 ---
 title: Release Lifecycle and Operations
 description: What Helm actually does at install, upgrade, and rollback — release state, the three-way merge, hooks, stuck releases, tests, distribution, and the operator's toolbox.
+keywords:
+  - another operation is in progress
+  - pending-upgrade stuck release
+  - three-way merge patch
+  - helm rollback
+  - helm hooks pre-upgrade post-install
+  - sh.helm.release secret
+  - helm history revision
+  - --atomic --wait --force
+  - helm test smoke test
+  - mapkubeapis plugin
+  - oci registry helm push cosign
+  - helm diff plugin preflight
+  - uninstall keeps pvc crds
 sidebar:
   order: 6
 ---

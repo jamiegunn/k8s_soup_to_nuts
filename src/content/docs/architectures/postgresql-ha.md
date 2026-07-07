@@ -1,6 +1,18 @@
 ---
 title: "PostgreSQL: Production Reference Architecture"
 description: A complete, copy-paste-deployable HA PostgreSQL build on CloudNativePG — three instances, quorum sync, PgBouncer, S3 backups, alerts, and drills.
+keywords:
+  - CloudNativePG CNPG operator
+  - quorum synchronous replication ANY 1
+  - PgBouncer transaction pooling
+  - WAL archiving to S3 Barman
+  - point-in-time recovery PITR
+  - failover kill the primary
+  - ScheduledBackup restore drill
+  - max_connections and pooler
+  - Cluster CR Pooler ScheduledBackup
+  - replication lag stale reads
+  - RPO zero data loss
 sidebar:
   order: 3
 ---

@@ -1,6 +1,19 @@
 ---
 title: "Storage: PV, PVC, and StorageClass"
 description: The Kubernetes storage model for application teams — access modes, dynamic provisioning, expansion, reclaim policies, and what to ask your platform team.
+keywords:
+  - persistentvolumeclaim pending
+  - access modes rwo rwx rwop rox
+  - multi-attach error
+  - waitforfirstconsumer binding
+  - dynamic provisioning csi driver
+  - allowvolumeexpansion grow volume
+  - reclaim policy delete retain
+  - volume node affinity conflict
+  - emptydir ephemeral scratch
+  - filesystemresizepending
+  - provisioningfailed events
+  - data gone after namespace delete
 sidebar:
   order: 3
 ---

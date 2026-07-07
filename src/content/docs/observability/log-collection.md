@@ -1,6 +1,19 @@
 ---
 title: Log Collection
 description: How the cluster log pipeline works, what app teams control, Loki vs ELK querying, volume etiquette, and the "my logs aren't showing up" checklist.
+keywords:
+  - Fluent Bit Fluentd Vector
+  - Loki LogQL query
+  - Elasticsearch OpenSearch Kibana
+  - node agent DaemonSet
+  - my logs aren't showing up
+  - JSON structured logging schema
+  - log volume limits rate limiting
+  - high cardinality labels
+  - fluentbit.io/exclude annotation
+  - multiline stack traces
+  - backpressure dropped log lines
+  - not logging secrets
 sidebar:
   order: 3
 ---

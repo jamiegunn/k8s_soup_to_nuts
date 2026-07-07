@@ -1,6 +1,19 @@
 ---
 title: How kubectl Actually Works
 description: What happens between pressing Enter and seeing output — kubeconfig anatomy, auth plugins, API discovery, verbosity debugging, and server-side vs client-side.
+keywords:
+  - kubectl slow to start
+  - why did kubectl open a browser
+  - error you must be logged in to the server unauthorized
+  - x509 certificate has expired or is not yet valid
+  - exec executable gke-gcloud-auth-plugin not found
+  - the server doesn't have a resource type
+  - kubectl -v=6 -v=8 round trippers
+  - KUBECONFIG merge current-context
+  - aws eks get-token kubelogin exec plugin
+  - kubectx kubens fzf context switching
+  - dry-run client vs server
+  - version skew warning
 sidebar:
   order: 2
 ---

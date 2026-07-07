@@ -1,6 +1,18 @@
 ---
 title: RBAC Explained
 description: The complete mental model for Kubernetes RBAC — Roles, bindings, verbs, subjects, defaults, and how to design least-privilege access for your team.
+keywords:
+  - Forbidden error kubernetes
+  - Role RoleBinding ClusterRole ClusterRoleBinding
+  - kubectl auth can-i list
+  - pods/exec pods/log subresources
+  - view edit admin default clusterroles
+  - serviceaccount permissions
+  - apiGroups empty string core group
+  - least-privilege role design
+  - how do I get access to a resource
+  - who can read secrets in my namespace
+  - aggregation rule aggregate-to-edit
 sidebar:
   order: 8
 ---

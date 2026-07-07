@@ -1,6 +1,18 @@
 ---
 title: Autoscaling
 description: HPA v2 metrics and behavior tuning, why replica thrash almost always traces to bad CPU requests, and where VPA and KEDA fit.
+keywords:
+  - horizontalpodautoscaler
+  - pods scaling up and down constantly
+  - replica flapping
+  - failedgetresourcemetric missing request for cpu
+  - scale to zero
+  - queue depth scaling
+  - metrics server
+  - scaledobject
+  - hpa not scaling
+  - kubectl describe hpa
+  - unable to fetch pod metrics
 sidebar:
   order: 6
 ---

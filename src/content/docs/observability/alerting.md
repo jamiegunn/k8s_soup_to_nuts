@@ -1,6 +1,19 @@
 ---
 title: Alerting
 description: What to page a human for, what to ticket, and how to ship PrometheusRule CRs as an app team on a platform-run Alertmanager.
+keywords:
+  - alert fatigue
+  - page on symptoms ticket on causes
+  - Prometheus Operator PrometheusRule
+  - Alertmanager routing and silences
+  - multi-window burn rate
+  - error budget SLO
+  - absent() dead man's switch
+  - severity critical vs warning
+  - histogram_quantile p99 latency
+  - runbook_url annotations
+  - PagerDuty receiver
+  - HPA maxed out alert
 sidebar:
   order: 9
 ---

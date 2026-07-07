@@ -22,6 +22,37 @@ export default defineConfig({
 			title: 'K8s Soup to Nuts',
 			description:
 				'A field guide to running, debugging, and surviving Kubernetes when you own the apps but not the cluster.',
+			// Override the markdown wrapper so per-page `keywords` frontmatter is
+			// injected as hidden, Pagefind-indexed text. See the component and
+			// src/content.config.ts for the full mechanism.
+			components: {
+				MarkdownContent: './src/components/MarkdownContent.astro',
+			},
+			// Pagefind ranking tuned to favour relevance breadth over exact,
+			// term-dense matches — so pages that pertain to a query surface even
+			// when they mention it once. Values are Pagefind defaults unless noted.
+			// See https://pagefind.app/docs/ranking/
+			pagefind: {
+				ranking: {
+					// Lower (default 9): let fuzzy/partial/stemmed matches rank more
+					// comparably to exact ones, broadening what surfaces.
+					termSimilarity: 6,
+					// Lower (default 0.1): reduce the reward for repeating a term, so a
+					// page that mentions a concept once still competes with a term-dense
+					// page. Improves recall of "pertaining" pages.
+					termFrequency: 0.05,
+					// Lower (default 0.1): reduce the short-page bias so long,
+					// comprehensive reference/architecture pages aren't out-ranked for
+					// length alone.
+					pageLength: 0.05,
+					// Default (range 0–2): how quickly repeated terms stop adding value.
+					termSaturation: 2,
+					// Weight the injected `keywords` metadata between title (5) and body
+					// (~1): a keyword hit meaningfully boosts a page without overriding a
+					// genuine title match.
+					metaWeights: { title: 5, keywords: 3 },
+				},
+			},
 			social: [
 				{
 					icon: 'github',
@@ -100,6 +131,12 @@ export default defineConfig({
 					label: 'Networking & Routing',
 					items: [
 						{ autogenerate: { directory: 'networking' } },
+						{
+							// The internal fabric (pod network, Service/ClusterIP network,
+							// cluster DNS) as distinct from the app-facing edge above.
+							label: 'Cluster Networking (Internal Fabric)',
+							items: [{ autogenerate: { directory: 'cluster-networking' } }],
+						},
 						{
 							label: 'Under the Hood: Routing & DNS',
 							collapsed: true,

@@ -1,6 +1,18 @@
 ---
 title: "The Bare-Metal Front Door: MetalLB + ingress-nginx + cert-manager"
 description: The complete bare-metal HTTP(S) edge — a corporate VIP on the network team's appliance pooled to one MetalLB IP, an HA ingress-nginx behind it, cert-manager issuing TLS, and wildcard DNS — built end to end with verification drills.
+keywords:
+  - F5 BIG-IP NetScaler appliance
+  - corporate VIP pool member
+  - PROXY protocol broken header
+  - Kubernetes Ingress Controller Fake Certificate
+  - Let's Encrypt HTTP-01 challenge
+  - DNS-01 wildcard certificate
+  - externalTrafficPolicy Local
+  - ACME rate limit staging server
+  - L2Advertisement ARP failover
+  - 502 503 at the edge
+  - wildcard default TLS certificate
 sidebar:
   order: 8
 ---

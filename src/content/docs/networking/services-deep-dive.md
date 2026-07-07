@@ -1,6 +1,19 @@
 ---
 title: Services Deep Dive
 description: How ClusterIP, NodePort, LoadBalancer, and headless Services actually work — kube-proxy, EndpointSlices, externalTrafficPolicy, and the debugging chain. (The full machinery — the iptables chain walk, IPVS, eBPF, conntrack — lives in [kube-proxy and the Dataplane](/routing/kube-proxy-and-the-dataplane/).)
+keywords:
+  - service has no endpoints
+  - connection refused from a service
+  - ClusterIP can't ping
+  - Endpoints none
+  - targetPort mismatch
+  - selector typo
+  - EXTERNAL-IP pending
+  - externalTrafficPolicy client IP
+  - headless service
+  - readiness removes pod from service
+  - kube-proxy iptables IPVS
+  - session affinity stickiness
 sidebar:
   order: 4
 ---

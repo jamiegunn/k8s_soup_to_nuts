@@ -1,6 +1,15 @@
 ---
 title: "Field Notes: The Deployment That Unfixed Itself"
 description: A 2am kubectl edit saved the night. A 9am pipeline run silently reverted it, and nobody connected the dots until peak traffic.
+keywords:
+  - kubectl edit reverted by pipeline
+  - GitOps drift correction
+  - managedFields ownership timeline
+  - server-side apply forensics
+  - memory limit silently reverted
+  - OOM storm at peak
+  - kubectl diff before apply
+  - live patch must land in git
 date: 2026-03-05
 authors: editor
 tags:

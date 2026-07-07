@@ -1,6 +1,18 @@
 ---
 title: YAML, Labels, and Namespaces
 description: Manifest anatomy, labels vs annotations, how selectors wire Deployments to Pods to Services, namespace mechanics, and the YAML footguns that cause real outages.
+keywords:
+  - selector does not match template labels
+  - service selector matches nothing zero endpoints
+  - app.kubernetes.io standard labels
+  - yaml indentation footgun
+  - the norway problem yaml booleans
+  - CreateContainerConfigError cross-namespace reference
+  - quote configmap values as strings
+  - labels vs annotations difference
+  - immutable deployment selector
+  - dry-run and diff before apply
+  - namespace dns fqdn svc.cluster.local
 sidebar:
   order: 6
 ---

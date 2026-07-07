@@ -1,6 +1,19 @@
 ---
 title: Backup and Disaster Recovery
 description: Backup layers for stateful workloads on Kubernetes — app-native dumps, VolumeSnapshots, Velero — and why an unrestored backup is a hope, not a backup.
+keywords:
+  - pg_dump to object storage
+  - volumesnapshot csi snapshot
+  - velero namespace restore
+  - wal archiving pitr
+  - point-in-time
+  - rpo rto
+  - restore drill
+  - crash-consistent vs app-consistent
+  - cronjob dump schedule
+  - warm standby cross-cluster
+  - reclaim policy data loss
+  - dropped table ransomware
 sidebar:
   order: 9
 ---

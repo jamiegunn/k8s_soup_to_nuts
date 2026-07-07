@@ -1,6 +1,18 @@
 ---
 title: F5 CIS (Container Ingress Services)
 description: How F5 CIS turns Kubernetes resources into BIG-IP configuration, the CRs you author to drive it, and the failure modes between your namespace and the VIP.
+keywords:
+  - big-ip
+  - as3 declaration
+  - virtualserver crd
+  - transportserver
+  - tlsprofile
+  - f5 ipam ipamLabel
+  - f5 csi confusion
+  - pool members empty 503
+  - cluster mode vs nodeport mode
+  - f5cr label filter ignored
+  - stale as3 config
 sidebar:
   order: 6
 ---

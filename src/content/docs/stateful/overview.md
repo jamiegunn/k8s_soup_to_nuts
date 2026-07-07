@@ -1,6 +1,19 @@
 ---
 title: Stateful Workloads Overview
 description: Should you run databases and queues on Kubernetes at all? An honest decision framework, and a map of this section.
+keywords:
+  - managed service rds cloud sql elasticache
+  - run database on kubernetes
+  - operator vs raw statefulset
+  - rpo rto framework
+  - data gravity latency
+  - reclaim policy data loss
+  - volumesnapshot velero
+  - pager toil on-call
+  - split-brain failover
+  - namespace-scoped platform team
+  - pre-flight storageclass checklist
+  - should i self-host
 sidebar:
   order: 1
 ---

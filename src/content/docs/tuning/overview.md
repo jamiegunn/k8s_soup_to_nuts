@@ -1,6 +1,19 @@
 ---
 title: Knobs & Levers
 description: The consolidated tuning references — every health-check, JVM memory, and requests/limits knob with its default, its real effect, and when to turn it.
+keywords:
+  - kubernetes tuning reference
+  - which knob to turn for a symptom
+  - probe restarts oomkilled latency troubleshooting
+  - defaults wrong for production workloads
+  - measure before you tune
+  - one knob at a time
+  - knob interaction effects
+  - greenfield vs brownfield sizing
+  - cpu request hpa target coupling
+  - memory limit maxrampercentage coupling
+  - grace period prestop drain
+  - golden service manifests
 sidebar:
   order: 1
 ---

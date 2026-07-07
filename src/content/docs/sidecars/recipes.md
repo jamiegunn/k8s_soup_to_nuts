@@ -1,6 +1,17 @@
 ---
 title: Sidecar Recipes
 description: Five production-ready sidecar patterns with complete YAML, sizing guidance, and failure modes — plus the anti-recipes to refuse.
+keywords:
+  - Fluent Bit log shipper sidecar
+  - config reloader SIGHUP inotify
+  - Vault agent secrets sidecar tmpfs
+  - local caching proxy Valkey
+  - OpenTelemetry collector agent
+  - memory_limiter OOMKill collector
+  - ConfigMap reload without rollout
+  - shareProcessNamespace pkill HUP
+  - anti-recipe cron or database sidecar
+  - maxmemory versus container limit headroom
 sidebar:
   order: 3
 ---

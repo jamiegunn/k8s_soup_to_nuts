@@ -1,6 +1,18 @@
 ---
 title: CI with GitHub & Artifactory
 description: The concrete CI stack — GitHub Actions as the engine, Artifactory as the artifact hub — mapped onto the tool-agnostic pipeline reference, with a clear division of labor between platform and app teams.
+keywords:
+  - github actions and artifactory ci stack
+  - platform team vs app team responsibilities
+  - immutable artifact promoted through environments
+  - ci hands off to cd pull request
+  - github enterprise private artifactory runners
+  - no runner matching labels queue times
+  - pipeline green but cluster runs old code
+  - pin actions by commit sha not tag
+  - docker-local docker-remote virtual repository key
+  - who owns what in a paved road pipeline
+  - orders-api spring boot java 21 example
 sidebar:
   order: 1
 ---

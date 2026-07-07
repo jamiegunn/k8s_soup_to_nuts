@@ -1,6 +1,16 @@
 ---
 title: Hands-On Labs
 description: Follow-along tutorials — stand up a k3s cluster in a Lima VM on your Mac, then ship a Java API through Helm, secrets, a Valkey backend, and ingress.
+keywords:
+  - where do the kubernetes labs start
+  - what you build across the labs
+  - lab prerequisites and host setup
+  - how the lab sequence is ordered
+  - how long the labs take to complete
+  - references versus tutorials
+  - do i need java or docker desktop for the labs
+  - pause and resume the labs between sittings
+  - teardown promise leaves no trace
 sidebar:
   order: 1
 ---

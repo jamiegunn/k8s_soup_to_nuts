@@ -1,6 +1,19 @@
 ---
 title: "Linux Inside the Pod: A Field Guide"
 description: What to run and how to read it once you're exec'd into a container — memory, CPU, disk, and network truth from /proc and cgroup files, with and without tools.
+keywords:
+  - free top shows node memory not container
+  - cgroup memory.max memory.current
+  - cpu.stat nr_throttled throttling
+  - /proc/1/environ read env vars
+  - /proc/net/tcp decode hex
+  - too many open files fd limit
+  - df says full du finds nothing deleted file
+  - ss recv-q send-q socket
+  - meminfo lies inside container
+  - no ps no tools minimal image
+  - kill -3 thread dump pid 1
+  - readonly root filesystem check
 sidebar:
   order: 16
 ---

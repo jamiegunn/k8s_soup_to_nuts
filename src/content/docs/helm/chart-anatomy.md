@@ -1,6 +1,19 @@
 ---
 title: Chart Anatomy
 description: Every file in a Helm chart directory and what it's for — Chart.yaml dissected, dependencies and lock files, the crds/ trap, subchart mechanics, and versioning discipline.
+keywords:
+  - version vs appversion
+  - Chart.lock lock file
+  - helm dependency build vs update
+  - found in Chart.yaml but missing in charts/ directory
+  - crds directory not upgraded
+  - umbrella chart
+  - subchart values global
+  - kubeversion constraint
+  - alias subchart
+  - condition redis.enabled
+  - values.schema.json
+  - .helmignore package
 sidebar:
   order: 2
 ---

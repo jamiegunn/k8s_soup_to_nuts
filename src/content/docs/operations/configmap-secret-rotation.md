@@ -1,6 +1,19 @@
 ---
 title: ConfigMap and Secret Rotation
 description: Updating configuration and secrets in running workloads — what propagates live, what needs a restart, and the subPath trap that catches everyone.
+keywords:
+  - subpath not updating
+  - env var not refreshing
+  - checksum/config annotation
+  - reloader stakater
+  - kubectl rollout restart
+  - two-phase database password
+  - external secrets operator
+  - sealed secrets
+  - sops
+  - immutable configmap
+  - sighup reload
+  - secrets store csi driver
 sidebar:
   order: 4
 ---

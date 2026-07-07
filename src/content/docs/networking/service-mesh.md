@@ -1,6 +1,19 @@
 ---
 title: Service Mesh for App Teams
 description: Living inside a platform-run Istio or Linkerd mesh — what the sidecar actually does to your pod, the CRs you own, and how to debug when the proxy is the problem.
+keywords:
+  - mTLS between pods
+  - sidecar proxy
+  - Envoy istio-proxy
+  - connection reset by peer
+  - 503 UF UH NR response flags
+  - Job never completes with sidecar
+  - holdApplicationUntilProxyStarts
+  - VirtualService DestinationRule
+  - ambient mesh ztunnel
+  - circuit breaking outlier detection
+  - proxy startup ordering
+  - east-west traffic
 sidebar:
   order: 11
 ---

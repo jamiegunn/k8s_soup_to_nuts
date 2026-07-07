@@ -1,6 +1,19 @@
 ---
 title: Observability Overview
 description: The four signals — logs, metrics, events, traces — and what Kubernetes gives you for free versus what needs platform tooling.
+keywords:
+  - logs metrics events traces four signals
+  - kubectl logs kubectl top kubectl get events
+  - ephemeral state capture during incidents
+  - OpenTelemetry instrumentation
+  - trace_id log correlation
+  - Prometheus Grafana Loki
+  - readiness liveness probes
+  - which signal do I reach for
+  - debugging by restart anti-pattern
+  - Fluent Bit DaemonSet log collection
+  - why did this pod crash
+  - day-one observability new service
 sidebar:
   order: 1
 ---

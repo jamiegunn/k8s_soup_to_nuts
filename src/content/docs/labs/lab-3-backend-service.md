@@ -1,6 +1,16 @@
 ---
 title: "Lab 3: Wiring a Backend Service"
 description: Add a Valkey cache behind orders-api — author a second mini-chart, discover it via Service DNS, share a Secret, gate startup with an initContainer, then break it on purpose.
+keywords:
+  - connect one service to another in kubernetes
+  - service discovery by dns name
+  - deploy a valkey redis cache with helm
+  - share a secret between two deployments
+  - initcontainer waits for a dependency
+  - graceful degradation when the cache is down
+  - ephemeral debug container and nslookup
+  - chart-per-service versus subchart
+  - existingsecret convention
 sidebar:
   order: 5
 ---

@@ -1,6 +1,18 @@
 ---
 title: "Spring Boot Actuator as an Ops Surface"
 description: "The full Actuator endpoint catalog for locked-down Kubernetes: runtime log levels, thread and heap dumps over HTTP, live config inspection, and the exposure discipline that keeps it all off your attack surface."
+keywords:
+  - change log level without redeploy
+  - /actuator/heapdump credential leak
+  - exposure.include=* vulnerability
+  - management port 8081 port-forward
+  - runtime log levels over http
+  - management.endpoints.web.exposure.include
+  - /actuator/env masked values
+  - show-values=when-authorized
+  - CycloneDX SBOM endpoint
+  - micrometer prometheus scrape
+  - git commit id which version running
 sidebar:
   order: 12
 ---

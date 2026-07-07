@@ -1,6 +1,15 @@
 ---
 title: "Field Notes: The Prune That Ate Our ConfigMap"
 description: A ConfigMap hand-created during a hotfix lived happily in our Argo-managed namespace for six weeks. Then the platform team enabled prune, and Argo deleted it at 4pm on a Friday — correctly.
+keywords:
+  - Argo CD prune deletes resource
+  - OutOfSync inherited tracking label
+  - app.kubernetes.io/instance label
+  - CreateContainerConfigError
+  - configmap not found at pod churn
+  - hand-created hotfix not in git
+  - automated sync selfHeal prune true
+  - copying live YAML carries labels
 date: 2026-05-05
 authors: editor
 tags:

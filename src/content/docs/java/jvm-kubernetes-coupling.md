@@ -1,6 +1,18 @@
 ---
 title: "The JVM–Kubernetes Coupling Map"
 description: "Every point where the JVM and Kubernetes are wired together — twelve couplings, the failure mode when each one is misaligned, and the rule that keeps them in agreement."
+keywords:
+  - restart spiral CrashLoopBackOff throttling
+  - SIGTERM shutdown hooks exec form ENTRYPOINT
+  - JIT warmup cold start
+  - networkaddress.cache.ttl DNS caching
+  - HikariCP maxLifetime stale connection
+  - thread stacks invisible OOMKilled
+  - virtual threads Loom
+  - CDS AppCDS GraalVM CRaC
+  - exit code 137 vs OutOfMemoryError
+  - terminationGracePeriodSeconds
+  - liveness probe timeoutSeconds GC pause
 sidebar:
   order: 11
 ---

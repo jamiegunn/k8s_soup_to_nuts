@@ -1,6 +1,19 @@
 ---
 title: "The End-to-End Timeout Budget"
 description: Every request and idle timeout on the client → appliance → ingress → pod → database path, the two ordering rules that keep them from fighting, a worked 10-second budget, and the audit kit for discovering what's actually set.
+keywords:
+  - 504 gateway timeout at exactly 60 seconds
+  - connection reset by peer
+  - proxy-read-timeout ingress-nginx
+  - httpclient timeout 100 second default
+  - statement_timeout postgres
+  - jdbc sockettimeout infinite
+  - idle timeout stale keepalive 502
+  - retry storm multiplication
+  - f5 netscaler vip idle timeout
+  - hikari connectiontimeout maxlifetime
+  - request timeout shrink inward
+  - probe timeoutseconds budget
 sidebar:
   order: 9
 ---

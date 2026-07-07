@@ -1,6 +1,19 @@
 ---
 title: Events
 description: Kubernetes events as the cluster's audit trail — how to query them, the greatest-hits reasons decoded, and why you must capture them within the hour.
+keywords:
+  - kubectl get events --sort-by
+  - FailedScheduling
+  - BackOff CrashLoopBackOff
+  - Unhealthy readiness probe failed
+  - FailedMount FailedAttachVolume
+  - Evicted OOMKilled
+  - ErrImagePull FailedPull
+  - events expire one hour TTL
+  - kubectl describe pod
+  - involvedObject field-selector
+  - rollout hung deadline exceeded
+  - kubernetes-event-exporter
 sidebar:
   order: 5
 ---

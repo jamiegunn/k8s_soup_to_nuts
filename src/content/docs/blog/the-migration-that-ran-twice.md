@@ -1,6 +1,15 @@
 ---
 title: "Field Notes: The Migration That Ran Twice"
 description: A schema-migration Job died on a lock timeout, and Kubernetes helpfully retried it. The second run re-executed a rename against a half-migrated table, and at 11pm we were debating a database restore.
+keywords:
+  - lock wait timeout exceeded 1205
+  - MariaDB non-transactional DDL
+  - RENAME COLUMN non-idempotent
+  - DROP COLUMN IF EXISTS data loss
+  - backoffLimit 0 for migrations
+  - expand/contract pattern
+  - audit table roll-forward recovery
+  - half-applied migration unrecorded
 date: 2026-06-02
 authors: editor
 tags:

@@ -1,6 +1,19 @@
 ---
 title: Memory Leaks and OOM
 description: Telling container OOMKills apart from java.lang.OutOfMemoryError, and the workflows for heap, metaspace, native, and thread leaks in Kubernetes pods.
+keywords:
+  - OOMKilled exit 137 vs OutOfMemoryError
+  - java.lang.OutOfMemoryError Java heap space
+  - OutOfMemoryError Metaspace
+  - Direct buffer memory
+  - unable to create native thread
+  - GC overhead limit exceeded
+  - NativeMemoryTracking VM.native_memory
+  - classloader leak DevTools
+  - MALLOC_ARENA_MAX glibc arena
+  - Netty direct ByteBuffer leak
+  - Inflater Deflater native leak
+  - heap dump dominator tree MAT
 sidebar:
   order: 8
 ---

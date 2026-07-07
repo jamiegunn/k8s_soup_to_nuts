@@ -1,6 +1,19 @@
 ---
 title: Pod Stuck Pending
 description: Decode FailedScheduling messages and fix Pending pods — resource requests, quotas, affinity, taints, and volume binding.
+keywords:
+  - pod won't schedule
+  - FailedScheduling
+  - 0/12 nodes are available
+  - Insufficient cpu
+  - Insufficient memory
+  - untolerated taint
+  - node affinity selector didn't match
+  - exceeded quota
+  - too many pods
+  - volume node affinity conflict
+  - WaitForFirstConsumer PVC pending
+  - preemption no victims found
 sidebar:
   order: 3
 ---

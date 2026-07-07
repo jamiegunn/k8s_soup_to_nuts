@@ -1,6 +1,18 @@
 ---
 title: "Graceful Shutdown and the Termination Lifecycle"
 description: The canonical termination mechanics — the full deletion timeline, the endpoint-propagation race, the grace-period budget inequality, PID 1 signal reality, and per-stack drain wiring.
+keywords:
+  - 502 errors during deploy
+  - dropped requests on rollout
+  - terminationgraceperiodseconds
+  - prestop hook sleep
+  - sigterm not received by app
+  - exit code 137 vs 143
+  - pid 1 signal handling
+  - tini dumb-init zombie reaping
+  - shell form exec form entrypoint
+  - endpoint propagation race
+  - pod stuck terminating
 sidebar:
   order: 8
 ---

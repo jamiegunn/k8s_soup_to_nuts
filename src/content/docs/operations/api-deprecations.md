@@ -1,6 +1,19 @@
 ---
 title: API Deprecations and Cluster Upgrades
 description: Surviving Kubernetes version upgrades you don't control — detecting removed APIs before the platform's upgrade breaks your deploys, and handling the behavior changes that ride along.
+keywords:
+  - resource mapping not found
+  - no matches for kind
+  - extensions/v1beta1
+  - policy/v1beta1 poddisruptionbudget
+  - pluto
+  - kubent
+  - helm mapkubeapis
+  - kubectl apply fails after upgrade
+  - removed api version
+  - dockershim removal
+  - version skew
+  - kind node image testing
 sidebar:
   order: 12
 ---

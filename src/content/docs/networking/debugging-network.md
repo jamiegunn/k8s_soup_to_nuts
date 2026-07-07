@@ -1,6 +1,19 @@
 ---
 title: Debugging the Network
 description: A systematic hop-by-hop playbook for network failures — ephemeral netshoot containers, the right tools, signature symptoms, and a printable checklist.
+keywords:
+  - connection timeout
+  - connection refused
+  - connection reset
+  - curl hangs
+  - DNS not resolving
+  - name resolution failure
+  - packet loss
+  - can't connect to service
+  - intermittent network errors
+  - tcpdump
+  - MTU mismatch
+  - debug pod networking
 sidebar:
   order: 10
 ---

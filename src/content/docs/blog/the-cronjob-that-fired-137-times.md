@@ -1,6 +1,15 @@
 ---
 title: "Field Notes: The CronJob That Fired 137 Times"
 description: We suspended a CronJob during an incident and unsuspended it three days later. The controller remembered every run we missed, and so did our partner's rate limiter.
+keywords:
+  - suspend true unsuspend catch-up
+  - startingDeadlineSeconds
+  - concurrencyPolicy Allow Forbid
+  - missed runs backfill herd
+  - too many missed start times
+  - 100 missed runs cliff
+  - backoffLimit retry multiplier
+  - partner API rate limiter 429
 date: 2026-01-20
 authors: editor
 tags:

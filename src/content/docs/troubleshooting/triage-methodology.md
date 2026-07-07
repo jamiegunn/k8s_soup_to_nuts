@@ -1,6 +1,18 @@
 ---
 title: Triage Methodology
 description: A systematic five-step method for Kubernetes incidents, with pod lifecycle states, exit codes decoded, and a worked example.
+keywords:
+  - how to diagnose a broken pod
+  - kubernetes troubleshooting checklist
+  - debugging methodology
+  - pod lifecycle states explained
+  - exit code meanings 137 139 143
+  - what changed incident response
+  - narrow the blast radius
+  - kubectl describe pod
+  - kubectl get events sort-by
+  - when to escalate to platform
+  - one pod or all replicas
 sidebar:
   order: 2
 ---

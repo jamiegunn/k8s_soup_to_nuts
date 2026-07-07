@@ -1,6 +1,18 @@
 ---
 title: "The Locked-Down Namespace"
 description: The fully hardened namespace — restricted PSA, default-deny NetworkPolicy, non-root read-only containers, least-privilege RBAC, and quotas — with a real app running inside it and every 3 a.m. diagnostic path proven to still work.
+keywords:
+  - Pod Security Admission restricted profile
+  - default-deny NetworkPolicy both directions
+  - least-privilege RBAC roles no wildcards
+  - ResourceQuota LimitRange surge headroom
+  - ephemeral debug container under restricted
+  - kubectl debug profile restricted
+  - heap dump read-only rootfs
+  - violates PodSecurity FailedCreate
+  - automountServiceAccountToken false
+  - 403 RBAC denial missing verb
+  - seccompProfile runAsNonRoot drop ALL
 sidebar:
   order: 10
 ---

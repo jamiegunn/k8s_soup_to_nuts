@@ -1,6 +1,19 @@
 ---
 title: Getting Dumps Out of the Pod
 description: Moving multi-gigabyte heap dumps and recordings from a pod to your laptop — kubectl cp, its tar dependency, raw-stream fallbacks, and helper pods.
+keywords:
+  - kubectl cp tar not found
+  - '"tar": executable file not found in $PATH'
+  - kubectl exec cat stream hprof
+  - base64 binary transfer
+  - gzip compress heap dump
+  - distroless no shell
+  - ephemeral container /proc root
+  - helper pod shared PVC
+  - ReadWriteOnce volume
+  - ephemeral-storage eviction
+  - split large file into chunks
+  - sha256sum verify transfer
 sidebar:
   order: 5
 ---

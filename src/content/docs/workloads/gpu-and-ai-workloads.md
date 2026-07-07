@@ -1,6 +1,18 @@
 ---
 title: GPUs and AI Workloads
 description: Running GPU workloads as a tenant — extended resources and their strict rules, MIG vs time-slicing, the two failure modes (Pending forever and the startup-probe problem), a complete model-serving Deployment, and GPU etiquette in a shared cluster.
+keywords:
+  - nvidia.com/gpu
+  - insufficient nvidia.com/gpu pending
+  - gpu pod stuck pending
+  - untolerated taint gpu
+  - cuda out of memory neighbor
+  - time-slicing mig
+  - dev shm 64mi nccl error
+  - model load startup probe restart loop
+  - dcgm exporter gpu utilization
+  - kueue job queue
+  - vllm triton model serving
 sidebar:
   order: 19
 ---

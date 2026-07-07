@@ -1,6 +1,19 @@
 ---
 title: Network Policies
 description: How NetworkPolicy selection flips pods from default-allow to default-deny, the rules you actually need, and why some clusters silently don't enforce them.
+keywords:
+  - firewall
+  - block traffic between pods
+  - connection refused between pods
+  - allow list
+  - whitelist
+  - microsegmentation
+  - zero trust networking
+  - Calico
+  - Cilium
+  - CNI not enforcing policy
+  - egress blocked
+  - cannot reach service after applying policy
 sidebar:
   order: 8
 ---

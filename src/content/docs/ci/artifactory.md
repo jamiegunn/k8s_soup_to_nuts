@@ -1,6 +1,19 @@
 ---
 title: "Artifactory: Images, Charts, and Dependency Persistence"
 description: Artifactory from the app-team seat — the local/remote/virtual repository model, Docker and Helm publishing, Renovate against a private registry, dependency persistence, and the failure decoder for 401s, 403s, and vanished artifacts.
+keywords:
+  - jfrog private docker registry
+  - 401 unauthorized on docker push
+  - 403 forbidden pulling image in cluster
+  - manifest unknown image disappeared
+  - 429 too many requests docker hub rate limit
+  - imagepullsecrets errimagepull
+  - helm push oci chart registry
+  - index.yaml chart not found after upload
+  - xray cve policy block download
+  - renovate against private registry
+  - retention cleanup policy deleted my tag
+  - maven mirrorof settings.xml dependency cache
 sidebar:
   order: 4
 ---

@@ -1,0 +1,37 @@
+---
+// Override of the MarkdownContent component.
+//
+// Purpose: improve *findability*. Pagefind can only match words that appear in
+// the rendered page, so a page about NetworkPolicy won't surface for "firewall"
+// or "connection refused between pods" unless those words are on the page. This
+// override injects each page's optional `keywords` frontmatter (see
+// src/content.config.ts) as hidden text that is:
+//   - visually hidden (`sr-only`) and hidden from screen readers (`aria-hidden`),
+//     so it never changes what humans see or hear;
+//   - rendered INSIDE <main data-pagefind-body>, so Pagefind indexes it as body
+//     text and the page becomes searchable by those terms;
+//   - also tagged `data-pagefind-meta="keywords:…"`, registering a `keywords`
+//     metadata field that is weighted in ranking via
+//     `pagefind.ranking.metaWeights.keywords` in astro.config.mjs.
+//
+// starlight-blog ALSO overrides MarkdownContent (to add the cover/metadata/tags
+// wrapper on Field Notes posts). A Starlight `components` override can only have
+// one owner, so we delegate to starlight-blog's override — which branches
+// between the blog wrapper and Starlight's default — rather than Starlight's raw
+// default. (Note: `starlight-blog/components/MarkdownContent.astro` returns null
+// for non-blog pages, so it must NOT be used here; the `overrides/` entry is the
+// one that handles both.)
+import BlogAwareMarkdownContent from 'starlight-blog/overrides/MarkdownContent.astro';
+
+const keywords = Astro.locals.starlightRoute.entry.data.keywords as string[] | undefined;
+const keywordText = keywords?.filter(Boolean).join(', ');
+---
+
+{
+	keywordText && (
+		<span class="sr-only" aria-hidden="true" data-pagefind-meta={`keywords:${keywordText}`}>
+			{keywordText}
+		</span>
+	)
+}
+<BlogAwareMarkdownContent><slot /></BlogAwareMarkdownContent>

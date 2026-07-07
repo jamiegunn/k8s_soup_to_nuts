@@ -1,6 +1,19 @@
 ---
 title: Performance Analysis
 description: A layered triage methodology for "it's slow" — locating the latency with data, catching CPU throttling, and building an evidence pack for the platform team.
+keywords:
+  - the service is slow triage
+  - CPU throttling cpu.stat
+  - noisy neighbor node pressure
+  - readiness probe flapping
+  - connection pool exhaustion HikariCP
+  - bimodal latency histogram
+  - p99 latency spike
+  - GC memory pressure
+  - kubectl port-forward direct to pod
+  - in-cluster load testing hey Job
+  - podAntiAffinity spread replicas
+  - evidence pack for platform team
 sidebar:
   order: 7
 ---

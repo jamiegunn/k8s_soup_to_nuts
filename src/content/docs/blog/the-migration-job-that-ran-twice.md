@@ -1,6 +1,15 @@
 ---
 title: "Field Notes: The Migration Job That Ran Twice"
 description: A production outage caused by a non-idempotent database migration container, a retrying Job, and a schema that could not survive the same change being applied twice.
+keywords:
+  - non-idempotent database migration
+  - readiness probe copied onto a Job
+  - backoffLimit retry created second pod
+  - column does not exist / already exists
+  - ALTER TABLE ADD COLUMN IF NOT EXISTS
+  - partial schema state backfill
+  - gate app rollout on migration completion
+  - restartPolicy Never one-shot Job
 date: 2026-07-05
 authors: editor
 tags:

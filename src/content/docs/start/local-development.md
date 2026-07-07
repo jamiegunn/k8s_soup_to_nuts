@@ -1,6 +1,18 @@
 ---
 title: Local Development
 description: Build a fast inner loop for Kubernetes apps with kind, Tilt, and mirrord when the only real cluster belongs to the platform team.
+keywords:
+  - run kubernetes on my laptop
+  - kind minikube k3d k3s comparison
+  - tilt skaffold hot reload
+  - mirrord telepresence traffic intercept
+  - kind load docker-image ErrImagePull
+  - imagePullPolicy IfNotPresent for loaded images
+  - port-forward dependencies to laptop
+  - testcontainers vs pod dependency
+  - kustomize local overlay
+  - spring boot devtools live_update
+  - disposable cluster for testing manifests
 sidebar:
   order: 7
 ---

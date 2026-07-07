@@ -1,6 +1,19 @@
 ---
 title: Drift and CI/CD
 description: What happens to your emergency kubectl edits when the pipeline runs — apply, replace, Helm, and GitOps compared, with a will-it-stick decision matrix.
+keywords:
+  - live edit reverted
+  - three-way merge
+  - server-side apply conflict
+  - selfheal reverts changes
+  - argo cd
+  - flux reconcile
+  - kubectl diff
+  - managedfields ownership
+  - helm upgrade overwrites
+  - kubectl replace force
+  - 2am hotfix undone
+  - kubectl apply prune
 sidebar:
   order: 3
 ---

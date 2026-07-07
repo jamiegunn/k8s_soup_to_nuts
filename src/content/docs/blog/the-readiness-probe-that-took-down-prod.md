@@ -1,6 +1,15 @@
 ---
 title: "Field Notes: The Readiness Probe That Took Down Prod"
 description: A downstream dependency blipped for 30 seconds; our readiness probes turned it into a fleet-wide 100% outage — a postmortem on probe semantics.
+keywords:
+  - EndpointSlices zero ready endpoints
+  - readiness probe checks shared dependency
+  - failureThreshold correlated fleet failure
+  - fail open on dependencies
+  - Service has no endpoints 503
+  - thundering herd recovery flapping
+  - liveness vs readiness semantics
+  - circuit breaker timeout fallback
 date: 2026-06-15
 authors: editor
 tags:

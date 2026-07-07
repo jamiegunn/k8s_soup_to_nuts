@@ -1,6 +1,19 @@
 ---
 title: "Network Layers and VIPs"
 description: The four network layers that matter in Kubernetes, what operates at each one in your stack, and why every stable address you use is a virtual IP.
+keywords:
+  - virtual IP
+  - ClusterIP
+  - can't ping ClusterIP
+  - connection refused
+  - connection reset
+  - no route to host
+  - stale ARP cache
+  - gratuitous ARP
+  - VIP dark after failover
+  - MTU blackhole
+  - L4 vs L7
+  - which layer is the problem
 sidebar:
   order: 2
 ---

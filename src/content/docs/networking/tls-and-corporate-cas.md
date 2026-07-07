@@ -1,6 +1,19 @@
 ---
 title: TLS and Corporate CAs
 description: Serving certs and trust stores from the app-team seat — cert-manager against the platform's issuer, corporate CA bundles in Java and .NET containers, and the x509 error zoo.
+keywords:
+  - x509 certificate signed by unknown authority
+  - PKIX path building failed
+  - unable to get local issuer certificate
+  - certificate not trusted
+  - corporate root CA bundle
+  - cert-manager Certificate not Ready
+  - Java truststore cacerts keytool
+  - SSL_CERT_FILE NODE_EXTRA_CA_CERTS
+  - TLS handshake failure
+  - openssl s_client SNI
+  - expired certificate after renewal
+  - mTLS client certificate
 sidebar:
   order: 15
 ---

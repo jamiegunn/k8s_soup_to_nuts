@@ -1,6 +1,18 @@
 ---
 title: Java Observability in Kubernetes
 description: Always-on JFR flight recordings, Micrometer metrics into Prometheus, structured JVM logging, and async-profiler — continuous evidence instead of incident archaeology.
+keywords:
+  - always-on JFR ring buffer
+  - -XX:StartFlightRecording
+  - JDK Mission Control
+  - Micrometer Prometheus binders
+  - async-profiler flame graph
+  - perf_event_paranoid
+  - structured JSON logging logback
+  - jvm_memory_used_bytes
+  - RecordingStream event streaming
+  - logstash-logback-encoder
+  - native leak detection kubectl top
 sidebar:
   order: 9
 ---

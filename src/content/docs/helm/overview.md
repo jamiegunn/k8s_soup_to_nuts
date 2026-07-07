@@ -1,6 +1,18 @@
 ---
 title: Helm Deep Dive
 description: What Helm actually is — package manager, templating engine, and release manager in one binary — and how to read this section from the consumer seat and the author seat.
+keywords:
+  - helm three tools one binary
+  - package manager templating release manager
+  - Tiller helm 2 requirements.yaml
+  - nil pointer evaluating
+  - another operation is in progress
+  - helm template render before apply
+  - consumer seat vs author seat
+  - helm show values
+  - Chart.lock subchart version
+  - values are an api
+  - helm rollback history secret
 sidebar:
   order: 1
 ---

@@ -1,6 +1,19 @@
 ---
 title: StatefulSets Fundamentals
 description: How StatefulSets differ from Deployments — stable identity, ordered rollout, volumeClaimTemplates — and the gotchas that bite in production.
+keywords:
+  - stable pod identity ordinal names
+  - headless service per-pod dns
+  - volumeclaimtemplates immutable
+  - persistentvolumeclaimretentionpolicy
+  - stuck rollout pod 0 not ready
+  - force delete terminating pod
+  - cascade orphan
+  - partition canary rolling update
+  - podmanagementpolicy parallel
+  - pvc not garbage-collected
+  - split-brain node fencing
+  - grow volume expand pvc
 sidebar:
   order: 2
 ---

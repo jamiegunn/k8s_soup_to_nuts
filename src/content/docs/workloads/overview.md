@@ -1,6 +1,17 @@
 ---
 title: Workloads Overview
 description: How Deployments, ReplicaSets, and Pods fit together, and a map of the workloads section so you can find the article you actually need.
+keywords:
+  - deployment replicaset pod hierarchy
+  - deleted pod comes back
+  - owner references
+  - reconciliation loop
+  - kubectl edit reverted
+  - deployment vs statefulset vs daemonset
+  - selector labels contract
+  - which workload controller to use
+  - hand edit not sticking
+  - controller desired state
 sidebar:
   order: 1
 ---

@@ -1,6 +1,19 @@
 ---
 title: TCP and Non-HTTP Ingress
 description: Getting raw TCP and UDP into the cluster — LoadBalancer Services, the tcp-services ConfigMap, SNI routing, Gateway API L4 routes, and the timeout traps.
+keywords:
+  - expose postgres externally
+  - expose a database outside the cluster
+  - tcp-services ConfigMap
+  - SNI passthrough routing
+  - connection reset after 350 seconds
+  - PROXY protocol
+  - idle timeout drops connection
+  - TCPRoute UDPRoute TLSRoute
+  - conntrack table full dropping packet
+  - client IP preservation
+  - port-forward
+  - invalid startup packet
 sidebar:
   order: 14
 ---

@@ -1,6 +1,19 @@
 ---
 title: The Template Language
 description: Go templates plus Sprig as actually used in charts — the dot and its rebinding, truthiness traps, whitespace control, the function toolkit, _helpers.tpl done right, and debugging renders.
+keywords:
+  - nil pointer evaluating interface
+  - error converting yaml to json
+  - toyaml nindent indentation
+  - Sprig function library
+  - the dot rebinding range with
+  - replicas 0 falsy truthiness trap
+  - whitespace control chomp
+  - tpl function templates in values
+  - lookup live cluster render
+  - semvercompare capabilities kubeversion
+  - _helpers.tpl fullname selectorlabels
+  - helm template --debug --show-only
 sidebar:
   order: 3
 ---

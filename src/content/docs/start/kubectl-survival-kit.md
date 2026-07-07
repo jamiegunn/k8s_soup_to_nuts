@@ -1,6 +1,18 @@
 ---
 title: kubectl Survival Kit
 description: The 20% of kubectl that handles 95% of daily work — contexts, get/describe/logs/exec, selectors, jsonpath, rollout, debug, and a quick-reference table.
+keywords:
+  - kubectl commands cheat sheet
+  - kubectl logs --previous for crashloopbackoff
+  - kubectl exec into container
+  - kubectl port-forward to service
+  - kubectl describe pod events
+  - label and field selectors
+  - kubectl rollout restart and undo
+  - kubectl debug ephemeral container distroless
+  - kubectl top pods cpu memory
+  - switch context and default namespace
+  - kubens kubectx
 sidebar:
   order: 5
 ---

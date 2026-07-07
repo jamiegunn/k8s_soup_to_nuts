@@ -1,6 +1,19 @@
 ---
 title: "Health Check Knobs"
 description: Every probe tunable in one place — defaults, the restart and rotation math, interaction effects, and per-archetype recipes with numbers derived from evidence.
+keywords:
+  - timeoutseconds default too low
+  - periodseconds failurethreshold
+  - successthreshold
+  - context deadline exceeded probe
+  - liveness probe restart timing math
+  - gc pause probe timeout
+  - cpu throttling probe failure
+  - exec probe cost fork
+  - unhealthy events
+  - terminationgraceperiodseconds probe
+  - crashloopbackoff startup budget
+  - minreadyseconds rollout duration
 sidebar:
   order: 2
 ---

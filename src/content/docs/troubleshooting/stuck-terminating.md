@@ -1,6 +1,20 @@
 ---
 title: "Stuck Terminating"
 description: Symptom-first playbook for pods, PVCs, and namespaces that won't die — grace periods vs finalizers vs dead nodes, the force-delete decision table, and when to wake platform.
+keywords:
+  - pod stuck terminating
+  - namespace won't delete
+  - PVC stuck terminating
+  - finalizers not removed
+  - force delete pod grace-period 0
+  - deletionTimestamp
+  - terminationGracePeriodSeconds
+  - node NotReady terminating
+  - pvc-protection finalizer
+  - ignoring SIGTERM exit 137
+  - FailedKillPod
+  - namespace terminating forever
+  - shell form PID 1 signal
 sidebar:
   order: 10
 ---

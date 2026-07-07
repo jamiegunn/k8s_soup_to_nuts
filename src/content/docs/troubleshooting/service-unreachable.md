@@ -1,6 +1,21 @@
 ---
 title: Service Unreachable
 description: Hop-by-hop playbook for "the service is down" — selectors, endpoints, ports, DNS, NetworkPolicy, and ingress errors.
+keywords:
+  - service is down
+  - connection refused
+  - 502 503 504 ingress
+  - no endpoints
+  - selector doesn't match labels
+  - targetPort mismatch
+  - readiness probe failing 0/1
+  - NetworkPolicy blocking traffic
+  - EndpointSlice empty
+  - EXTERNAL-IP pending
+  - externalTrafficPolicy Local
+  - MetalLB not announcing
+  - DNS NXDOMAIN service
+  - listening on 127.0.0.1 not 0.0.0.0
 sidebar:
   order: 7
 ---

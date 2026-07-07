@@ -1,6 +1,15 @@
 ---
 title: "Field Notes: The Heap Dump With No JDK"
 description: A production memory leak, a jlink-minimized image with no jmap, and the four escalating techniques it took to get a 4GB hprof out of the pod.
+keywords:
+  - jmap jcmd jps not found
+  - jattach static binary attach
+  - readOnlyRootFilesystem HeapDumpPath
+  - kubectl debug ephemeral container --target
+  - HeapDumpOnOutOfMemoryError
+  - jlink minimized image
+  - kubectl cp needs tar
+  - Caffeine cache unbounded leak
 date: 2026-02-10
 authors: editor
 tags:

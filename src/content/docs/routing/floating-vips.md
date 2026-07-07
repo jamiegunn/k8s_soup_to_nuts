@@ -1,6 +1,19 @@
 ---
 title: "Floating VIPs: VRRP, keepalived, and How Failover Actually Happens"
 description: The mechanism under every HA virtual IP — VRRP advertisements, the virtual MAC, gratuitous ARP on failover, split-brain, and how keepalived, kube-vip, and MetalLB are all the same pattern wearing different clothes.
+keywords:
+  - virtual MAC address 00:00:5e
+  - gratuitous ARP failover
+  - VIP dark after node maintenance
+  - split-brain two masters one VIP
+  - VRID priority advertisement
+  - 224.0.0.18 IP protocol 112
+  - kube-vip control plane VIP
+  - MetalLB L2 mode ARP
+  - preemption nopreempt
+  - connection state mirroring
+  - tcpdump vrrp arping
+  - master_down_interval failover time
 sidebar:
   order: 7
 ---

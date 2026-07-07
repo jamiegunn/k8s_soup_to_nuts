@@ -1,6 +1,17 @@
 ---
 title: CRDs Explained
 description: How CustomResourceDefinitions extend the Kubernetes API, how to discover and read the CRDs installed in your cluster, and what to ask the platform team for.
+keywords:
+  - customresourcedefinition
+  - no matches for kind in version
+  - kubectl get crds
+  - kubectl api-resources
+  - kubectl explain custom resource
+  - conversion webhook failed
+  - cannot list resource forbidden
+  - deleting crd deletes custom resources
+  - customresourcedefinitions is forbidden at cluster scope
+  - served vs storage version
 sidebar:
   order: 3
 ---

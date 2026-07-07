@@ -1,6 +1,17 @@
 ---
 title: High Availability
 description: PodDisruptionBudgets, anti-affinity, topology spread, priority, and graceful shutdown — surviving node drains and cluster upgrades without paging anyone.
+keywords:
+  - poddisruptionbudget
+  - pdb blocking node drain
+  - allowed disruptions zero
+  - kubectl drain stuck
+  - pod anti-affinity spread replicas
+  - topologyspreadconstraints maxskew
+  - all replicas on one node
+  - priorityclassname preemption
+  - cluster upgrade evicting pods
+  - minavailable maxunavailable
 sidebar:
   order: 5
 ---

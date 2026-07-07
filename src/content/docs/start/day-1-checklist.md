@@ -1,6 +1,18 @@
 ---
 title: "Day-1 Checklist: Before Your First Deploy"
 description: What to ask for and verify before shipping to a platform-provisioned namespace — access, quotas, image path, deploy path, traffic, observability, and the people — each with the command that proves it.
+keywords:
+  - onboarding to a new namespace
+  - kubectl auth can-i --list
+  - resourcequota and limitrange
+  - pod security admission enforce restricted
+  - default-deny networkpolicy
+  - image pull secret
+  - which ingress class should I use
+  - prometheus servicemonitor scrape convention
+  - platform team onboarding request
+  - verify rbac permissions before deploy
+  - first deploy blockers
 sidebar:
   order: 10
 ---

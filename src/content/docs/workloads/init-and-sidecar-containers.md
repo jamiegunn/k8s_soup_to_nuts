@@ -1,6 +1,18 @@
 ---
 title: Init and Sidecar Containers
 description: Multi-container pods done right — init container semantics, native sidecars, the classic sidecar patterns, and the anti-patterns that turn one pod into two problems.
+keywords:
+  - init container crashloopbackoff
+  - job never completes sidecar keeps running
+  - native sidecar restartpolicy always
+  - wait for database init container
+  - istio-proxy sidecar injected
+  - kubectl logs -c container
+  - init 1/2 status
+  - migration running in every pod
+  - shareprocessnamespace signal
+  - multi-container pod
+  - envoy proxy wont quit job
 sidebar:
   order: 15
 ---

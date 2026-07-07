@@ -1,6 +1,15 @@
 ---
 title: "Field Notes: The Image That Changed Under Us"
 description: Half the pods in one Deployment crashed and half were fine — same spec, same tag, same everything. Except the tag no longer meant the same image, because someone upstream had moved it.
+keywords:
+  - one tag two digests
+  - mutable image tag moved
+  - imagePullPolicy IfNotPresent cache
+  - CrashLoopBackOff sidecar agent
+  - imageID sha256 digest
+  - pin image by digest
+  - pull-through registry mirror
+  - imagePullPolicy Always consistency not identity
 date: 2026-06-25
 authors: editor
 tags:

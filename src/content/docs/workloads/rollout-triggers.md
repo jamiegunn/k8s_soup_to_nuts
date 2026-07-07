@@ -1,6 +1,18 @@
 ---
 title: What Triggers a Rollout
 description: The pod-template rule that decides when a Deployment rolls — which edits replace pods, which silently don't, how to force a rollout on config changes, and how to pause the trigger entirely.
+keywords:
+  - deployed but nothing rolled
+  - why is everything restarting
+  - configmap change no rollout
+  - latest tag no-op deploy
+  - kubectl rollout restart
+  - kubectl rollout pause resume
+  - paused deployment ignoring apply
+  - checksum annotation config
+  - rollme randalphanum helm
+  - pod template hash trigger
+  - apply is idempotent
 sidebar:
   order: 4
 ---

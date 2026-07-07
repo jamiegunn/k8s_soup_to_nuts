@@ -1,6 +1,19 @@
 ---
 title: Output and Queries
 description: Extract exactly the data you want from kubectl — JSONPath, custom-columns, sort-by, label and field selectors, and jq recipes for everything else.
+keywords:
+  - list all container images in namespace
+  - jsonpath range items end newline tab
+  - custom-columns and custom-columns-file
+  - kubectl sort-by restart count
+  - field label not supported field-selector
+  - label selector in notin key exists
+  - escaping dots in annotation keys jsonpath
+  - kubectl get -o json pipe jq recipes
+  - find containers without resource limits
+  - output-watch-events added modified deleted
+  - go-template when no jq available
+  - group pods by node
 sidebar:
   order: 3
 ---

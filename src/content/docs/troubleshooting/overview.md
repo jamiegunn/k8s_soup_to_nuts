@@ -1,6 +1,18 @@
 ---
 title: Troubleshooting Overview
 description: Symptom-to-playbook lookup table and the 60-second first-response commands for Kubernetes incidents.
+keywords:
+  - kubectl describe pod
+  - how to diagnose a broken pod
+  - kubernetes troubleshooting checklist
+  - my pod won't start
+  - kubectl get events
+  - kubectl logs previous
+  - reading pod status column
+  - service is down
+  - what changed incident response
+  - capture evidence bundle
+  - symptom to playbook lookup
 sidebar:
   order: 1
 ---

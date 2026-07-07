@@ -1,6 +1,16 @@
 ---
 title: "Lab 2: Secrets and Config, Every Way"
 description: Extend orders-api to consume configuration through every mechanism Kubernetes offers — env vars, Secrets, envFrom, mounted files, subPath — then prove by observation which ones update live and fix the rest with a checksum.
+keywords:
+  - inject configuration into kubernetes pods
+  - configmap and secret mounted as files
+  - envfrom with a prefix
+  - which config channels update live
+  - checksum annotation to roll pods on config change
+  - subpath mount does not update
+  - base64 secret is not encryption
+  - spring config import from mounted files
+  - layering values files per environment
 sidebar:
   order: 4
 ---

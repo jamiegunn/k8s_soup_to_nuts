@@ -1,6 +1,19 @@
 ---
 title: "Sizing Walkthrough: From Zero to Tuned"
 description: An end-to-end worked example that sizes one real service — probes, JVM, requests, limits, and HPA — from first deploy to production, with every number traced to a measurement.
+keywords:
+  - how to size a new service
+  - k6 load test in cluster
+  - maxrampercentage heap sizing
+  - working set plateau memory limit
+  - startup probe budget failurethreshold
+  - hpa utilization target knee
+  - cpu request p95 usage
+  - poddisruptionbudget replicas
+  - throttle ratio zero
+  - postgres connection pool maxreplicas
+  - quarterly resize ritual
+  - no data starter config
 sidebar:
   order: 6
 ---

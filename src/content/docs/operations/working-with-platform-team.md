@@ -1,6 +1,18 @@
 ---
 title: Working with the Platform Team
 description: The interface between app teams and cluster owners — what's theirs vs yours, how to write requests that get fast yeses, and how to escalate well during incidents.
+keywords:
+  - rbac request template
+  - pods/exec permission denied
+  - error from server forbidden
+  - quota raise request evidence
+  - cluster upgrade readiness
+  - pluto deprecated api detection
+  - poddisruptionbudget node drain
+  - break-glass elevation prod
+  - namespace ownership boundary
+  - incident escalation etiquette
+  - kubectl auth can-i denial
 sidebar:
   order: 7
 ---

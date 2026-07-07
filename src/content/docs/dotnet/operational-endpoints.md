@@ -1,6 +1,18 @@
 ---
 title: ".NET Operational Endpoints"
 description: "Assembling a Spring-Boot-Actuator-equivalent operational HTTP surface for .NET pods from ASP.NET Core health middleware and the dotnet-monitor sidecar API — with collection rules actuator can't match."
+keywords:
+  - dotnet-monitor HTTP API
+  - actuator equivalent for .NET
+  - collection rules triggers egress
+  - /gcdump /dump /trace endpoints
+  - port 52323 port-forward
+  - live log streaming /logs
+  - runtime log level change gap
+  - EventCounter trigger high cpu
+  - dotnet-monitor API key auth
+  - Prometheus /metrics separate port
+  - automatic dump on high CPU
 sidebar:
   order: 5
 ---

@@ -1,6 +1,17 @@
 ---
 title: Life of a Deployment
 description: Trace kubectl apply end-to-end — API server, etcd, controllers, scheduler, kubelet, probes, and endpoints — and learn where each failure mode surfaces.
+keywords:
+  - what happens after kubectl apply
+  - ProgressDeadlineExceeded rollout stuck
+  - FailedScheduling pod pending
+  - ErrImagePull ImagePullBackOff
+  - readiness probe endpointslice no backends
+  - exceeded quota FailedCreate replicaset
+  - deployment replicaset pod chain
+  - admission webhook denied the request
+  - running but 0/1 ready
+  - post-deploy verification checklist
 sidebar:
   order: 3
 ---

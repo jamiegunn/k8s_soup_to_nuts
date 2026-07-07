@@ -1,6 +1,19 @@
 ---
 title: The Kubernetes Networking Model
 description: The pod-IP contract, how CNI plugins implement it, packet walks for same-node and cross-node traffic, and where MTU problems come from.
+keywords:
+  - how kubernetes networking works
+  - pod to pod communication
+  - flat network
+  - CNI plugin Calico Cilium Flannel
+  - MTU blackhole
+  - large responses hang
+  - no route to host
+  - overlay vs routed network
+  - VXLAN encapsulation
+  - hostNetwork pod
+  - dual-stack IPv6
+  - pod CIDR service CIDR
 sidebar:
   order: 3
 ---

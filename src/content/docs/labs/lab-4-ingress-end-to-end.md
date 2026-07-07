@@ -1,6 +1,16 @@
 ---
 title: "Lab 4: Ingress and the Full Path"
 description: Install ingress-nginx on k3s alongside the bundled Traefik, route orders.localtest.me to your API, trace a request hop by hop, break readiness on purpose — then tear the whole lab stack down cleanly.
+keywords:
+  - install ingress-nginx with helm
+  - host-based routing to a kubernetes service
+  - ingressclass with two ingress controllers
+  - trace an http request hop by hop
+  - nodeport and lima automatic port forwarding
+  - decode an nginx ingress access log
+  - break a readiness probe and watch endpoints drain
+  - localtest.me resolves to localhost
+  - full teardown of the lab stack
 sidebar:
   order: 6
 ---

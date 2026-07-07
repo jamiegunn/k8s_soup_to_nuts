@@ -1,6 +1,15 @@
 ---
 title: "Field Notes: The subPath Mount That Never Updated"
 description: We updated a ConfigMap, verified it in-cluster, and then watched the app ignore it for days — on some pods. The culprit was one line of volume config and a propagation rule nobody had read.
+keywords:
+  - subPath mount never receives ConfigMap updates
+  - stale config different per pod
+  - kubelet ..data symlink swap
+  - checksum annotation force rollout
+  - feature flag stuck at old value
+  - config propagation modes
+  - bind mount frozen inode snapshot
+  - kubectl exec cat config inside pod
 date: 2026-02-25
 authors: editor
 tags:

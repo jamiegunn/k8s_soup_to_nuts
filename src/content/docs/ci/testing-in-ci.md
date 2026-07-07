@@ -1,6 +1,19 @@
 ---
 title: "Testing in CI: Units, Charts, and Ephemeral Clusters"
 description: The testing ladder for a Kubernetes app and its chart — app unit tests, helm-unittest, kubeconform and golden files, and the honest case for (and against) a k3d cluster on the runner.
+keywords:
+  - testcontainers postgres on github runner
+  - helm-unittest chart unit tests
+  - kubeconform validate rendered manifests
+  - helm lint --strict
+  - values.schema.json validation
+  - golden file diff chart render drift
+  - k3d ephemeral cluster in ci
+  - k3d image import pullPolicy Never
+  - helm test hooks smoke test
+  - surefire failsafe unit vs integration split
+  - flaky test quarantine re-run culture
+  - api deprecations gate policy/v1beta1
 sidebar:
   order: 5
 ---

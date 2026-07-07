@@ -1,6 +1,21 @@
 ---
 title: Volume and Storage Failures
 description: Symptom-first playbook for PVCs stuck Pending, Multi-Attach errors, FailedMount timeouts, full volumes, permission failures, and the data-loss traps around StatefulSets.
+keywords:
+  - volume won't mount
+  - Multi-Attach error for volume
+  - FailedMount timeout
+  - FailedAttachVolume
+  - PVC stuck pending
+  - no space left on device
+  - permission denied on mount
+  - fsGroup
+  - read-only file system
+  - storageClassName not found
+  - allowVolumeExpansion resize pvc
+  - reclaimPolicy Delete data loss
+  - NFS root-squash
+  - volume node affinity conflict statefulset
 sidebar:
   order: 11
 ---

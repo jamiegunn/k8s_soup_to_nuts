@@ -1,6 +1,18 @@
 ---
 title: "IBM MQ: Production Reference Architecture"
 description: A complete, copy-paste-deployable IBM MQ Native HA queue manager on Kubernetes — QueueManager CR, TLS, CHLAUTH, MetalLB exposure, quorum-aware PDBs, monitoring, and failure drills.
+keywords:
+  - Native HA queue manager
+  - MQRC 2009 connection broken
+  - CHLAUTH SSLPEERMAP mutual TLS
+  - QueueManager operator CR
+  - quorum loss split-brain
+  - HBINT heartbeat idle timeout
+  - MQ Advanced license entitlement
+  - AMQ9776 AMQ4036 channel errors
+  - persistent message replication survival
+  - amqsputc amqsgetc CCDT reconnect
+  - MQSC MCAUSER least privilege
 sidebar:
   order: 4
 ---

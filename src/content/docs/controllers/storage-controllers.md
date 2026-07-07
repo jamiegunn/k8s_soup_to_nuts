@@ -1,6 +1,18 @@
 ---
 title: "Storage Controllers: Longhorn, Ceph, Harvester & Friends"
 description: What's actually behind your StorageClass — Longhorn, Rook-Ceph, Harvester, OpenEBS, NFS — and how each backend changes the way slow, degraded, and stuck volumes behave.
+keywords:
+  - longhorn degraded volume rebuild
+  - rook-ceph health_warn
+  - pvc slow latency
+  - storageclass provisioner column
+  - localpv node pinning affinity
+  - mayastor nvme-of
+  - nfs root_squash permission denied
+  - ceph noisy neighbor cluster-wide
+  - fio fsync benchmark iops
+  - share-manager rwx nfs stall
+  - numberOfReplicas parameter
 sidebar:
   order: 9
 ---

@@ -1,6 +1,19 @@
 ---
 title: "Requests & Limits on a Running Fleet"
 description: Retrofitting resource management onto an existing, live-traffic fleet — the audit kit, deriving numbers from production history instead of load tests, and the wave-by-wave rollout choreography that doesn't page anyone.
+keywords:
+  - how to rightsize existing deployments
+  - oomkilled
+  - besteffort qos eviction
+  - why is my app throttled
+  - verticalpodautoscaler recommendation mode
+  - failedscheduling insufficient memory
+  - resourcequota exceeded
+  - prometheus working set percentile
+  - hpa target utilization retune
+  - node pressure eviction 3am
+  - in-place pod resize
+  - kubectl top pod
 sidebar:
   order: 5
 ---

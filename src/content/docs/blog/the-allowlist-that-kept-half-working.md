@@ -1,6 +1,15 @@
 ---
 title: "Field Notes: The Allow-List That Kept Half-Working"
 description: A reporting service that connected to the corporate database perfectly for weeks, then began timing out — but only from some pods, and worse under load. The trail led to egress SNAT, a firewall pinned to node IPs, and a cluster that had quietly grown.
+keywords:
+  - ORA-12170 TNS connect timeout
+  - egress SNAT masquerade
+  - node IP firewall rule
+  - Cilium egress gateway
+  - pod source IP vs node IP
+  - cluster autoscaled new nodes
+  - stable egress IP
+  - only some pods reachable
 date: 2026-07-06
 authors: editor
 tags:

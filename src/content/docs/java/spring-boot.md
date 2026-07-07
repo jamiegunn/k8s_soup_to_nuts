@@ -1,6 +1,18 @@
 ---
 title: Spring Boot on Kubernetes
 description: Actuator health groups wired to probes, graceful shutdown that actually drains, configtree config, Micrometer metrics, startup tuning, layered images, and a fully annotated reference Deployment.
+keywords:
+  - actuator liveness readiness health groups
+  - graceful shutdown drain in-flight requests
+  - terminationGracePeriodSeconds preStop
+  - configtree config import
+  - startup probe slow boot
+  - layered jar buildpacks
+  - micrometer tracing otel
+  - HikariCP maxLifetime connection reset
+  - spring-boot-devtools in production
+  - readiness flapping database indicator
+  - SPRING_PROFILES_ACTIVE
 sidebar:
   order: 10
 ---

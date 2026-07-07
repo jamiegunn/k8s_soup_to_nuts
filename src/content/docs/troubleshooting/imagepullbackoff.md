@@ -1,6 +1,19 @@
 ---
 title: ImagePullBackOff
 description: Fix ErrImagePull and ImagePullBackOff — tag typos, registry auth, rate limits, and imagePullPolicy surprises.
+keywords:
+  - ErrImagePull
+  - can't pull image
+  - manifest unknown tag not found
+  - unauthorized authentication required
+  - pull access denied
+  - imagePullSecrets docker-registry secret
+  - toomanyrequests docker hub rate limit
+  - x509 certificate registry private CA
+  - ErrImageNeverPull imagePullPolicy Never
+  - InvalidImageName
+  - i/o timeout node can't reach registry
+  - digest pinning latest tag
 sidebar:
   order: 5
 ---

@@ -1,6 +1,19 @@
 ---
 title: Dumps and Diagnostics (Runtime-Only Images)
 description: Every way to get memory dumps, GC heap graphs, CPU traces, and thread stacks out of a .NET pod that ships no SDK — dotnet-monitor, ephemeral containers, and crash dumps.
+keywords:
+  - dotnet-dump dotnet-trace dotnet-counters
+  - EventPipe diagnostic socket /tmp
+  - dotnet-monitor sidecar
+  - DOTNET_DbgEnableMiniDump crash dump
+  - DOTNET_DiagnosticPorts
+  - dotnet-gcdump heap graph
+  - SOS clrstack dumpheap gcroot
+  - ephemeral container /proc/1/root TMPDIR
+  - readOnlyRootFilesystem no socket
+  - PerfView speedscope
+  - chiseled distroless no shell
+  - DOTNET_EnableDiagnostics=0
 sidebar:
   order: 3
 ---

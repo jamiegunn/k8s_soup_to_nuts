@@ -1,6 +1,18 @@
 ---
 title: Node Problems (From Your Seat)
 description: Recognize node trouble from inside your namespace — evictions, stuck Terminating pods, drains — and make your app survive it.
+keywords:
+  - pod stuck terminating
+  - pod status unknown
+  - evicted pod node low on resource
+  - ephemeral-storage disk pressure eviction
+  - node notready cordoned drained
+  - mass pod rescheduling
+  - PodDisruptionBudget drain
+  - node.kubernetes.io/unreachable toleration 300 seconds
+  - is it node pain or app pain
+  - graceful shutdown sigterm node maintenance
+  - force delete stateful pod
 sidebar:
   order: 12
 ---

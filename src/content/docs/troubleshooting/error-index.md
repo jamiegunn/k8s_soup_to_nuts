@@ -1,6 +1,18 @@
 ---
 title: Error Message Index
 description: Look up the exact error string on your screen — CrashLoopBackOff, FailedScheduling, x509, 502s — and jump straight to the playbook that fixes it.
+keywords:
+  - what does this error mean
+  - kubectl describe pod events
+  - FailedScheduling Insufficient cpu
+  - OOMKilled exit code 137
+  - Back-off restarting failed container
+  - ImagePullBackOff unauthorized manifest unknown
+  - Error from server Forbidden
+  - x509 certificate signed by unknown authority
+  - FailedMount Multi-Attach error
+  - probe failed connection refused
+  - Evicted pod ephemeral-storage
 sidebar:
   order: 17
 ---

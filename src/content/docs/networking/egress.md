@@ -1,6 +1,19 @@
 ---
 title: "Egress: Leaving the Cluster and the Identity You Leave As"
 description: Everything about outbound traffic — why the database sees a node IP instead of your pod, the three egress-identity strategies, egress gateways as a stable SNAT passport, forward proxies, and getting a firewall rule that survives a scale-up.
+keywords:
+  - outbound traffic
+  - source IP
+  - SNAT masquerade
+  - egress gateway
+  - firewall allow-list
+  - database calls fail only when busy
+  - HTTPS_PROXY
+  - NO_PROXY
+  - x509 certificate signed by unknown authority
+  - SNAT port exhaustion
+  - toFQDNs
+  - stable static IP for whitelist
 sidebar:
   order: 16
 ---

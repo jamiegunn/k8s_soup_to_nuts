@@ -1,6 +1,15 @@
 ---
 title: "Field Notes: The Oracle Database That Hated Time Travel"
 description: An Oracle pod stuck in a CrashLoopBackOff with ORA-01012, and the trail that led through clock drift, Apple Silicon VM virtualization, and time-stabilizing host sleep guards.
+keywords:
+  - ORA-01012 not logged on
+  - CrashLoopBackOff exit code 1
+  - backward clock drift stall
+  - Apple Silicon QEMU Lima VM
+  - arch_sys_counter clocksource
+  - host sleep suspend jump
+  - caffeinate guard script
+  - DATABASE STARTUP FAILED
 date: 2026-07-05
 authors: editor
 tags:

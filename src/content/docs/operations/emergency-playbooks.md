@@ -1,6 +1,19 @@
 ---
 title: Emergency Playbooks
 description: Copy-paste incident cards for the six most common production emergencies — bad deploy, traffic spike, poisoned pod, OOM storm, bad config, and state capture.
+keywords:
+  - on-call runbook
+  - kubectl rollout undo
+  - kubectl rollout pause
+  - traffic spike scale out
+  - hpa pinned at max
+  - quarantine poisoned pod
+  - oomkilled storm
+  - revert bad config value
+  - capture logs before self-heal
+  - triage snapshot script
+  - 2am incident commands
+  - kubectl label pod quarantine
 sidebar:
   order: 8
 ---

@@ -1,6 +1,19 @@
 ---
 title: DNS Integration and Naming Architecture
 description: How cluster DNS and corporate DNS form one namespace — naming decisions, external-dns, TTL strategy, split-horizon, and the checklist to run before you ask for a record.
+keywords:
+  - external-dns annotations records as code
+  - cluster.local vs corporate DNS
+  - wildcard vs per-app records
+  - TTL failover time
+  - split-horizon hairpin
+  - CNAME chain GSLB VIP
+  - JVM networkaddress.cache.ttl
+  - Infoblox Route53 BIND provider
+  - resolves in pod fails on laptop
+  - ownership TXT records
+  - F5 VIP vs MetalLB IP target
+  - DNS record request template
 sidebar:
   order: 6
 ---

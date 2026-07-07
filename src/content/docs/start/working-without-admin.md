@@ -1,6 +1,17 @@
 ---
 title: Working Without Admin
 description: Operating effectively with namespace-scoped RBAC — discovering your permissions, spotting cluster-vs-app problems, and partnering with the platform team.
+keywords:
+  - kubectl get nodes forbidden
+  - namespace-scoped rbac limits
+  - kubectl auth whoami can-i
+  - app problem or cluster problem
+  - resourcequota limitrange budget
+  - escalate to platform team with evidence
+  - paved road gitops contract
+  - cannot list storageclasses or crds
+  - kubectl top nodes denied
+  - what am I allowed to do without admin
 sidebar:
   order: 4
 ---

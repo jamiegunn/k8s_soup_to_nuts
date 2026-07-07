@@ -1,6 +1,17 @@
 ---
 title: Reference Architectures
 description: Complete, copy-paste-deployable builds — every manifest included, every choice explained, with verification plans and failure-mode tables.
+keywords:
+  - copy-paste deployable manifests
+  - production build examples
+  - platform team asks and tickets
+  - verification and failure drills
+  - which architecture do I need
+  - stateful and stateless patterns
+  - corporate VIP appliance MetalLB
+  - Guaranteed QoS PodDisruptionBudget conventions
+  - kill the primary drain restore drills
+  - annotated YAML reference
 sidebar:
   order: 1
 ---

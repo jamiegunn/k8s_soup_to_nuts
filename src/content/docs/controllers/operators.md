@@ -1,6 +1,17 @@
 ---
 title: Operators
 description: What operators are, how to drive them through custom resources, and how to debug operator-managed apps when you can't read the operator's logs.
+keywords:
+  - operator pattern
+  - custom resource spec status conditions
+  - observedGeneration behind generation
+  - reconcileerror event
+  - operator hand-edit reverted
+  - pause reconciliation annotation
+  - operator lifecycle manager olm
+  - cnpg hibernation spec paused
+  - debugging operator without logs
+  - conditions message ready false
 sidebar:
   order: 4
 ---

@@ -1,6 +1,19 @@
 ---
 title: ingress-nginx in Practice
 description: The de facto Ingress controller from the tenant seat — annotations that actually matter, timeouts, TLS fallback traps, canaries, and debugging 502/504s.
+keywords:
+  - nginx.ingress.kubernetes.io
+  - 413 request entity too large
+  - proxy-body-size
+  - 504 after 60 seconds
+  - proxy-read-timeout
+  - backend-protocol GRPC
+  - canary-weight
+  - sticky sessions cookie affinity
+  - rewrite-target
+  - upstream_status
+  - configuration-snippet disabled
+  - annotation has no effect
 sidebar:
   order: 13
 ---

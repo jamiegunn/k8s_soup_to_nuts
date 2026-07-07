@@ -1,6 +1,18 @@
 ---
 title: Rollouts and Rollbacks
 description: Tuning RollingUpdate surge and unavailability, driving kubectl rollout safely, and building canary and blue/green releases with plain Deployments and Services.
+keywords:
+  - maxsurge maxunavailable tuning
+  - rollingupdate vs recreate
+  - kubectl rollout undo
+  - rollback reverted by gitops
+  - kubectl rollout status pipeline
+  - canary deployment with labels
+  - blue green service selector switch
+  - change-cause annotation
+  - rollout stuck progressdeadline
+  - deploy dropping capacity
+  - kubectl rollout history
 sidebar:
   order: 3
 ---

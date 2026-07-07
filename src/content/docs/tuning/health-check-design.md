@@ -1,6 +1,19 @@
 ---
 title: "Health Check Design"
 description: What "healthy" should actually mean — designing probe endpoints backwards from their consequences, classifying dependencies, per-archetype designs, and the retrofit program for a fleet full of inherited probes.
+keywords:
+  - why does my pod keep restarting
+  - liveness probe killing healthy pods
+  - readiness probe dependency check
+  - restart storm cascade
+  - thundering herd database failover
+  - spring boot actuator health groups
+  - grpc health check
+  - initialdelayseconds fossil
+  - transitive health check cascade
+  - /health/live and /health/ready endpoints
+  - queue consumer heartbeat file probe
+  - load shedding readiness
 sidebar:
   order: 3
 ---

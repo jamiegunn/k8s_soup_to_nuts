@@ -1,6 +1,17 @@
 ---
 title: "Reconciliation: The Control Loop"
 description: How Kubernetes controllers converge actual state toward desired state, why level-triggered design matters, and how to work with reconciliation instead of fighting it.
+keywords:
+  - level-triggered vs edge-triggered
+  - control loop observe diff act
+  - finalizers stuck terminating
+  - pvc-protection finalizer
+  - namespace stuck terminating
+  - observedGeneration lag
+  - hpa fighting gitops replicas
+  - informers work queue resync
+  - cascading delete ownerreferences
+  - reconcile backoff retry
 sidebar:
   order: 2
 ---

@@ -1,6 +1,19 @@
 ---
 title: Cost and Rightsizing
 description: FinOps from the app-team seat — why you're billed on requests not usage, the waste taxonomy with PromQL detection queries, reading showback numbers without arguing about them, and the quarterly rightsizing ritual.
+keywords:
+  - finops
+  - requests vs usage
+  - opencost kubecost
+  - showback chargeback
+  - resource slack
+  - over-provisioned cpu
+  - orphaned pvc
+  - vpa recommendation mode
+  - minreplicas too high
+  - scale dev to zero at night
+  - reserved but idle capacity
+  - namespace resourcequota
 sidebar:
   order: 14
 ---

@@ -1,6 +1,19 @@
 ---
 title: "The BusyBox Toolkit"
 description: How one ~1MB static binary becomes a complete troubleshooting toolkit on a cluster where you can't install anything.
+keywords:
+  - debug distroless container no shell
+  - kubectl debug ephemeral container
+  - no package manager in pod
+  - static binary debugging tools
+  - nc port test connection refused
+  - wget instead of curl in pod
+  - nslookup dns from pod
+  - /proc/1/root target filesystem
+  - busybox applets ash sh
+  - copy binary into running container
+  - kubectl cp tar not found
+  - throwaway debug pod
 sidebar:
   order: 15
 ---

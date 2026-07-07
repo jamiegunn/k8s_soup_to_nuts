@@ -1,6 +1,19 @@
 ---
 title: Authoring Best Practices
 description: Principled rules for charts that survive their consumers — render determinism, stable labels, checksum rollouts, passthrough specs, loud failures, tests, and docs.
+keywords:
+  - field is immutable error
+  - selector is immutable
+  - randalphanum regenerates password
+  - checksum/config annotation
+  - helm unittest plugin
+  - helm-docs values table
+  - required and fail functions
+  - library chart type
+  - imagepullsecrets passthrough
+  - toyaml tolerations verbatim
+  - capability gate api version
+  - golden file diff testing
 sidebar:
   order: 5
 ---

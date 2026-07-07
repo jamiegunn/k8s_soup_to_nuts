@@ -1,6 +1,16 @@
 ---
 title: "Lab 6: Metrics, Dashboards, and One Real Alert"
 description: Install kube-prometheus-stack sized for one node, scrape orders-api through a ServiceMonitor, run the site's own PromQL against real data, read a Grafana JVM dashboard — then write, trigger, and resolve one real alert.
+keywords:
+  - install kube-prometheus-stack on a lab cluster
+  - scrape spring boot metrics with a servicemonitor
+  - run promql queries against live data
+  - import a grafana jvm dashboard
+  - write trigger and resolve a prometheusrule alert
+  - size the monitoring stack for one node
+  - why prometheus is not scraping my target
+  - expose the actuator prometheus endpoint
+  - helm uninstall leaves crds behind
 sidebar:
   order: 8
 ---

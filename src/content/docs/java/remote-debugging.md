@@ -1,6 +1,18 @@
 ---
 title: Remote Debugging a JVM in a Pod
 description: Attaching an IDE debugger to a JVM in Kubernetes over JDWP and port-forward, and the probe-killing, traffic-eating hazards of breakpoints in production.
+keywords:
+  - JDWP agent
+  - -agentlib:jdwp transport dt_socket
+  - port-forward 5005
+  - breakpoint kills liveness probe
+  - IntelliJ Remote JVM Debug
+  - attach debugger to pod
+  - suspend=n
+  - debug replica off the Service
+  - conditional breakpoints logpoints
+  - Listening for transport dt_socket
+  - JAVA_TOOL_OPTIONS debug flag
 sidebar:
   order: 6
 ---

@@ -1,6 +1,19 @@
 ---
 title: "It's Slow, Not Down"
 description: Symptom-first playbook for latency incidents — the p50/p99 four-quadrant read, then the eight causes of mystery slowness ranked by base rate, from CPU throttling to retry storms.
+keywords:
+  - high latency but pods healthy
+  - p99 latency spike slow but green
+  - cpu throttling cfs quota
+  - container_cpu_cfs_throttled_periods_total
+  - gc pause stop the world
+  - connection pool exhaustion HikariCP pending
+  - dns 5 second timeout ndots
+  - conntrack table full slow requests
+  - noisy neighbor node pressure
+  - downstream dependency slow
+  - retry amplification storm timeout budget
+  - slow database query pg_stat_statements
 sidebar:
   order: 9
 ---
