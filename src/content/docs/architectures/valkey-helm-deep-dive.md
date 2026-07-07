@@ -14,6 +14,8 @@ keywords:
   - REPLICAOF NO ONE promote passive cluster
   - post-install hook cluster bootstrap job
   - valkey-cli --cluster create replicas
+  - how clients connect GET SET pubsub streams
+  - expose valkey internally and externally L4
 sidebar:
   order: 3
 ---
@@ -25,6 +27,13 @@ The companion to this page is [Valkey: Two StatefulSets, One MetalLB VIP](/archi
 3. What are the topologies past a single primary/replica pair — **cluster mode** (sharding) and **cross-cluster active/passive** — and when do I actually reach for them?
 
 If you only ever run one Valkey in one namespace, the raw-manifest page is the whole job and this one is optional reading. The moment you have three teams asking for "a Valkey like the payments one," you want a chart.
+
+:::note[Two companion deep dives — where this page only summarizes]
+This page packages the server and decides *topology*. Two child pages carry the depth it deliberately keeps high-level:
+
+- **[Valkey Data Access: Commands, Read/Write Split, and Cluster Semantics](/architectures/valkey-data-access-patterns/)** — the verb model with runnable call examples: `GET`/`SET` and the other structures, classic vs **sharded** pub/sub (`SPUBLISH`/`SSUBSCRIBE`), Streams and consumer groups, transactions, the read/write split and the `READONLY` error, the `CROSSSLOT`/`{hashtag}` rule, and how cache-vs-store changes every command choice.
+- **[Valkey Ingress: VIPs, TCP Routing, and cluster-announce](/architectures/valkey-ingress-and-cluster-announce/)** — how a connection actually reaches the right pod, with a diagram per path: internal ClusterIP vs headless DNS, every external L4 option (MetalLB, NodePort, `tcp-services`, Gateway `TCPRoute`/`TLSRoute`, proxy), the full `cluster-announce` mechanism (and why external cluster-mode clients get `MOVED` to nowhere), and TLS/ACL at the edge.
+:::
 
 ## 1. The mental model: three moving parts
 
@@ -349,6 +358,8 @@ The instinct "more replicas = safer" is correct only when there's *nothing else*
 
 ## 5. Internal and external access
 
+This section is the chart-packaging summary — the `externalAccess` toggle and the Services it renders. The full treatment of *every* exposure path, TLS/ACL at the edge, and the `cluster-announce` deep dive lives in [Valkey Ingress: VIPs, TCP Routing, and cluster-announce](/architectures/valkey-ingress-and-cluster-announce/).
+
 **Internal** consumers stay in-cluster and need nothing external. Two DNS surfaces: a `ClusterIP` Service (`{{ include "valkey.fullname" . }}` on `:6379`, load-balanced across ready endpoints) for "give me a Valkey," and the **headless** Services (`clusterIP: None`, `publishNotReadyAddresses: true`) that mint per-pod DNS — `valkey-primary-0.<headless>.<ns>.svc.cluster.local` — which is both what the replica replicates *to* and how a client pins the writer. Same as the raw build's [§3b](/architectures/valkey-shared-vip/#3b-headless-services).
 
 **External** is where the protocol matters: Valkey speaks the **Redis TCP protocol, not HTTP**, so an HTTP Ingress cannot route it — host/path rules are meaningless for a binary TCP protocol. You need **L4**. Two doors, both covered in [TCP Ingress](/networking/tcp-ingress/):
@@ -435,7 +446,7 @@ spec:
 
 The hook runs *after* the StatefulSet's pods exist ([Helm hooks](/helm/lifecycle-and-operations/), [Jobs and CronJobs](/workloads/jobs-and-cronjobs/)); `--cluster-replicas 1` tells `valkey-cli` to make half the nodes replicas of the other half. It runs **once** — re-running against an already-formed cluster errors, which is why the delete policy and `backoffLimit` matter, and why cluster formation is genuinely harder to make idempotent than a primary/replica pair.
 
-**External access is the hard part, and the reason cluster mode usually stays internal.** Each node must **advertise a stable, externally reachable address** to clients and to its peers, via `cluster-announce-ip`, `cluster-announce-port`, and `cluster-announce-bus-port` (the bus is the separate gossip channel, conventionally client-port + 10000). A shared VIP can't work — the client is redirected to *specific nodes* by `MOVED`, so every node needs its own routable address. That means a **per-pod LoadBalancer** (one MetalLB IP per shard member — expensive and a big platform ask) or a **cluster-aware proxy**. Because of this, cluster mode is typically kept **cluster-internal**, with only cluster-aware in-cluster clients.
+**External access is the hard part, and the reason cluster mode usually stays internal.** Each node must **advertise a stable, externally reachable address** to clients and to its peers, via `cluster-announce-ip`, `cluster-announce-port`, and `cluster-announce-bus-port` (the bus is the separate gossip channel, conventionally client-port + 10000). A shared VIP can't work — the client is redirected to *specific nodes* by `MOVED`, so every node needs its own routable address. That means a **per-pod LoadBalancer** (one MetalLB IP per shard member — expensive and a big platform ask) or a **cluster-aware proxy**. Because of this, cluster mode is typically kept **cluster-internal**, with only cluster-aware in-cluster clients. The full walkthrough — the `MOVED`-to-an-unreachable-pod-IP failure, the three `cluster-announce-*` settings, the gossip bus port, and per-pod addressing — is in [Valkey Ingress](/architectures/valkey-ingress-and-cluster-announce/), and the client-side `MOVED`/`ASK`/`READONLY` semantics are in [Valkey Data Access](/architectures/valkey-data-access-patterns/).
 
 **Primary/replica vs cluster mode:**
 
