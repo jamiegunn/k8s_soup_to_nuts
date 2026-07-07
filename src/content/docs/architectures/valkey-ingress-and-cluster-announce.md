@@ -136,6 +136,43 @@ This is the pattern the whole Valkey family is built on, documented end-to-end i
     └── source IP is now a NODE IP, not the client ─────────────────┘
 ```
 
+The same path with the control plane shown — the MetalLB speakers **gossip** (memberlist) to elect which node answers for the VIP, and the two Valkey pods run their own **replication** stream underneath the ingress path:
+
+```mermaid
+flowchart TB
+  C["Client app"]
+  ELB["External / corporate LB (valkey.example.internal)"]
+  subgraph cluster["Kubernetes cluster"]
+    subgraph spk["MetalLB speakers (DaemonSet, L2 mode)"]
+      S1["speaker node-1"]
+      S2["speaker node-2 (elected)"]
+      S3["speaker node-3"]
+    end
+    VIP(["MetalLB IP 10.40.0.50"])
+    RW["Service valkey-rw (type=LoadBalancer) :6379"]
+    RO["Service valkey-ro (type=LoadBalancer) :6380"]
+    KP["kube-proxy: DNAT + SNAT"]
+    P[("valkey-primary-0")]
+    R[("valkey-replica-0")]
+  end
+  C -->|":6379 rw / :6380 ro"| ELB
+  ELB -->|"TCP pool member"| VIP
+  S1 <-->|"memberlist gossip"| S2
+  S2 <-->|"memberlist gossip"| S3
+  S2 -.->|"wins election, ARP/GARP for the VIP"| VIP
+  VIP --> RW
+  VIP --> RO
+  RW --> KP
+  RO --> KP
+  KP -->|":6379"| P
+  KP -->|":6380 to 6379"| R
+  P -->|"async replication (via headless DNS)"| R
+```
+
+:::note[In cluster mode there's a second gossip layer]
+The gossip above is **MetalLB's** speaker election, not Valkey's. In *cluster mode* the Valkey pods themselves also gossip — over the **cluster bus** (client port + 10000) — to track slot ownership and node health, which is a separate concern from how a client reaches them. That's [§3](#3-cluster-announce--why-external-cluster-mode-clients-get-moved-to-nowhere).
+:::
+
 Two facts that bite:
 
 - **`externalTrafficPolicy: Cluster` is mandatory here.** The two Services select *different* pod sets (primary vs replica), and MetalLB will only share one IP between them if both use `Cluster` (or both `Local` selecting identical pods — impossible here). With `Local`, the second Service sits `<pending>` forever. Details and the full three-part sharing rule are in [MetalLB](/controllers/metallb/) and [External Load Balancing](/networking/external-load-balancing/).
