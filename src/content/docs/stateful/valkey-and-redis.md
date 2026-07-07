@@ -144,7 +144,7 @@ Realistic options, in order of how often they're the right call:
 - **Bitnami charts caveat**: the long-standard `bitnami/redis` and `bitnami/valkey` charts got caught in Broadcom's 2025 licensing shift — freely available images moved to `bitnamilegacy` (unmaintained) with the maintained catalog going commercial. Pin digests, mirror what you depend on into your own registry, and don't base new production deployments on "Bitnami is free forever."
 - **Upstream `valkey/valkey` image + your own manifests** — completely fine for standalone instances; that's what the examples here use.
 
-Remember the constraint: an operator's CRDs are a cluster-scoped install — **platform team request** — after which you create the namespaced CRs yourself. [Operators for State](/stateful/operators-for-state/) covers that workflow.
+Remember the constraint: an operator's [CRDs](/controllers/crds-explained/) are a cluster-scoped install — **platform team request** — after which you create the namespaced CRs yourself. [Operators for State](/stateful/operators-for-state/) covers that workflow.
 
 :::tip[The decision table]
 | Situation | Deploy as |

@@ -133,6 +133,8 @@ egress:
         port: 5432
 ```
 
+For egress to something *outside* the cluster, standard `NetworkPolicy` can only match `ipBlock` CIDRs — it **cannot** match a hostname, because it sees packets after DNS resolution. Restricting a pod to a set of *domains* (a SaaS API, a package registry) needs a CNI extension like Cilium's `toFQDNs` or Calico's domain rules; that, plus which source IP your egress traffic actually leaves as, is [Egress](/networking/egress/).
+
 ## Enforcement depends on the CNI — verify, don't assume
 
 NetworkPolicy is an API contract that the **CNI plugin** may or may not implement. Calico and Cilium enforce it. Plain Flannel **accepts your policies and does absolutely nothing with them** — `kubectl apply` succeeds, `kubectl get netpol` lists them, and every packet still flows. No error, no event, no warning.

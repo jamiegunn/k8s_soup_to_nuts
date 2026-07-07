@@ -5,7 +5,7 @@ sidebar:
   order: 9
 ---
 
-Everything inside the cluster — Services, DNS, ingress — assumes traffic is already *in*. This article is about the front door: how packets from the outside world reach a node in the first place, and why the answer differs completely between cloud and on-prem clusters even though your manifest looks identical.
+Everything inside the cluster — Services, DNS, ingress — assumes traffic is already *in*. This article is about the front door: how packets from the outside world reach a node in the first place, and why the answer differs completely between cloud and on-prem clusters even though your manifest looks identical. (For the opposite direction — how your pods reach *out* to corporate databases and the internet, and what source IP they leave as — see [Egress](/networking/egress/).)
 
 ## The universal interface: type LoadBalancer
 
@@ -71,7 +71,7 @@ Bare-metal and vSphere clusters have no cloud API. Two fulfillment patterns domi
 
 **MetalLB** — runs inside the cluster and hands out external IPs from address pools the platform team configured, announcing them to the physical network via ARP (Layer 2 mode) or BGP. From your side it's invisible: create the Service, get an IP from the pool. Pool exhaustion and announcement problems are the platform failure modes. Details in [MetalLB](/controllers/metallb/).
 
-**F5 BIG-IP via CIS** — the Container Ingress Services controller watches Kubernetes resources and programs an external F5 appliance to load-balance to node ports or (in some topologies) directly to pod IPs. Common in enterprises that already standardize on F5. You may interact with it via annotated Services, Ingress, or F5's own CRDs (VirtualServer/TransportServer) — whatever contract your platform team established. Details in [F5 CIS](/controllers/f5-cis/).
+**F5 BIG-IP via CIS** — the Container Ingress Services controller watches Kubernetes resources and programs an external F5 appliance to load-balance to node ports or (in some topologies) directly to pod IPs. Common in enterprises that already standardize on F5. You may interact with it via annotated Services, Ingress, or F5's own [CRDs](/controllers/crds-explained/) (VirtualServer/TransportServer) — whatever contract your platform team established. Details in [F5 CIS](/controllers/f5-cis/).
 
 Either way, your manifest stays a plain `type: LoadBalancer` Service (or an Ingress); the on-prem machinery is the platform team's.
 
@@ -82,7 +82,7 @@ Since a `LoadBalancer` Service is defined across all worker nodes in the cluster
 * **In L2 Mode**: MetalLB speaker pods run a leader election. Exactly one worker node is elected to answer ARP requests for the VIP. The upstream switch sends all traffic for the VIP to that node's MAC address.
 * **In BGP Mode**: Nodes announce the VIP as a `/32` host route to the upstream routers. The routers then use ECMP (Equal-Cost Multi-Path) to load-balance connection flows across multiple nodes.
 
-Once the packet arrives at the node's physical network interface, Kubernetes' internal proxying (`kube-proxy` or the CNI) takes over, routing it to the destination pod. The detailed mechanics of this two-hop process are in the [MetalLB Routing Guide](/controllers/metallb/#how-the-network-routes-to-a-node-l2-arp-vs-bgp-routing).
+Once the packet arrives at the node's physical network interface, Kubernetes' internal proxying (`kube-proxy` or the CNI) takes over, routing it to the destination pod. The detailed mechanics of this two-hop process are in the [MetalLB Routing Guide](/controllers/metallb/#how-the-network-routes-to-a-node-l2-arp-vs-bgp-routing), and the mental model for *why one node (L2) or many (BGP)* answers — with the commands to find the chosen node — is [How MetalLB Chooses the Node](/controllers/metallb-node-selection/).
 
 ## externalTrafficPolicy: the trade you must choose
 

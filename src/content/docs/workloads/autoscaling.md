@@ -100,7 +100,7 @@ Where VPA earns its keep for you: **recommendation mode** (`updateMode: "Off"`),
 
 ## KEDA: event-driven scaling
 
-If your workload is queue-driven — consuming from Kafka, RabbitMQ, or a [message queue](/stateful/message-queues/) — CPU is a lagging signal: by the time consumers are CPU-hot, the backlog is already deep. KEDA scales on queue depth/lag directly and can scale to zero between bursts. It's another cluster-level install (it ships CRDs and an operator), so availability is a platform question, but the `ScaledObject` you'd write is namespace-scoped and yours:
+If your workload is queue-driven — consuming from Kafka, RabbitMQ, or a [message queue](/stateful/message-queues/) — CPU is a lagging signal: by the time consumers are CPU-hot, the backlog is already deep. KEDA scales on queue depth/lag directly and can scale to zero between bursts. It's another cluster-level install (it ships [CRDs](/controllers/crds-explained/) and an operator), so availability is a platform question, but the `ScaledObject` you'd write is namespace-scoped and yours:
 
 ```yaml
 apiVersion: keda.sh/v1alpha1

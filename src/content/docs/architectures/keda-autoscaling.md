@@ -11,7 +11,7 @@ This is the build article that ties the site's messaging stack ([Message Queues 
 
 ## How KEDA actually works (and the HPA it owns)
 
-KEDA is two things, both **platform-installed** cluster-wide (operators and CRDs are the platform team's side of the [contract](/operations/working-with-platform-team/); you own the namespaced CRs):
+KEDA is two things, both **platform-installed** cluster-wide (operators and [CRDs](/controllers/crds-explained/) are the platform team's side of the [contract](/operations/working-with-platform-team/); you own the namespaced CRs):
 
 1. **The operator** watches your `ScaledObject`/`ScaledJob` CRs and polls the broker on your behalf.
 2. **The metrics adapter** registers as an external-metrics API server, so the ordinary HPA controller can consume queue metrics.

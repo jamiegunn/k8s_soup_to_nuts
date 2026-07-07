@@ -143,7 +143,7 @@ Harvester is SUSE's hyper-converged infrastructure platform — a Kubernetes dis
 
 ## Rook-Ceph: the shared ocean
 
-Rook is the operator that runs Ceph on Kubernetes — a textbook example of the [operator pattern](/controllers/operators/): CRDs describe the desired Ceph cluster; Rook reconciles mons, OSDs, and gateways into existence. Ceph itself is the 20-year-old distributed storage veteran, and unlike Longhorn's per-volume islands, Ceph is **one shared pool of storage** serving everyone.
+Rook is the operator that runs Ceph on Kubernetes — a textbook example of the [operator pattern](/controllers/operators/): [CRDs](/controllers/crds-explained/) describe the desired Ceph cluster; Rook reconciles mons, OSDs, and gateways into existence. Ceph itself is the 20-year-old distributed storage veteran, and unlike Longhorn's per-volume islands, Ceph is **one shared pool of storage** serving everyone.
 
 Three faces, usually three StorageClasses:
 

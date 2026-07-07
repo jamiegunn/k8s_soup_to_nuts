@@ -136,7 +136,7 @@ The trap that spans all of these: a pool with **no matching advertisement** happ
 
 ## How the network routes to a node: L2 ARP vs. BGP Routing
 
-A common point of confusion when working with MetalLB: if Kubernetes exposes a `LoadBalancer` Service on *every* worker node (via kube-proxy and NodePorts), and you have a single IP (VIP) assigned to it, **how does the physical network decide which node to send the packet to?**
+A common point of confusion when working with MetalLB: if Kubernetes exposes a `LoadBalancer` Service on *every* worker node (via kube-proxy and NodePorts), and you have a single IP (VIP) assigned to it, **how does the physical network decide which node to send the packet to?** The summary is below; for the full mental model — plus the commands to see *which* node is chosen right now — see [How MetalLB Chooses the Node](/controllers/metallb-node-selection/).
 
 The journey from client to pod happens in two distinct hops:
 
@@ -174,7 +174,7 @@ What this means in practice:
 - **Failover takes seconds, not milliseconds.** When the announcing node dies, memberlist has to notice (~10 seconds with defaults), a new speaker wins the election, and it blasts **gratuitous ARP** to tell the segment the MAC changed. Clients and switches that ignore the gratuitous ARP keep sending to the dead node's MAC until their ARP cache entry expires — so real-world blips of 10 seconds to a few minutes after a node loss are normal L2 behavior, not a bug.
 - **The IP must be on the same L2 segment as the nodes.** Pool IPs come from spare space in the node subnet. Clients on other subnets reach the VIP through their router like any other IP on that segment — but the VIP itself can't live in some unrelated range.
 
-If you've operated keepalived/VRRP pairs, the mental model transfers almost exactly: a floating IP claimed via ARP, one active holder, gratuitous ARP on failover. MetalLB's L2 mode is that pattern with Kubernetes as the config store and memberlist instead of VRRP heartbeats — same strengths, same single-node throughput ceiling.
+If you've operated keepalived/VRRP pairs, the mental model transfers almost exactly: a floating IP claimed via ARP, one active holder, gratuitous ARP on failover. MetalLB's L2 mode is that pattern with Kubernetes as the config store and memberlist instead of VRRP heartbeats — same strengths, same single-node throughput ceiling. [Floating VIPs](/routing/floating-vips/) covers that shared mechanism in full, including the **split-brain** failure where two speakers both claim one VIP because memberlist can't gossip between them — a real incident in [The VIP That Two Nodes Claimed](/blog/the-vip-that-two-nodes-claimed/).
 
 ## BGP mode: real multipath
 

@@ -98,7 +98,7 @@ kubectl patch deployment payments --type json -p '[
 ]'
 ```
 
-**Merge patch (`--type merge`).** Plain RFC 7386 merge: objects merge, but **lists are replaced wholesale**. Required for custom resources (CRDs have no strategic-merge schema), fine for scalar fields, dangerous for container lists — if you merge-patch `containers` you replace the entire array. When in doubt on a Deployment, use strategic; on a CR, use merge with a fragment that doesn't touch lists you don't fully restate.
+**Merge patch (`--type merge`).** Plain RFC 7386 merge: objects merge, but **lists are replaced wholesale**. Required for custom resources ([CRDs](/controllers/crds-explained/) have no strategic-merge schema), fine for scalar fields, dangerous for container lists — if you merge-patch `containers` you replace the entire array. When in doubt on a Deployment, use strategic; on a CR, use merge with a fragment that doesn't touch lists you don't fully restate.
 
 **Server-side apply (`kubectl apply --server-side`).** Not a patch flavor of `kubectl patch`, but the same family: you submit a full or partial object and the API server merges it, tracking which *manager* owns which field. Mostly this is what your pipeline does; during incidents its relevance is forensic (see managedFields below) and for conflict semantics — if you `--server-side` apply a field your pipeline's manager owns, you get a conflict unless you `--force-conflicts`, which transfers ownership to you. That ownership transfer is itself a form of drift: some CD tools will then treat the field as "not theirs."
 

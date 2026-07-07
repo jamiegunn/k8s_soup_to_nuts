@@ -128,6 +128,8 @@ Read in order the first time; after that, jump to the layer that's on fire.
 12. [TCP and non-HTTP ingress](/networking/tcp-ingress/) — getting databases, queues, and other raw TCP/UDP traffic into the cluster when Ingress can't help.
 13. [TLS and corporate CAs](/networking/tls-and-corporate-cas/) — serving certs via cert-manager, trusting the corporate CA from Java/.NET containers, and the x509 error zoo.
 14. [Gateway API for app teams](/networking/gateway-api/) — the Ingress successor: HTTPRoute anatomy, weighted canaries without annotations, and the status conditions that tell the truth.
+15. [Egress](/networking/egress/) — the reverse of everything above: how pods reach *out*, the three source identities your traffic can leave as, egress gateways, forward proxies, and firewall rules that survive a scale-up.
+16. [Networking commands: a cross-platform field reference](/networking/networking-commands/) — `arp`, `ip`/`ifconfig`, `ss`/`netstat`, `ps`, `dig`, `ping`, `nc`, `tcpdump` with the flags that matter, and a task-by-task table of the Linux/macOS/Windows equivalents.
 
 When these practical guides aren't deep enough, the [Routing & DNS Deep Dive](/routing/overview/) section traces a request end to end ([Life of a Request](/routing/life-of-a-request/)) and dissects the machinery ([kube-proxy and the dataplane](/routing/kube-proxy-and-the-dataplane/), [CoreDNS](/routing/coredns-deep-dive/), [DNS integration](/routing/dns-integration/)).
 

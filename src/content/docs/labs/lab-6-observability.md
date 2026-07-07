@@ -106,7 +106,7 @@ monitoring-kube-state-metrics-6d5c6f7b48-hx9zr           1/1     Running   0    
 prometheus-monitoring-kube-prometheus-prometheus-0       2/2     Running   0          72s
 ```
 
-Note the shape: the **operator** is a controller that watches CRDs (`Prometheus`, `ServiceMonitor`, `PrometheusRule`, …) and generates Prometheus configuration from them — the chart installed about ten CRDs to make that possible (`kubectl get crd | grep monitoring.coreos.com`). Remember that fact; it matters at teardown. The stack layers — what scrapes what, and metrics-server vs Prometheus — are mapped in [Metrics](/observability/metrics/).
+Note the shape: the **operator** is a controller that watches [CRDs](/controllers/crds-explained/) (`Prometheus`, `ServiceMonitor`, `PrometheusRule`, …) and generates Prometheus configuration from them — the chart installed about ten CRDs to make that possible (`kubectl get crd | grep monitoring.coreos.com`). Remember that fact; it matters at teardown. The stack layers — what scrapes what, and metrics-server vs Prometheus — are mapped in [Metrics](/observability/metrics/).
 
 First look. Prometheus's UI travels over a port-forward (the operator maintains a stable Service named `prometheus-operated`):
 

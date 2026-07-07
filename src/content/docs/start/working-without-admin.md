@@ -21,7 +21,7 @@ Access varies by organization, but the common grant for an app team looks like:
 - Read Events, EndpointSlices; often NetworkPolicies too
 
 **Usually denied:**
-- Anything cluster-scoped: Nodes, PersistentVolumes, StorageClasses, CRDs, ClusterRoles, other Namespaces
+- Anything cluster-scoped: Nodes, PersistentVolumes, StorageClasses, [CRDs](/controllers/crds-explained/), ClusterRoles, other Namespaces
 - Anything in namespaces that aren't yours (including `kube-system` — no CoreDNS or ingress-controller logs for you)
 - Creating RBAC beyond what's delegated; DaemonSets; privileged/hostPath pods (blocked by admission policy even if RBAC would allow)
 - `kubectl top nodes` (needs cluster scope; `kubectl top pods` in your namespace usually works)

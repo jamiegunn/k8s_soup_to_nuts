@@ -50,7 +50,7 @@ Each section stands alone and opens with its own overview:
 - **[Java on Kubernetes](/java/overview/)** — JVM memory in cgroups, thread and heap dumps with a JRE-only image, remote debugging, GC tuning.
 - **[Stateful Workloads](/stateful/overview/)** — StatefulSets, storage, and running (or connecting to) PostgreSQL, Valkey/Redis, Oracle, and message queues.
 - **[Networking](/networking/overview/)** — Services, DNS, Ingress, NetworkPolicies, and how to debug "it can't reach the thing".
-- **[Controllers & Operators](/controllers/overview/)** — reconciliation, CRDs, and the controllers your platform team runs that affect you (MetalLB, F5 CIS, CSI drivers, admission webhooks).
+- **[Controllers & Operators](/controllers/overview/)** — reconciliation, [CRDs](/controllers/crds-explained/), and the controllers your platform team runs that affect you (MetalLB, F5 CIS, CSI drivers, admission webhooks).
 - **[Observability](/observability/overview/)** — logs, metrics, events, tracing: knowing what your app is doing without exec-ing into it.
 - **[Troubleshooting](/troubleshooting/overview/)** — a triage methodology plus one article per infamous failure mode (`CrashLoopBackOff`, `ImagePullBackOff`, `OOMKilled`, ...).
 - **[Operations](/operations/overview/)** — day-2 reality: live patching vs GitOps drift, secret rotation, emergency playbooks, and working with your platform team.

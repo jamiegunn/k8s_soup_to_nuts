@@ -237,7 +237,7 @@ Summary: 5 resources found parsing stdin - Valid: 5, Invalid: 0, Errors: 0, Skip
 Five resources: the Deployment, Service, ConfigMap, Secret, and Ingress your chart has accumulated since Lab 1. The quiet superpower is the version flag: in CI this runs in a loop over your platform's *current and next* Kubernetes versions, so the day your chart renders an API that the next version removes, this rung fails months before the cluster upgrade would have — the automated [API deprecations](/operations/api-deprecations/) gate.
 
 :::note[Did Lab 6? One resource is a stranger here]
-With `metrics.enabled: true` the render includes a ServiceMonitor, and kubeconform errors on it: `could not find schema for ServiceMonitor`. CRDs aren't core APIs — no CRD, no schema. Either add the community catalog (`-schema-location default -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceVersion}}.json'`) for `Valid: 6`, or pass `-ignore-missing-schemas` and record that you chose blindness for that one kind — the same trade-off [Testing in CI](/ci/testing-in-ci/) spells out.
+With `metrics.enabled: true` the render includes a ServiceMonitor, and kubeconform errors on it: `could not find schema for ServiceMonitor`. [CRDs](/controllers/crds-explained/) aren't core APIs — no CRD, no schema. Either add the community catalog (`-schema-location default -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceVersion}}.json'`) for `Valid: 6`, or pass `-ignore-missing-schemas` and record that you chose blindness for that one kind — the same trade-off [Testing in CI](/ci/testing-in-ci/) spells out.
 :::
 
 ## 5. Rung 4½: the golden-file diff

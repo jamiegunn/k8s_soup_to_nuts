@@ -102,7 +102,7 @@ Snapshots usually live in the same storage system as the volumes. A storage-arra
 
 Velero backs up Kubernetes **objects** (all the YAML in a namespace) plus, optionally, volume data (via CSI snapshots or file-level copy with Kopia) to object storage. It answers a question levels 1–2 don't: *"restore my whole namespace — Deployments, Services, PVCs, Secrets, CRs — onto this or another cluster."*
 
-Velero is a cluster-scoped install (its own CRDs, controllers, node agents): **platform team owns it**. Your interaction, depending on the RBAC they grant, is creating `Schedule`/`Backup` CRs or simply requesting "nightly namespace backup for `myapp`, 30-day retention":
+Velero is a cluster-scoped install (its own [CRDs](/controllers/crds-explained/), controllers, node agents): **platform team owns it**. Your interaction, depending on the RBAC they grant, is creating `Schedule`/`Backup` CRs or simply requesting "nightly namespace backup for `myapp`, 30-day retention":
 
 ```console
 $ velero backup get -n velero

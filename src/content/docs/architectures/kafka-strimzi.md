@@ -120,7 +120,7 @@ If there is no appliance in your shop, drop this subsection entirely: point clie
 
 File the [platform team request](/operations/working-with-platform-team/) early — four items are cluster-scoped and not yours:
 
-1. **Strimzi cluster operator installed, pinned version, watching your namespace** (`STRIMZI_NAMESPACE` includes `kafka-prod`, or cluster-wide watch). CRDs are cluster-scoped; you can't install them.
+1. **Strimzi cluster operator installed, pinned version, watching your namespace** (`STRIMZI_NAMESPACE` includes `kafka-prod`, or cluster-wide watch). [CRDs](/controllers/crds-explained/) are cluster-scoped; you can't install them.
 2. **Rack-awareness RBAC.** `spec.kafka.rack` (below) makes each broker read its node's zone label via an init container — that needs a ClusterRoleBinding the operator only creates if it's allowed to. One-line ask: "enable rack awareness support for our Kafka CR."
 3. **StorageClass guidance.** Kafka is sequential-I/O-friendly but fsync-sensitive in two places: the KRaft **metadata log** (small, latency-critical — slow fsync here destabilizes the controller quorum) and produce-path flushes. Ask for fast local-ish or provisioned-IOPS block storage, `WaitForFirstConsumer` binding, `allowVolumeExpansion: true` — the full conversation is in [Storage Controllers](/controllers/storage-controllers/) and [PVs & PVCs](/stateful/storage-pv-pvc/). Network-attached storage works; storage that lies about flushes does not.
 4. **Four MetalLB IPs** from a routable pool: 3 brokers + 1 bootstrap. Adding a broker later costs one more IP — budget the pool accordingly.

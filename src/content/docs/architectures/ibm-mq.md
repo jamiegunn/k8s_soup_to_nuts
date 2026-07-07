@@ -58,7 +58,7 @@ Two honest options:
 
 **This article shows the `QueueManager` CR** because it expresses Native HA declaratively and is what most supported installations run. Chart users: everything maps directly — the MQSC/INI ConfigMaps mount the same way, `spec.queueManager.storage` becomes `volumeClaimTemplates`, `spec.pki` becomes a mounted secret at `/etc/mqm/pki/keys/`, and you own the StatefulSet, PDB, and Services explicitly.
 
-Operator installation is cluster-scoped (CRDs, catalog source) — that's a [platform team ask](/operations/working-with-platform-team/). Request: "IBM MQ Operator, channel `v3.x` pinned, watching namespace `mq-prod`; we own QueueManager CRs in that namespace." Also ask what their StorageClass does on fsync — see the CR notes below.
+Operator installation is cluster-scoped ([CRDs](/controllers/crds-explained/), catalog source) — that's a [platform team ask](/operations/working-with-platform-team/). Request: "IBM MQ Operator, channel `v3.x` pinned, watching namespace `mq-prod`; we own QueueManager CRs in that namespace." Also ask what their StorageClass does on fsync — see the CR notes below.
 
 ## The build
 

@@ -132,7 +132,7 @@ Delete (or let finish) the consuming pod and the PVC clears in seconds. The comm
 | `kubernetes.io/pvc-protection` (on PVCs) | PVC protection controller | **Every pod using the PVC to be gone.** The classic stuck-PVC: you deleted the claim while a pod still mounts it — delete the pod, the PVC follows within seconds. Full walkthrough in [Volume Failures](/troubleshooting/volume-failures/) |
 | `kubernetes.io/pv-protection` (on PVs) | PV protection controller | The bound PVC to be deleted first |
 | `external-attacher/...`, CSI driver names | The storage driver | The volume to actually detach from the node — slow or stuck when the node is unhealthy |
-| Mesh/operator-specific (`istio-finalizer...`, vendor CRD finalizers) | That operator's controller | Its cleanup loop to run — stuck forever if the operator was uninstalled while its objects still existed |
+| Mesh/operator-specific (`istio-finalizer...`, vendor [CRD](/controllers/crds-explained/) finalizers) | That operator's controller | Its cleanup loop to run — stuck forever if the operator was uninstalled while its objects still existed |
 
 **Fix:** resolve *what the finalizer is waiting for* — delete the consuming pod, fix the unhealthy operator, let the detach finish. The finalizer then disappears on its own, usually within one reconcile loop.
 

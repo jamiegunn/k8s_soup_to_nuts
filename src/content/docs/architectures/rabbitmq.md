@@ -53,7 +53,7 @@ The shape, and why:
 
 File the [platform team request](/operations/working-with-platform-team/) early — three items are cluster-scoped and not yours:
 
-1. **RabbitMQ Cluster Operator installed** (CRDs + cluster-wide RBAC — the standard [operator split](/controllers/operators/)). Ask for a pinned operator version and, if you want queues/policies as CRs (section 5), the **Messaging Topology Operator** alongside it.
+1. **RabbitMQ Cluster Operator installed** ([CRDs](/controllers/crds-explained/) + cluster-wide RBAC — the standard [operator split](/controllers/operators/)). Ask for a pinned operator version and, if you want queues/policies as CRs (section 5), the **Messaging Topology Operator** alongside it.
 2. **StorageClass guidance.** Quorum queues fsync the Raft log on every confirmed publish — **p99 fsync latency is your p99 publish-confirm latency**. Ask: what does fsync actually cost on this class, and does the device lie about write barriers? You want RWO block storage, `allowVolumeExpansion: true`, `volumeBindingMode: WaitForFirstConsumer` so PVCs land in each pod's zone. Details: [Storage Controllers](/controllers/storage-controllers/).
 3. **Optionally, a MetalLB IP** from a routable pool if off-cluster clients exist.
 

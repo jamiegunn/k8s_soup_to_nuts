@@ -359,7 +359,7 @@ Egress default-deny is where NetworkPolicies earn their keep and where they bite
 Every derived number decays; each alert fires when one goes stale, *before* it fails. Routing, severities, and runbook-link discipline are in [Alerting](/observability/alerting/).
 
 :::caution[This one manifest can fail `kubectl apply` outright]
-`PrometheusRule` is a custom resource from the prometheus-operator — the only one of the nine that isn't a stock Kubernetes kind. If the CRDs aren't installed, the apply fails with `no matches for kind "PrometheusRule"`. Check first: `kubectl api-resources | grep monitoring.coreos.com`. If that comes back empty, this is a platform ask — the operator install is cluster-scoped and not yours to do — and your pipeline should apply this manifest conditionally or keep it in a separate overlay so the other eight still ship while the ticket is open.
+`PrometheusRule` is a custom resource from the prometheus-operator — the only one of the nine that isn't a stock Kubernetes kind. If the [CRDs](/controllers/crds-explained/) aren't installed, the apply fails with `no matches for kind "PrometheusRule"`. Check first: `kubectl api-resources | grep monitoring.coreos.com`. If that comes back empty, this is a platform ask — the operator install is cluster-scoped and not yours to do — and your pipeline should apply this manifest conditionally or keep it in a separate overlay so the other eight still ship while the ticket is open.
 :::
 
 ```yaml

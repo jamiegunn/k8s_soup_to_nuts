@@ -149,7 +149,7 @@ spec:
         - /spec/replicas
 ```
 
-(Better still: remove `replicas` from your manifest entirely when an HPA owns it.) You can't set `ignoreDifferences` yourself — it lives on the Application — so this is a named, specific platform ask. Same pattern applies to any controller-managed field: cert-manager-injected caBundles, webhook-injected sidecars, defaulted fields on CRDs.
+(Better still: remove `replicas` from your manifest entirely when an HPA owns it.) You can't set `ignoreDifferences` yourself — it lives on the Application — so this is a named, specific platform ask. Same pattern applies to any controller-managed field: cert-manager-injected caBundles, webhook-injected sidecars, defaulted fields on [CRDs](/controllers/crds-explained/).
 
 ## Flux specifics, briefly
 

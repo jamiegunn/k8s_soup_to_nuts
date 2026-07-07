@@ -16,7 +16,7 @@ from "ingress.yaml": no matches for kind "Ingress" in version "extensions/v1beta
 ensure CRDs are installed first
 ```
 
-That "ensure CRDs are installed first" hint is actively misleading — nothing about CRDs is wrong. The API version simply no longer exists on this server. `policy/v1beta1` PodDisruptionBudgets did the same thing to people at 1.25.
+That "ensure [CRDs](/controllers/crds-explained/) are installed first" hint is actively misleading — nothing about CRDs is wrong. The API version simply no longer exists on this server. `policy/v1beta1` PodDisruptionBudgets did the same thing to people at 1.25.
 
 The deprecation policy in one paragraph: **GA APIs (`v1`) are stable** — Kubernetes has never removed a GA API. Beta APIs (`v1beta1`, `v2beta1`...) are explicitly temporary: once a replacement goes GA, the beta version is deprecated and then removed a few releases later. Alpha APIs can vanish any release. So the exposure list is finite and knowable: it's every non-`v1` apiVersion in your repo.
 

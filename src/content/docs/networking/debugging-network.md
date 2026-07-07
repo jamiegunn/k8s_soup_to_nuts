@@ -60,6 +60,8 @@ tcpdump -ni eth0 'tcp port 5432' -c 20                  # the ground truth: are 
 
 `tcpdump` deserves emphasis: it's your only source of *truth* rather than inference. Sending SYNs and seeing no SYN-ACK? The problem is downstream of you. Not even seeing your SYNs leave? It's local (policy/eBPF drops appear as silent non-transmission on some CNIs). Seeing SYN-ACK but app still times out? Look at the app, not the network.
 
+These are the in-pod (netshoot) forms. When you're testing from *outside* the cluster — a laptop, a jump box, a Windows workstation — the same tools have different names and flags per OS; the [cross-platform command reference](/networking/networking-commands/) is the `arp`/`ss`/`dig`/`traceroute`/`nc` equivalents on Linux, macOS, and Windows.
+
 ## The playbook
 
 Work the numbered steps; stop at the first failure — that's your layer.

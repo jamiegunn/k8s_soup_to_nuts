@@ -228,7 +228,7 @@ Summary: 6 resources found parsing stdin - Valid: 6, Invalid: 0, Errors: 0, Skip
 
 Pin the version list to *your platform's* current and next Kubernetes version — this is your automated [API deprecations](/operations/api-deprecations/) gate: the day your chart renders `policy/v1beta1` against a 1.30 schema, this step fails, months before the platform upgrade would have failed it for real.
 
-Two caveats. Kubeconform only knows core APIs; CRDs (ServiceMonitor, ExternalSecret, your platform's tenancy CRDs) need the extra `-schema-location` pointing at the community CRDs-catalog as above, or they're unvalidatable. And for CRDs not in any catalog, choose deliberately between `-ignore-missing-schemas` (silent skip — record that you chose blindness) and failing.
+Two caveats. Kubeconform only knows core APIs; [CRDs](/controllers/crds-explained/) (ServiceMonitor, ExternalSecret, your platform's tenancy CRDs) need the extra `-schema-location` pointing at the community CRDs-catalog as above, or they're unvalidatable. And for CRDs not in any catalog, choose deliberately between `-ignore-missing-schemas` (silent skip — record that you chose blindness) and failing.
 
 ### Golden-file diffs
 

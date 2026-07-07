@@ -59,7 +59,7 @@ kubectl auth can-i create pods/exec -n payments
 You likely can't *grant* anything, but you need the vocabulary to read your own access and to ask for changes precisely:
 
 - **Role** — a named bundle of rules (verbs × resources × apiGroups), scoped to one namespace.
-- **ClusterRole** — same bundle, defined cluster-wide. Two uses: cluster-scoped stuff (nodes, CRDs), or a reusable rule-set granted per-namespace.
+- **ClusterRole** — same bundle, defined cluster-wide. Two uses: cluster-scoped stuff (nodes, [CRDs](/controllers/crds-explained/)), or a reusable rule-set granted per-namespace.
 - **RoleBinding** — attaches a Role *or a ClusterRole* to subjects (users/groups/service accounts) **within one namespace**. This is how you probably have access: a RoleBinding in your namespace pointing at a shared ClusterRole like `edit`.
 - **ClusterRoleBinding** — attaches a ClusterRole everywhere. Platform-only territory.
 

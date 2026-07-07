@@ -83,7 +83,7 @@ The pod packet becomes the payload of a node-to-node packet. The underlying netw
 Either way, the contract holds: `db` sees the source IP 10.244.1.5. No NAT between pods.
 
 :::note[Where NAT does happen]
-Pod-to-**external** traffic (out of the cluster) is typically SNATed to the node's IP — the internet can't route pod CIDRs. So your database's firewall sees node IPs, not pod IPs. When requesting firewall openings for an external dependency, ask your platform team for the node/egress IP range, not pod IPs.
+Pod-to-**external** traffic (out of the cluster) is typically SNATed to the node's IP — the internet can't route pod CIDRs. So your database's firewall sees node IPs, not pod IPs. When requesting firewall openings for an external dependency, ask your platform team for the node/egress IP range, not pod IPs. The three ways to control that egress identity — including a stable egress-gateway IP that survives cluster scaling — are covered in [Egress](/networking/egress/).
 :::
 
 ## MTU: the silent killer

@@ -25,7 +25,7 @@ Kubernetes gives you none of this. A StatefulSet will happily restart the old pr
 
 [CloudNativePG](https://cloudnative-pg.io/) (CNPG), a CNCF project originally from EDB, is the current best default. Notably it does *not* use a StatefulSet — it manages pods and PVCs directly for finer failover control — and it treats backup to object storage and replication as first-class.
 
-The operator install is cluster-scoped (CRDs + a deployment with broad RBAC): **platform team request**. Once installed, everything you touch is a namespaced CR:
+The operator install is cluster-scoped ([CRDs](/controllers/crds-explained/) + a deployment with broad RBAC): **platform team request**. Once installed, everything you touch is a namespaced CR:
 
 ```yaml
 apiVersion: postgresql.cnpg.io/v1

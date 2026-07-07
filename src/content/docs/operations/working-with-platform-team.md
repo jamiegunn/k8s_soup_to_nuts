@@ -16,7 +16,7 @@ The exact split varies, but this is the common shape:
 | Nodes, node pools, OS, kubelet, capacity | Deployments, StatefulSets, Jobs in your namespaces |
 | CNI, cluster networking, NetworkPolicy enforcement | Services, your NetworkPolicy *requests* / manifests |
 | Ingress **controllers** (nginx, F5, gateway impls) | Ingress **resources** routing to your Services |
-| CRDs and operator installations (cluster-scoped) | Custom resource *instances* your apps use |
+| [CRDs](/controllers/crds-explained/) and operator installations (cluster-scoped) | Custom resource *instances* your apps use |
 | RBAC grants — Roles/Bindings that give you access | Knowing exactly which verbs you need, and asking |
 | StorageClasses, CSI drivers, backup infrastructure | PVCs, data lifecycle, app-level backups |
 | Cluster upgrades, API server, etcd | Your workloads' *readiness* for those upgrades |

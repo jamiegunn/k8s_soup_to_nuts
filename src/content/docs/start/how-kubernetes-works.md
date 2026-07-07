@@ -91,7 +91,7 @@ Every Kubernetes object is either **namespaced** (lives inside a namespace, and 
 | ConfigMaps, Secrets | PersistentVolumes (PVs) |
 | PersistentVolumeClaims (PVCs) | StorageClasses |
 | ServiceAccounts, Roles, RoleBindings | ClusterRoles, ClusterRoleBindings |
-| Jobs, CronJobs, HPAs, PDBs | CustomResourceDefinitions (CRDs) |
+| Jobs, CronJobs, HPAs, PDBs | [CustomResourceDefinitions](/controllers/crds-explained/) (CRDs) |
 | NetworkPolicies | IngressClasses, PriorityClasses, webhooks |
 
 Check any resource yourself:

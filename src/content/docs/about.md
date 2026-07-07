@@ -5,7 +5,7 @@ description: What this site is, how its content is written and verified, which K
 
 ## What this site is
 
-K8s Soup to Nuts is a field guide for dev/ops and application teams who deploy to Kubernetes but do **not** administer the cluster. A platform team owns the nodes, the CNI, RBAC, ingress controllers, and CRDs; you own everything inside your namespace. Every page is written from that seat, and anything that crosses the boundary says so explicitly.
+K8s Soup to Nuts is a field guide for dev/ops and application teams who deploy to Kubernetes but do **not** administer the cluster. A platform team owns the nodes, the CNI, RBAC, ingress controllers, and [CRDs](/controllers/crds-explained/); you own everything inside your namespace. Every page is written from that seat, and anything that crosses the boundary says so explicitly.
 
 The assumed corporate topology, used consistently across examples and reference architectures: external clients → corporate VIP on a network-team load balancer (F5/NetScaler) → in-cluster MetalLB service IP → Service → pods.
 

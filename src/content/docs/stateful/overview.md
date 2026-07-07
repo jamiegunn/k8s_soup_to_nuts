@@ -29,7 +29,7 @@ Choose this when: the service exists, latency to it is acceptable, and cost isn'
 
 A good operator (CloudNativePG for Postgres, Strimzi for Kafka, the RabbitMQ cluster operator) encodes the operational knowledge — failover orchestration, backup scheduling, safe upgrades — that you would otherwise have to script yourself at 3 a.m. You declare a CR like `Cluster` with `instances: 3`; the operator does the rest.
 
-Choose this when: no managed service fits, the technology has a mature operator, and your platform team will install its CRDs. That last part matters — the CRDs and usually the operator itself are cluster-scoped installs, which in the environment this guide assumes means **a platform team request**, not a `helm install` you run yourself. See [Operators for State](/stateful/operators-for-state/) for how to evaluate one and how the install conversation goes.
+Choose this when: no managed service fits, the technology has a mature operator, and your platform team will install its [CRDs](/controllers/crds-explained/). That last part matters — the CRDs and usually the operator itself are cluster-scoped installs, which in the environment this guide assumes means **a platform team request**, not a `helm install` you run yourself. See [Operators for State](/stateful/operators-for-state/) for how to evaluate one and how the install conversation goes.
 
 ### 3. Raw StatefulSet
 

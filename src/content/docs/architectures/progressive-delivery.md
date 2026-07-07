@@ -15,7 +15,7 @@ Three real options exist on a platform-managed cluster, and the right one is not
 
 | | ingress-nginx canary annotations | Flagger | Argo Rollouts |
 |---|---|---|---|
-| **What it is** | Two Deployments + two Ingresses; you set `canary-weight` by hand | A controller that *wraps* your existing Deployment, generating primary/canary copies | A CRD that *replaces* Deployment entirely |
+| **What it is** | Two Deployments + two Ingresses; you set `canary-weight` by hand | A controller that *wraps* your existing Deployment, generating primary/canary copies | A [CRD](/controllers/crds-explained/) that *replaces* Deployment entirely |
 | **New CRDs** | None | Canary, MetricTemplate | Rollout, AnalysisTemplate, AnalysisRun, Experiment |
 | **Metric gating** | You, squinting at Grafana | Automatic | Automatic |
 | **Manifest invasiveness** | None | Low — Deployment unchanged | High — kind changes, GitOps pipeline must know |

@@ -55,7 +55,7 @@ The manifests are the easy half. Each build below needs things only your platfor
 
 | Build | Platform tickets |
 |---|---|
-| Golden Service | Near zero: quota sized for maxReplicas + surge; prometheus-operator CRDs if you want the alert rules |
+| Golden Service | Near zero: quota sized for maxReplicas + surge; prometheus-operator [CRDs](/controllers/crds-explained/) if you want the alert rules |
 | Zero-Downtime Deploys | Zero — pure workload configuration; that's the point |
 | Locked-Down Namespace | Namespace PSA labels (if you can't set them), plus whatever your admission-policy team owns |
 | Valkey: Shared VIP | One MetalLB IP with `allow-shared-ip`; a StorageClass |

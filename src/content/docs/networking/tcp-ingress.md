@@ -157,7 +157,7 @@ spec:
 `UDPRoute` is structurally identical; `TLSRoute` adds SNI `hostnames` matching for the passthrough case above. Realities to check first:
 
 - **Listener-per-port for raw TCP.** No SNI means no multiplexing — every TCP service needs its own listener on the Gateway, which is a platform change per port. The tcp-services limitation didn't disappear; it moved into a cleaner API.
-- **Maturity honesty:** TCPRoute/UDPRoute/TLSRoute live in the Gateway API **experimental channel** (`v1alpha2` as of 2026). Your platform must install the experimental CRDs *and* run an implementation that supports them. `kubectl api-resources | grep tcproute` tells you in five seconds whether this path exists in your cluster.
+- **Maturity honesty:** TCPRoute/UDPRoute/TLSRoute live in the Gateway API **experimental channel** (`v1alpha2` as of 2026). Your platform must install the experimental [CRDs](/controllers/crds-explained/) *and* run an implementation that supports them. `kubectl api-resources | grep tcproute` tells you in five seconds whether this path exists in your cluster.
 
 ## F5 TransportServer
 

@@ -226,7 +226,7 @@ Watch `container="istio-proxy"` in your resource dashboards. If the proxy is thr
 
 ## Do you even want the mesh?
 
-If you're given the choice: the mesh earns its complexity when you need **mTLS-by-policy** (compliance), **uniform golden metrics across polyglot services**, or **traffic shaping you can't do at ingress** (per-request canaries, outlier ejection, deep retry control). It does *not* earn it for a three-service stack that could get retries from a library and TLS from the ingress — you'd be adding a distributed system to debug in exchange for features you won't use. Linkerd, if offered, is the lower-cost on-ramp: less to configure, less to misconfigure, fewer CRDs.
+If you're given the choice: the mesh earns its complexity when you need **mTLS-by-policy** (compliance), **uniform golden metrics across polyglot services**, or **traffic shaping you can't do at ingress** (per-request canaries, outlier ejection, deep retry control). It does *not* earn it for a three-service stack that could get retries from a library and TLS from the ingress — you'd be adding a distributed system to debug in exchange for features you won't use. Linkerd, if offered, is the lower-cost on-ramp: less to configure, less to misconfigure, fewer [CRDs](/controllers/crds-explained/).
 
 ### Onboarding checklist for joining an existing mesh
 

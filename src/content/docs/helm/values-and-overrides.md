@@ -211,7 +211,7 @@ The rule is **deltas only**. Each environment file contains exactly what differs
 
 **Secrets do not go in values files.** Not base64'd, not "just for dev," not in a private repo. Values files end up in Git, in CI logs, in `helm get values` output readable by anyone with release access. Use External Secrets or SOPS-encrypted sources as covered in [Secrets](/workloads/secrets/); the `helm-secrets` plugin (SOPS-encrypted values files decrypted at install time) is the established middle path if your pipeline runs `helm` directly. Charts should accept a `existingSecret:` name, not secret material.
 
-**GitOps mapping.** Under Flux or Argo CD you don't run `helm upgrade` at all — the same architecture maps onto the controller's CRD:
+**GitOps mapping.** Under Flux or Argo CD you don't run `helm upgrade` at all — the same architecture maps onto the controller's [CRD](/controllers/crds-explained/):
 
 ```yaml
 # Flux HelmRelease — values inline plus valuesFrom a ConfigMap/Secret

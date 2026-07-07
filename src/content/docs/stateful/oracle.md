@@ -92,7 +92,7 @@ Note the registry: pulling from `container-registry.oracle.com` requires accepti
 
 ### Production-ish: OraOperator
 
-Oracle ships an official operator, **OraOperator** (oracle-database-operator), whose `SingleInstanceDatabase` (SIDB) CR manages a containerized single-instance database — provisioning, cloning, patching, and standby (Data Guard) wiring via other CRs. As always, the CRD install is cluster-scoped: platform team request; you then create the CR:
+Oracle ships an official operator, **OraOperator** (oracle-database-operator), whose `SingleInstanceDatabase` (SIDB) CR manages a containerized single-instance database — provisioning, cloning, patching, and standby (Data Guard) wiring via other CRs. As always, the [CRD](/controllers/crds-explained/) install is cluster-scoped: platform team request; you then create the CR:
 
 ```yaml
 apiVersion: database.oracle.com/v1alpha1

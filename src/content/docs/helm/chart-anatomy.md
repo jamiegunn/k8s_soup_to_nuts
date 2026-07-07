@@ -162,7 +162,7 @@ This is `npm install` vs `npm ci`, and the same rule follows: **commit `Chart.lo
 
 ## crds/: install-once, and the honest bad news
 
-Files in `crds/` are **plain YAML, not templates** — no `{{ }}` allowed — and Helm gives them exactly one behavior: on `helm install`, if the CRD doesn't exist, create it. That's the whole feature. On `helm upgrade`, files in `crds/` are **silently ignored**. On `helm uninstall`, they're left behind (which is correct — deleting a CRD deletes every custom resource of that type, cluster-wide).
+Files in `crds/` are **plain YAML, not templates** — no `{{ }}` allowed — and Helm gives them exactly one behavior: on `helm install`, if the [CRD](/controllers/crds-explained/) doesn't exist, create it. That's the whole feature. On `helm upgrade`, files in `crds/` are **silently ignored**. On `helm uninstall`, they're left behind (which is correct — deleting a CRD deletes every custom resource of that type, cluster-wide).
 
 The upgrade gap is the part to internalize: you bump a chart that ships CRDs, the operator's Deployment updates, and the CRDs stay at the old schema. The operator then rejects fields its new version needs, or worse, half-works. Helm's position is deliberate — CRD upgrades can be destructive and cluster-scoped, so it refuses to automate them — but the result is that **CRD lifecycle is your problem**. The workable options:
 

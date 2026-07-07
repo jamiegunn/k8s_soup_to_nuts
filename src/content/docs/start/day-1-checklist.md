@@ -130,7 +130,7 @@ kubectl logs deploy/<anything-running> --tail=5   # works via kubectl...
 
 Any format requirements (JSON logs, mandatory fields) are cheapest to adopt before your first deploy — [Log Collection](/observability/log-collection/) has the pipeline, [Logging Fundamentals](/observability/logging-fundamentals/) the app-side conventions.
 
-**The Prometheus scrape convention.** **Ask** how metrics get discovered in this cluster: `prometheus.io/scrape` annotations or a `ServiceMonitor`/`PodMonitor` CRD? Check what the cluster supports:
+**The Prometheus scrape convention.** **Ask** how metrics get discovered in this cluster: `prometheus.io/scrape` annotations or a `ServiceMonitor`/`PodMonitor` [CRD](/controllers/crds-explained/)? Check what the cluster supports:
 
 ```bash
 kubectl api-resources | grep -i -E 'servicemonitor|podmonitor'

@@ -25,7 +25,7 @@ Four rules. Everything else in this article is implementation detail.
 4. **Humans approve promotion, not construction.** Nobody hand-builds artifacts or hand-edits manifests on the way to prod. The human decision is "does the thing that passed staging go to prod now?" — a merge button, not a terminal.
 
 :::note[You don't own the cluster]
-This article assumes the tenant position: you have namespace-scoped credentials, the platform team owns the cluster, RBAC, and the ingress/CRD layer. Your pipeline deploys into *your namespaces* with a least-privilege identity (section at the end). Everything here works within that boundary.
+This article assumes the tenant position: you have namespace-scoped credentials, the platform team owns the cluster, RBAC, and the ingress/[CRD](/controllers/crds-explained/) layer. Your pipeline deploys into *your namespaces* with a least-privilege identity (section at the end). Everything here works within that boundary.
 :::
 
 ## The stages, in order

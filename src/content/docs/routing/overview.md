@@ -89,6 +89,12 @@ The full corporate topology — external VIP → in-cluster [MetalLB](/controlle
 - "Why does my NetworkPolicy `ipBlock` never match?"
 - "When is SNAT actually the right choice?" (egress gateways: sometimes you *want* one stable NAT)
 
+**[Floating VIPs](/routing/floating-vips/)** — the mechanism under every HA virtual IP: VRRP advertisements, the virtual MAC, gratuitous ARP on failover, and how keepalived, kube-vip, and MetalLB are all the same pattern. It answers:
+
+- "Why is the VIP dark for four minutes after node maintenance, then fine?"
+- "How can two nodes both be answering for one VIP?" (split-brain)
+- "Do my connections survive a failover?" (usually no — design for the reconnect)
+
 **[CoreDNS Deep Dive](/routing/coredns-deep-dive/)** and **[DNS Integration](/routing/dns-integration/)** — the resolution layer from the inside: the plugin chain, the cluster-zone/corporate-zone split, and how a name in corporate DNS ends up pointing at a pod. ([DNS Inside the Cluster](/networking/dns/) remains the practical guide to `resolv.conf`, `ndots`, and pod-side knobs.)
 
 ## The methodology: trace first, then zoom

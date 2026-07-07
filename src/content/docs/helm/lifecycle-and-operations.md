@@ -202,7 +202,7 @@ No `repo add`, no index. And because an OCI chart is a standard artifact, **cosi
 
 For consuming third-party charts, mirror them into your own registry rather than pulling from upstream at deploy time — upstream repos disappear, rename, and re-tag, and your 3am rollback should not depend on someone else's hosting.
 
-Pin versions in CI. `--version 1.4.0`, exactly — never a floating range in prod, never unversioned `latest`-ish installs. A chart version change is a code change; it goes through the same PR-diff-review path as everything else ([CI/CD Pipeline Design](/operations/cicd-pipeline-design/)). GitOps CRDs encode the same rule: `spec.chart.version` in a HelmRelease is a pin, and Renovate bumps it via PR.
+Pin versions in CI. `--version 1.4.0`, exactly — never a floating range in prod, never unversioned `latest`-ish installs. A chart version change is a code change; it goes through the same PR-diff-review path as everything else ([CI/CD Pipeline Design](/operations/cicd-pipeline-design/)). GitOps [CRDs](/controllers/crds-explained/) encode the same rule: `spec.chart.version` in a HelmRelease is a pin, and Renovate bumps it via PR.
 
 ## The operator's toolbox
 

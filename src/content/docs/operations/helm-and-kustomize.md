@@ -114,7 +114,7 @@ patches:
         value: spot
 ```
 
-When to use which: **strategic merge for 90% of cases** — it's readable and survives reordering. Reach for JSON6902 when you need to *remove* a field (strategic merge can only do that with `$patch: delete` directives, which are uglier), patch by list *index* in lists that don't merge by key, or target a CRD whose schema Kustomize doesn't know (strategic merge falls back to dumb replace-the-list behavior on unknown types — a classic "why did my other env var disappear" moment).
+When to use which: **strategic merge for 90% of cases** — it's readable and survives reordering. Reach for JSON6902 when you need to *remove* a field (strategic merge can only do that with `$patch: delete` directives, which are uglier), patch by list *index* in lists that don't merge by key, or target a [CRD](/controllers/crds-explained/) whose schema Kustomize doesn't know (strategic merge falls back to dumb replace-the-list behavior on unknown types — a classic "why did my other env var disappear" moment).
 
 ### configMapGenerator and the content hash
 

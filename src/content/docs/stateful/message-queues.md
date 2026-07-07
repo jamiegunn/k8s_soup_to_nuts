@@ -51,7 +51,7 @@ Test all four by killing broker pods in staging while load runs. It's the cheape
 
 ## IBM MQ
 
-IBM ships an official container (`icr.io/ibm-messaging/mq`) and a certified operator (`QueueManager` CR, mostly documented for OpenShift but usable elsewhere — CRD install is a platform request). The unit of identity is the **queue manager**: its name, its logs, and its object definitions live on the volume. The queue manager *is* its disk.
+IBM ships an official container (`icr.io/ibm-messaging/mq`) and a certified operator (`QueueManager` CR, mostly documented for OpenShift but usable elsewhere — [CRD](/controllers/crds-explained/) install is a platform request). The unit of identity is the **queue manager**: its name, its logs, and its object definitions live on the volume. The queue manager *is* its disk.
 
 Two deployment shapes matter:
 
