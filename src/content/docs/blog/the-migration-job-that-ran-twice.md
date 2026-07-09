@@ -22,9 +22,11 @@ sidebar:
 excerpt: We lost the deployment window because our migration container assumed the universe would be polite. A copied readiness probe killed the pod mid-run, triggering a non-idempotent retry that wedged the rollout.
 ---
 
+*Not to be confused with [The Migration That Ran Twice](/blog/the-migration-that-ran-twice/) — a different incident, same shape: that one is a MariaDB lock-timeout retry where a destructive `DROP COLUMN IF EXISTS` rename ate data. This one is Postgres, a probe-killed Job, and a non-idempotent `ALTER TABLE` left mid-backfill.*
+
 We did not lose the database because Kubernetes was flaky.
 
-We lost the deployment window because our migration container assumed the universe would be polite: one pod, one run, one clean exit, one schema state. Kubernetes does not make that promise. Jobs retry. Pods get rescheduled. Nodes drain. Containers restart after the process exits with a non-zero code. If your migration is not idempotent, the second run is not a backup plan. It is a loaded footgun with YAML indentation.
+We lost the deployment window because our migration container assumed the universe would be polite: one pod, one run, one clean exit, one schema state. Kubernetes does not make that promise. [Jobs retry](/workloads/jobs-and-cronjobs/). Pods get rescheduled. Nodes drain. Containers restart after the process exits with a non-zero code. If your migration is not idempotent, the second run is not a backup plan. It is a loaded footgun with YAML indentation.
 
 This happened during a routine `orders-api` rollout. The application Deployment was fine. The database was fine. The cluster was fine. The breakage lived in the narrow space between all three: a migration Job that ran once, partially succeeded, got retried on another node, and then tried to create schema objects that now existed but were not recorded as applied.
 
@@ -176,7 +178,7 @@ Events:
   Warning  Killing    12m   kubelet            Stopping container migrate
 ```
 
-There should not have been a readiness probe on this Job. Someone had copied the application container spec into the migration manifest and left the probes in place. The process was doing a long backfill and intentionally did not expose HTTP. The kubelet treated that as failed health, terminated the container, and the Job controller did exactly what it was configured to do: create another pod.
+There should not have been a [readiness probe](/workloads/health-checks/) on this Job. Someone had copied the application container spec into the migration manifest and left the probes in place. The process was doing a long backfill and intentionally did not expose HTTP. The kubelet treated that as failed health, terminated the container, and the Job controller did exactly what it was configured to do: create another pod.
 
 Kubernetes was innocent. Our manifest was guilty.
 
@@ -275,7 +277,7 @@ job.batch "orders-migrate" deleted
 Deleting the Job does not undo database changes. It only stops Kubernetes from creating more migration pods. If your Job uses finalizers or an external controller such as Argo CD, Helm, or Flux, check whether it will be recreated automatically.
 :::
 
-Then stop rolling new app pods that depend on the incomplete schema. If the old ReplicaSet still works, pin traffic there by undoing the rollout or scaling the new Deployment down, depending on your release controller.
+Then stop rolling new app pods that depend on the incomplete schema. If the old ReplicaSet still works, pin traffic there by [undoing the rollout](/workloads/rollouts-and-rollbacks/) or scaling the new Deployment down, depending on your release controller.
 
 ```bash
 kubectl -n shop rollout undo deployment/orders-api
@@ -295,15 +297,15 @@ Watch the boring metrics while you do this:
 - Job pod creation count.
 - New application pod restart rate.
 
-For PostgreSQL, the database team checked locks and the partial schema state from their side. From a restricted namespace, we could still verify the app-level symptom by using the same database client image our migration used, because the Secret was already mounted by the Job. Your policies may differ.
+For PostgreSQL, the database team checked locks and the partial schema state from their side. From a restricted namespace, we could still verify the app-level symptom by using the same database client image our migration used, passing the connection string in from our own shell. Note that `kubectl run` has no `--env-from` flag — it only takes repeatable `--env=` — and `$DATABASE_URL` has to expand inside the pod, not the local shell, so the query runs through an inner `sh -c`. Your policies may differ.
 
 ```bash
 kubectl -n shop run orders-db-check \
   --rm -it \
   --restart=Never \
   --image=registry.example.com/platform/psql:16 \
-  --env-from=secretRef=orders-db \
-  --command -- psql "$DATABASE_URL" -c "select count(*) filter (where tax_region is null) as missing_tax_region from orders;"
+  --env="DATABASE_URL=$DATABASE_URL" \
+  --command -- sh -c 'psql "$DATABASE_URL" -c "select count(*) filter (where tax_region is null) as missing_tax_region from orders;"'
 ```
 
 ```console

@@ -241,6 +241,10 @@ REVISION  UPDATED                   STATUS      CHART               DESCRIPTION
 $ helm rollback payments-db 7
 ```
 
+:::note[A plain `helm upgrade` does not carry your old overrides forward]
+`helm upgrade rel chart` renders from chart defaults plus *only* the `-f`/`--set` flags on **this** command — anything you set last time but omit now reverts to the default. `--reuse-values` and `--reset-values` change that behavior, each with caveats. Keep the full desired state in version-controlled values files and always pass them, so every upgrade is deterministic. Full breakdown in [Values and Overrides](/helm/values-and-overrides/#the-precedence-chain).
+:::
+
 `helm rollback` re-applies revision 7's rendered manifests as a *new* revision 9 — it does not touch data, PVCs, or anything the chart's hooks created outside Helm's tracking. For plain Deployments, [rollouts and rollbacks](/workloads/rollouts-and-rollbacks/) semantics still apply underneath.
 
 **Chart version bumps are code changes.** A chart upgrade can rename resources, change defaults, or restructure the values schema entirely. Read the chart's CHANGELOG/upgrade notes before bumping — major versions of popular charts routinely require values migration, and "same values file, new chart version" is how you discover a key was renamed and silently ignored (see above).

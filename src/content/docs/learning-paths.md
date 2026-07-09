@@ -14,7 +14,7 @@ keywords:
   - which pages to read in order
 ---
 
-This site has ~180 pages. Nobody should read it front to back, and nobody should land mid-topic without the prerequisites. Pick the track that matches your situation, read the steps **in order**, and use the checkpoint to know when you're done.
+This site has ~220 pages. Nobody should read it front to back, and nobody should land mid-topic without the prerequisites. Pick the track that matches your situation, read the steps **in order**, and use the checkpoint to know when you're done.
 
 Time estimates assume reading plus trying things against a real (dev) namespace. If you only read, halve them — and retain half as much.
 

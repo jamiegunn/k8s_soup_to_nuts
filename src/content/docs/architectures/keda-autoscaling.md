@@ -41,10 +41,10 @@ Authoritative reference for every scaler and field: [keda.sh/docs](https://keda.
 
 ## The build: order-events consumer
 
-The patient is **order-events-consumer**: a worker that reads the `order-events` topic from the Kafka cluster built in [Kafka on Strimzi](/architectures/kafka-strimzi/), processes each message in ~200ms typical / 30s worst case (a payment-provider call), and writes to Postgres. Traffic is bursty — quiet overnight, storms at campaign time — which is exactly the shape that justifies scale-to-zero. The [RabbitMQ](/architectures/rabbitmq/) and [IBM MQ](/architectures/ibm-mq/) variants swap only the trigger and auth; everything else stands.
+The patient is **order-events-consumer**: a worker that reads the `orders.events` topic from the Kafka cluster built in [Kafka on Strimzi](/architectures/kafka-strimzi/), processes each message in ~200ms typical / 30s worst case (a payment-provider call), and writes to Postgres. Traffic is bursty — quiet overnight, storms at campaign time — which is exactly the shape that justifies scale-to-zero. The [RabbitMQ](/architectures/rabbitmq/) and [IBM MQ](/architectures/ibm-mq/) variants swap only the trigger and auth; everything else stands.
 
 ```text
- producers ──▶ Kafka: order-events (12 partitions)
+ producers ──▶ Kafka: orders.events (12 partitions)
                      │ consumer group: order-events-consumer
                      ▼
    Deployment: order-events-consumer (0..12 replicas)
@@ -134,8 +134,8 @@ metadata:
 type: Opaque
 stringData:
   sasl: scram_sha512
-  username: order-events-scaler         # KafkaUser from the Strimzi build
-  password: "<from the KafkaUser secret>"
+  username: order-events-scaler         # the read-only KafkaUser added in the Strimzi build
+  password: "<from the order-events-scaler KafkaUser secret>"
   tls: enable
   ca: |
     -----BEGIN CERTIFICATE-----
@@ -166,7 +166,7 @@ spec:
       key: ca
 ```
 
-The scaler user needs *read* on the topic and *describe* on the consumer group (it reads committed offsets; it never consumes). Grant it via a `KafkaUser` ACL in the [Strimzi build](/architectures/kafka-strimzi/), not by reusing the app's credentials — separate creds mean an app-side credential rotation can't silently break scaling, and vice versa.
+The scaler user needs *read* on the topic and *describe* on the consumer group (it reads committed offsets; it never consumes). That's the `order-events-scaler` `KafkaUser` added to the [Strimzi build](/architectures/kafka-strimzi/) — a SCRAM user separate from the app's `orders-app` credentials, so an app-side credential rotation can't silently break scaling, and vice versa. The `password` above is the value the user operator writes into the `order-events-scaler` Secret.
 
 ## 3. The ScaledObject — every knob justified
 
@@ -210,7 +210,7 @@ spec:
       metadata:
         bootstrapServers: kafka-kafka-bootstrap.kafka-prod.svc:9093
         consumerGroup: order-events-consumer   # MUST match the app's group.id
-        topic: order-events
+        topic: orders.events
         # Target lag PER REPLICA, not total. desired ≈ ceil(totalLag / 100):
         # lag 1200 → 12 pods. Derive it: one pod drains ~50 msg/s, so 100
         # means "catch up within ~2s of work per pod". Too low → pinned at
@@ -321,18 +321,52 @@ Decision rule: message processed in **seconds** → ScaledObject; **minutes, and
 
 ## 7. Verification: five drills before you trust it
 
-**1. Burst and watch scale-out.** Publish 5,000 messages with the Strimzi perf producer, then watch both objects:
+**1. Burst and watch scale-out.** Publish 5,000 messages with the Strimzi perf producer. The [Strimzi build](/architectures/kafka-strimzi/) exposes **only** its internal TLS + mTLS listener on `9093` — there is no plaintext `9092` — so the producer must speak SSL with the `orders-app` client cert (the KafkaUser that holds *Write* on the topic; the read-only `order-events-scaler` user can't publish). Build a `client.properties` from that user's Secret plus the cluster CA, exactly as the Strimzi client contract does, then point the perf producer at it.
+
+First, materialize the trust/keystore and a `client.properties` in a scratch dir from the two Strimzi Secrets (`orders-app` holds `user.p12` + its password; `kafka-cluster-ca-cert` holds `ca.p12` + its password):
 
 ```bash
-kubectl -n kafka-prod run producer -ti --rm --image=quay.io/strimzi/kafka:0.46.0-kafka-4.0.0 -- \
-  bin/kafka-producer-perf-test.sh --topic order-events --num-records 5000 \
+mkdir -p /tmp/kfk && cd /tmp/kfk
+kubectl -n kafka-prod get secret orders-app \
+  -o jsonpath='{.data.user\.p12}' | base64 -d > user.p12
+USER_PW=$(kubectl -n kafka-prod get secret orders-app \
+  -o jsonpath='{.data.user\.password}' | base64 -d)
+kubectl -n kafka-prod get secret kafka-cluster-ca-cert \
+  -o jsonpath='{.data.ca\.p12}' | base64 -d > ca.p12
+CA_PW=$(kubectl -n kafka-prod get secret kafka-cluster-ca-cert \
+  -o jsonpath='{.data.ca\.password}' | base64 -d)
+
+cat > client.properties <<EOF
+security.protocol=SSL
+ssl.truststore.location=/certs/ca.p12
+ssl.truststore.password=${CA_PW}
+ssl.truststore.type=PKCS12
+ssl.keystore.location=/certs/user.p12
+ssl.keystore.password=${USER_PW}
+ssl.keystore.type=PKCS12
+EOF
+```
+
+Then run the perf producer against `9093`, mounting that dir as `/certs` and passing the config via `--producer.config`:
+
+```bash
+kubectl -n kafka-prod run producer -ti --rm --image=quay.io/strimzi/kafka:0.46.0-kafka-4.0.0 \
+  --overrides='{"spec":{"volumes":[{"name":"certs","emptyDir":{}}],
+    "containers":[{"name":"producer","image":"quay.io/strimzi/kafka:0.46.0-kafka-4.0.0",
+    "stdin":true,"tty":true,"volumeMounts":[{"name":"certs","mountPath":"/certs"}]}]}}' \
+  --command -- sleep 3600 &
+kubectl -n kafka-prod cp /tmp/kfk/. producer:/certs/       # user.p12, ca.p12, client.properties
+kubectl -n kafka-prod exec -ti producer -- \
+  bin/kafka-producer-perf-test.sh --topic orders.events --num-records 5000 \
   --record-size 512 --throughput -1 --producer-props \
-  bootstrap.servers=kafka-kafka-bootstrap:9092
+  bootstrap.servers=kafka-kafka-bootstrap:9093 \
+  --producer.config /certs/client.properties
+kubectl -n kafka-prod delete pod producer
 
 kubectl -n orders get scaledobject,hpa -w
 ```
 
-One honesty note on that command: it assumes a **plaintext `9092` staging listener** that the production [Strimzi build](/architectures/kafka-strimzi/) deliberately does not expose — its internal listener is TLS + mTLS on `9093` only. Against the real cluster, point at `9093` and add `--producer.config` with a client-cert config built from a `KafkaUser` secret and the cluster CA.
+(If mTLS clients are awkward in your shop, the Strimzi build notes SCRAM is a drop-in for the KafkaUser — then `client.properties` becomes `security.protocol=SASL_SSL` + a `sasl.jaas.config` line, same truststore. Either way it's `9093`, never `9092`.)
 
 Expected phases — quiet, burst, drained:
 

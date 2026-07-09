@@ -67,19 +67,20 @@ DaemonSets typically need node-level privileges and tolerations the platform tea
 4. **[High availability](/workloads/high-availability/)** — PodDisruptionBudgets, anti-affinity, topology spread, and graceful shutdown so node drains don't take you down.
 5. **[Autoscaling](/workloads/autoscaling/)** — HPA v2 done right, stabilization windows, and the classic misconfigurations that cause replica thrash.
 6. **[Health checks](/workloads/health-checks/)** — startup vs readiness vs liveness, precisely, plus the footguns that turn probes into outage generators.
-7. **[Resources and QoS](/workloads/resources-and-qos/)** — requests vs limits, QoS classes, CPU throttling, and how to size honestly.
-8. **[Configuration](/workloads/configuration/)** — ConfigMaps and Secrets, env vs volumes, update propagation, and forcing rollouts on config change.
-9. **[Environment variables](/workloads/environment-variables/)** — every env source, precedence and collision rules, `$(VAR)` expansion, and JVM flag-injection patterns.
-10. **[Config as files](/workloads/config-files-and-volumes/)** — volume mount mechanics, `subPath` traps, projected volumes, and file permissions.
-11. **[Secrets](/workloads/secrets/)** — types, why files beat env, and keeping secrets out of git (Sealed Secrets, SOPS, External Secrets).
-12. **[Jobs and CronJobs](/workloads/jobs-and-cronjobs/)** — run-to-completion semantics, retry behavior, schedules, and missed-run gotchas.
-13. **[Init and sidecar containers](/workloads/init-and-sidecar-containers/)** — multi-container pods: init semantics, native sidecars, and the patterns that justify them.
-14. **[Pod security](/workloads/pod-security/)** — securityContext, Pod Security Standards, and hardening that doesn't break the app.
-15. **[ServiceAccounts](/workloads/serviceaccounts/)** — workload identity: pods calling the Kubernetes API and cloud services without long-lived keys.
-16. **[Scheduling](/workloads/scheduling/)** — nodeSelector, affinity, taints and tolerations, topology spread, and priority — where pods land and why.
-17. **[GPUs and AI workloads](/workloads/gpu-and-ai-workloads/)** — requesting accelerators you don't manage, model-load vs startup-probe budgets, and queue etiquette on shared GPUs.
-18. **[DaemonSets](/workloads/daemonsets/)** — the per-node fleet running under your pods, how it affects you, and the rare cases where you run your own.
-19. **[Graceful shutdown](/workloads/graceful-shutdown/)** — the termination lifecycle end to end: the SIGTERM/endpoint race, the preStop pattern, and the budget inequality that makes deploys dropless.
+7. **[Graceful shutdown](/workloads/graceful-shutdown/)** — the termination lifecycle end to end: the SIGTERM/endpoint race, the preStop pattern, and the budget inequality that makes deploys dropless.
+8. **[Resources and QoS](/workloads/resources-and-qos/)** — requests vs limits, QoS classes, CPU throttling, and how to size honestly.
+9. **[Configuration](/workloads/configuration/)** — ConfigMaps and Secrets, env vs volumes, update propagation, and forcing rollouts on config change.
+10. **[Environment variables](/workloads/environment-variables/)** — every env source, precedence and collision rules, `$(VAR)` expansion, and JVM flag-injection patterns.
+11. **[Config as files](/workloads/config-files-and-volumes/)** — volume mount mechanics, `subPath` traps, projected volumes, and file permissions.
+12. **[Secrets](/workloads/secrets/)** — types, why files beat env, and keeping secrets out of git (Sealed Secrets, SOPS, External Secrets).
+13. **[Jobs and CronJobs](/workloads/jobs-and-cronjobs/)** — run-to-completion semantics, retry behavior, schedules, and missed-run gotchas.
+14. **[Init and sidecar containers](/workloads/init-and-sidecar-containers/)** — multi-container pods: init semantics, native sidecars, and the patterns that justify them.
+15. **[Pod security](/workloads/pod-security/)** — securityContext, Pod Security Standards, and hardening that doesn't break the app.
+16. **[Securing pods: best practices](/workloads/securing-pods-best-practices/)** — the hardening playbook end to end: a locked-down baseline you can copy, and how to audit and prove a pod meets it.
+17. **[ServiceAccounts](/workloads/serviceaccounts/)** — workload identity: pods calling the Kubernetes API and cloud services without long-lived keys.
+18. **[Scheduling](/workloads/scheduling/)** — nodeSelector, affinity, taints and tolerations, topology spread, and priority — where pods land and why.
+19. **[GPUs and AI workloads](/workloads/gpu-and-ai-workloads/)** — requesting accelerators you don't manage, model-load vs startup-probe budgets, and queue etiquette on shared GPUs.
+20. **[DaemonSets](/workloads/daemonsets/)** — the per-node fleet running under your pods, how it affects you, and the rare cases where you run your own.
 
 ## Which article do I need?
 
@@ -96,6 +97,7 @@ DaemonSets typically need node-level privileges and tolerations the platform tea
 | "My nightly job didn't run / ran twice" | [Jobs and CronJobs](/workloads/jobs-and-cronjobs/) |
 | "Why is this env var not what I set?" | [Environment variables](/workloads/environment-variables/) |
 | "Deployment applied but pods never appear" | [Pod security](/workloads/pod-security/) |
+| "How do I audit / prove a pod is hardened?" | [Securing pods: best practices](/workloads/securing-pods-best-practices/) |
 | "My pod gets 403 calling the API / cloud" | [ServiceAccounts](/workloads/serviceaccounts/) |
 | "Pod is Pending / CrashLoopBackOff right now" | [Troubleshooting section](/troubleshooting/triage-methodology/) |
 
@@ -162,7 +164,7 @@ Several articles in this section touch the boundary — PDBs that block node dra
 
 ## Suggested reading order
 
-If you're new to running workloads here, read in sidebar order — each article builds on the last: the Deployment object itself, then how it rolls, then how it survives disruption, scales, reports health, consumes resources, and takes configuration, ending with the run-to-completion cousins.
+If you're new to running workloads here, read in sidebar order — each article builds on the last: the Deployment object itself, then how it rolls, survives disruption, scales, reports health, shuts down cleanly, consumes resources, takes configuration, hardens, and finds a node — ending with the per-node cousins, DaemonSets.
 
 If you're not new, treat this section as a reference and jump via the symptom table above. The two articles I'd push on *every* team regardless of experience:
 

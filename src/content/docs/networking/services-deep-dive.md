@@ -171,5 +171,6 @@ Rule of thumb: use `Local` when you need client IPs (audit logs, geo, rate limit
 | Headless (`clusterIP: None`) | Inside cluster | Pod IPs via DNS | StatefulSets, client-side LB, peer discovery |
 | NodePort | Anything that reaches node IPs | Node IPs, high port | Substrate for LBs; rare direct use |
 | LoadBalancer | External clients | External VIP | Public/enterprise entry points (needs a provisioner) |
+| [ExternalName](/architectures/external-database/) | Inside cluster | None — a DNS CNAME | Aliasing an off-cluster host (DB, API) to a cluster name; mind the CNAME-lie/IP trap |
 
 Next layer up: HTTP-aware routing with [Ingress](/networking/ingress-and-routing/). Next layer down: how names become these IPs at all — [DNS](/networking/dns/).

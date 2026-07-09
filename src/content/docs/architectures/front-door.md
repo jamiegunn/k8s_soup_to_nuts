@@ -96,7 +96,7 @@ Smaller shops without a network team or an F5 run *exactly* this stack minus the
 
 ## Build
 
-Apply order matters: address pool before the controller (or its Service sits `<pending>`), controller before issuers (HTTP-01 needs a working edge), certificates before you flip the default-cert flag.
+Apply order matters: address pool before the controller (or its Service sits `<pending>`), controller before issuers (HTTP-01 needs a working edge), the DNS-01 solver's API-token Secret before the DNS-01 ClusterIssuer that references it, certificates before you flip the default-cert flag.
 
 ### 1. MetalLB: the address pool and L2 advertisement
 
@@ -140,6 +140,13 @@ Installed via Helm; the values excerpt below is the part that encodes design dec
 #   -n ingress-nginx --create-namespace -f front-door-values.yaml
 controller:
   replicaCount: 2
+  extraArgs:
+    # Serve the wildcard cert for any Ingress with a missing/broken tls secret
+    # and for unrouted hosts — kills the "Fake Certificate" trap. The Certificate
+    # (§3) writes this secret into THIS namespace; format is <namespace>/<secret>.
+    # Apply order: the secret must exist before this flag, or the controller
+    # crash-loops on a missing default cert — flip it after cert-manager issues.
+    default-ssl-certificate: "ingress-nginx/wildcard-apps-tls"
   topologySpreadConstraints:
     - maxSkew: 1
       topologyKey: kubernetes.io/hostname
@@ -231,7 +238,17 @@ spec:
 
 **TLS terminates at ingress-nginx — a decision, not a default.** With the appliance in passthrough mode, cert-manager keeps doing everything it does below: per-host certs from Ingress annotations, the wildcard default cert, automatic renewal, SNI routing across hundreds of hostnames — all inside the cluster, zero tickets per app. The variant your network team may propose — terminate TLS *on the F5* (their cert tooling, their HSM, their compliance story) — is legitimate but costs exactly those things: certificates become network-team change requests instead of annotations, cert-manager is reduced to internal traffic, and every new hostname needs appliance-side SNI/cert config. If the org mandates it, run the appliance L7 with re-encryption to the pool member and switch the client-IP strategy to `X-Forwarded-For` as described above. Default to passthrough; concede it only deliberately.
 
-**DNS-01 as the wildcard alternative.** HTTP-01 cannot issue wildcard certificates. If you want a real `*.apps.example.com` cert (recommended as the default cert), add a DNS-01 solver: cert-manager writes a TXT record via your DNS provider's API instead of serving a token. Trade-off: it needs API credentials for your DNS zone living in the cluster — a real secret with real blast radius — but it works for wildcards and for hosts not reachable from the internet. That means a second ClusterIssuer alongside the HTTP-01 one (which keeps serving the per-host certs):
+**DNS-01 as the wildcard alternative.** HTTP-01 cannot issue wildcard certificates. If you want a real `*.apps.example.com` cert (recommended as the default cert), add a DNS-01 solver: cert-manager writes a TXT record via your DNS provider's API instead of serving a token. Trade-off: it needs API credentials for your DNS zone living in the cluster — a real secret with real blast radius — but it works for wildcards and for hosts not reachable from the internet. That means a second ClusterIssuer alongside the HTTP-01 one (which keeps serving the per-host certs).
+
+First the credential the solver reads — a scoped DNS-edit API token, in cert-manager's namespace, under the exact key the issuer's `apiTokenSecretRef` names (`cloudflare-api-token` / `api-token`). Create it **before** the ClusterIssuer, or the issuer comes up `Ready: False` with a "secret not found" error:
+
+```bash
+kubectl create secret generic cloudflare-api-token \
+  --namespace cert-manager \
+  --from-literal=api-token='<Cloudflare token: Zone.DNS Edit on this zone only>'
+```
+
+Then the issuer that references it:
 
 ```yaml
 apiVersion: cert-manager.io/v1
@@ -269,7 +286,7 @@ spec:
     - "*.apps.example.com"
 ```
 
-Then in the Helm values: `controller.extraArgs.default-ssl-certificate: "ingress-nginx/wildcard-apps-tls"`. This is what kills the **Fake Certificate trap** described in [ingress-nginx](/networking/ingress-nginx/): any Ingress with a `tls:` block but a missing/broken secret — or any HTTPS request for an unrouted host — gets served the wildcard instead of the self-signed "Kubernetes Ingress Controller Fake Certificate" that scares users and breaks clients.
+The `controller.extraArgs.default-ssl-certificate: "ingress-nginx/wildcard-apps-tls"` line in the Helm values above is what activates this — it points the controller at the secret this Certificate creates. That is what kills the **Fake Certificate trap** described in [ingress-nginx](/networking/ingress-nginx/): any Ingress with a `tls:` block but a missing/broken secret — or any HTTPS request for an unrouted host — gets served the wildcard instead of the self-signed "Kubernetes Ingress Controller Fake Certificate" that scares users and breaks clients. Because the flag names a secret that must already exist, flip it (a `helm upgrade`) only *after* the wildcard Certificate reports `READY=True` — the apply-order rule at the top of this build.
 
 ### 4. DNS: the wildcard record
 

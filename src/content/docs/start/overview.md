@@ -55,7 +55,7 @@ You should be comfortable with a terminal and have `kubectl` access to at least 
 
 Each section stands alone and opens with its own overview:
 
-- **Start** (you are here) — the mental model and the daily toolkit. Read [How Kubernetes Works](/start/how-kubernetes-works/) and [Life of a Deployment](/start/life-of-a-deployment/) first; they pay for everything else.
+- **Start** (you are here) — the mental model and the daily toolkit. Begin with [How Kubernetes Works](/start/how-kubernetes-works/) for the reconciliation model that pays for everything else; then follow [Learning Paths Track 1](/learning-paths/#1-new-to-deploying-on-kubernetes) for the full reading order through the rest of the section.
 - **[kubectl Mastery](/kubectl/overview/)** — beyond the survival kit: how kubectl actually talks to the API, output and query wizardry, and the tricks that make you fast.
 - **[Workloads](/workloads/overview/)** — Deployments, rollouts, autoscaling, health checks, resources and QoS, Jobs. The bread and butter.
 - **[Java on Kubernetes](/java/overview/)** — JVM memory in cgroups, thread and heap dumps with a JRE-only image, remote debugging, GC tuning.
@@ -111,7 +111,7 @@ If `kubectl get pods` returns `Forbidden` or you're staring at someone else's na
 
 ## How to read it
 
-If you're new to Kubernetes: read this Start section in order — it's six articles and roughly an afternoon. [How Kubernetes Works](/start/how-kubernetes-works/) gives you the reconciliation mental model, [Life of a Deployment](/start/life-of-a-deployment/) makes it concrete, and the remaining three equip you for daily work. After that, read the [Workloads overview](/workloads/overview/) before you write your first production Deployment.
+If you're new to Kubernetes: work through this Start section in order — it's ten articles and a day or so, and [Learning Paths Track 1](/learning-paths/#1-new-to-deploying-on-kubernetes) sequences them for you. [How Kubernetes Works](/start/how-kubernetes-works/) gives you the reconciliation mental model and [Life of a Deployment](/start/life-of-a-deployment/) makes it concrete once you've got the vocabulary; the rest equip you for daily work. After that, read the [Workloads overview](/workloads/overview/) before you write your first production Deployment.
 
 If you've been running apps on Kubernetes for a while: skim [kubectl Survival Kit](/start/kubectl-survival-kit/) for tricks you may have missed, then jump straight to whatever's on fire. Every troubleshooting article is written to be entered cold, mid-incident: symptom at the top, diagnosis steps in order, escalation criteria at the bottom.
 

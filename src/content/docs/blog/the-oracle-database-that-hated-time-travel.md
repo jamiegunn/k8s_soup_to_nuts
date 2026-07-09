@@ -20,7 +20,7 @@ tags:
 excerpt: Oracle Database Free on a local Apple Silicon VM went down and refused to come back up. The container log blamed a generic ORA-01012 error, but the real root cause was QEMU's system counter drifting during host sleep events.
 ---
 
-Our local Oracle Database Free pod (`oracle-oracle-0`) was stuck in a `CrashLoopBackOff` loop. `describe` reported it had restarted 18 times, exiting with exit code 1 just a single second after every start attempt.
+Our local [Oracle Database](/stateful/oracle/) Free pod (`oracle-oracle-0`) was stuck in a `CrashLoopBackOff` loop. `describe` reported it had restarted 18 times, exiting with exit code 1 just a single second after every start attempt.
 
 The container logs showed the listener starting up cleanly, followed immediately by:
 
@@ -39,13 +39,13 @@ First, we checked for node taints or eviction events. `kubectl describe node` sh
 
 ## Spinning up a debug pod to inspect the alert log
 
-Because the container exited so quickly, the diagnostic details were lost. We scaled the StatefulSet down to 0 to free up the PersistentVolume:
+Because the container exited so quickly, the diagnostic details were lost. We scaled the [StatefulSet](/stateful/statefulsets-fundamentals/) down to 0 to free up the PersistentVolume:
 
 ```bash
 kubectl scale statefulset oracle-oracle --replicas=0 -n oracle
 ```
 
-Then we spun up a temporary, sleep-locked debug pod mounting the same PVC:
+Then we spun up a temporary, sleep-locked debug pod mounting the same [PVC](/stateful/storage-pv-pvc/):
 
 ```yaml
 apiVersion: v1
@@ -118,5 +118,6 @@ done
 
 This prevents the time-freeze events that cause Oracle to self-destruct upon wake. 
 
-> [!TIP]
-> Deleting the pod is not a magic fix for clock drift. If the host clock is actively drifting, a recreated pod will hit the exact same startup failure. The real fix is ensuring clock stability on the host machine.
+:::tip
+Deleting the pod is not a magic fix for clock drift. If the host clock is actively drifting, a recreated pod will hit the exact same startup failure. The real fix is ensuring clock stability on the host machine.
+:::

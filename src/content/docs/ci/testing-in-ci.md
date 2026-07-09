@@ -45,6 +45,10 @@ The Maven side is mostly plumbing you already have from [the build job](/ci/gith
 
 Split unit from integration at the Maven level with the Surefire/Failsafe convention: `*Test.java` runs in `test` via Surefire (fast, no external processes), `*IT.java` runs in `verify` via Failsafe. That split is what lets the workflow choose its blast radius per trigger:
 
+:::caution[Action versions here are shown as readable tags, not pins]
+Every `uses:` in this article is written as a moving tag (`actions/checkout@v4`, `azure/setup-helm@v4`, and so on) so the examples stay legible. In a real pipeline these **must** be pinned by full commit SHA, per the section's [SHA-pinning doctrine](/ci/overview/#conventions-used-throughout-this-section) — a tag is a pointer the action's owner can repoint at arbitrary code that runs with your credentials. Let Dependabot or Renovate keep the pins both frozen *and* updated.
+:::
+
 ```yaml
   unit-tests:
     runs-on: ubuntu-latest

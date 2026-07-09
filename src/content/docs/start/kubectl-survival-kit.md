@@ -160,6 +160,12 @@ kubectl diff -f deployment.yaml     # what would apply change? exit 1 = differen
 Run `diff` before `apply` in anything resembling prod. It's also the fastest drift detector: if `diff` against your git manifest isn't empty, someone live-patched.
 
 ```bash
+kubectl apply -f deployment.yaml    # create or update to match the manifest
+```
+
+`apply` is the one write verb an app team runs daily: it reconciles the cluster to your manifest, creating what's missing and updating what's changed. Always `kubectl diff -f` first, then `kubectl apply -f` — that way you apply exactly what you reviewed. In a GitOps setup your pipeline runs `apply` for you; keep it for staging and break-glass.
+
+```bash
 kubectl rollout status deploy/my-app        # block until rollout completes or stalls
 kubectl rollout restart deploy/my-app       # rolling restart, no manifest change
 kubectl rollout undo deploy/my-app          # back to previous ReplicaSet
@@ -203,6 +209,7 @@ kubectl debug -it my-app-x2klp --image=busybox --target=app
 | Extract one field | `kubectl get RES NAME -o jsonpath='{.spec...}'` |
 | Field docs | `kubectl explain RES.spec.FIELD` |
 | Preview a change | `kubectl diff -f file.yaml` |
+| Apply a manifest | `kubectl apply -f file.yaml` |
 | Wait for a deploy | `kubectl rollout status deploy/NAME` |
 | Rolling restart | `kubectl rollout restart deploy/NAME` |
 | Roll back | `kubectl rollout undo deploy/NAME` |

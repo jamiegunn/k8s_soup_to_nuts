@@ -328,6 +328,32 @@ spec:
 
 The user operator writes a Secret named `orders-app` back into the namespace: `user.crt`/`user.key` (plus a ready-made `user.p12` + password for JVM clients), and the cluster CA is in `kafka-cluster-ca-cert`. Your app mounts these like any other credential — hygiene, rotation, and mounting patterns in [Secrets](/workloads/secrets/). Strimzi renews the CA on a schedule; clients must re-read mounted certs or restart on rotation.
 
+**A second, read-only user for autoscaling.** The [KEDA build](/architectures/keda-autoscaling/) scales the `order-events-consumer` group on this topic's lag, and its operator is a *separate* Kafka client from your app — it needs its own credential with the narrowest possible grant: **Read** on the topic (to read committed offsets) and **Describe** on the consumer group. Never reuse `orders-app` for it — separate creds mean an app-side rotation can't silently break scaling, and vice versa.
+
+```yaml
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaUser
+metadata:
+  name: order-events-scaler
+  namespace: kafka-prod
+  labels:
+    strimzi.io/cluster: kafka
+spec:
+  authentication:
+    type: scram-sha-512   # KEDA's kafka scaler consumes SASL creds; SCRAM keeps
+                          # the scaler's client config to username/password + CA,
+                          # no keystore to mount into the KEDA operator
+  authorization:
+    type: simple
+    acls:                 # least privilege: read offsets, describe the group. No Write.
+      - resource: { type: topic, name: orders.events, patternType: literal }
+        operations: [Describe, Read]
+      - resource: { type: group, name: order-events-consumer, patternType: literal }
+        operations: [Describe, Read]
+```
+
+The user operator writes a Secret named `order-events-scaler` holding the SCRAM `password`; the KEDA `TriggerAuthentication` references it directly (see the KEDA build's §2).
+
 ### 4. NetworkPolicy
 
 Strimzi creates its own policies for the ports it owns (9090 controller quorum, 9091 replication, operator access). Your job is the client-facing surface — and pinning the pod-to-pod rules explicitly so a future default-deny doesn't eat the cluster:

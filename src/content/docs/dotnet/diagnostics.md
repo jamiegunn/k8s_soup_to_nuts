@@ -232,7 +232,7 @@ dotnet-counters ps
 
 ```bash
 dotnet-stack report -p 1                    # stacks to your terminal
-dotnet-gcdump collect -p 1 -o /tmp-local.gcdump   # written in the DEBUG container
+dotnet-gcdump collect -p 1 -o /tmp/local.gcdump   # written in the DEBUG container
 dotnet-dump collect -p 1 -o /tmp/big.dmp    # written by the TARGET → its /tmp
 ls -lh /proc/1/root/tmp/big.dmp             # retrieve via procfs
 ```

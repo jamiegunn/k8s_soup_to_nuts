@@ -134,15 +134,16 @@ kubectl debug -it myapp-7d4b9c6f5d-x2klm \
 # inside the debug container — attach needs the SAME UID as the JVM:
 ps -o pid,user,comm -e | grep java     # note pid (say 7) and user (say uid 1000)
 setpriv --reuid=1000 --regid=1000 --clear-groups \
-  jmap -dump:live,format=b,file=/proc/7/root/dumps/manual.hprof 7
+  jmap -dump:live,format=b,file=/dumps/manual.hprof 7
 ```
 
 Two path subtleties: the ephemeral container has its *own* filesystem, but
-the JVM writes the dump in *its* namespace — so either target a path that
-exists for the JVM (`/dumps` on the shared volume, reachable from the debug
-side as `/proc/7/root/dumps/`), or mount the same volume into the debug
-container. Writing to `/proc/7/root/...` from the tool side works because
-modern JDK attach resolves paths relative to the target. If attach fails
+`jmap -dump:file=` is resolved by the *target JVM* in *its* mount namespace —
+so the path you pass to `jmap` must be the path the JVM sees, `/dumps/manual.hprof`,
+**not** `/proc/7/root/dumps/...`. The JVM writes the dump to its own `/dumps`;
+you then read the file back from the debug side at
+`/proc/7/root/dumps/manual.hprof` (or mount the same volume into the debug
+container so the file appears directly). If attach fails
 with "Unable to open socket file", it's almost always the UID mismatch above
 — same caveats as in [thread dumps](/java/thread-dumps-jre-only/), including
 `jps` being blind across namespaces (attach by pid from `ps`).

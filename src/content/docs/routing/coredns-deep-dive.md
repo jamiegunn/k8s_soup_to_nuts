@@ -227,20 +227,9 @@ The trade-offs, and why many platforms don't enable it: to know which namespace'
 
 ### NodeLocal DNSCache — the per-node cache
 
-NodeLocal DNSCache is a **DaemonSet** running a small caching DNS instance on every node, listening on a link-local address (`169.254.20.10`) and typically intercepting the kube-dns Service IP so pods need no reconfiguration. You can detect it from your seat:
+NodeLocal DNSCache is a per-node caching layer on a link-local address (`169.254.20.10`) that answers the bulk of a busy node's query volume on-box and forwards misses to CoreDNS over TCP. Its headline benefit: the pod-to-cache hop uses NOTRACK rules, so pod DNS packets skip connection tracking entirely — killing the UDP conntrack race that produces the famous "every Nth lookup takes exactly 5 seconds" signature. If your pods show that signature and per-pod `single-request-reopen` isn't enough, "please evaluate NodeLocal DNSCache" is the correct platform escalation, with timing evidence attached.
 
-```console
-$ kubectl exec deploy/orders -- cat /etc/resolv.conf | grep nameserver
-nameserver 169.254.20.10        # ← NodeLocal is in play (some setups keep 10.96.0.10 and intercept it)
-```
-
-What it changes:
-
-- **Cache hits never leave the node.** The bulk of a busy node's query volume — including all those search-walk NXDOMAINs — is answered locally.
-- **Misses go upstream over TCP**, on connections the node cache keeps open to CoreDNS.
-- **The UDP conntrack race dies.** The interception uses NOTRACK rules, so pod DNS packets skip connection tracking entirely — eliminating the dropped-UDP-packet race that produces the famous "every Nth lookup takes exactly 5 seconds" signature. The conntrack mechanics behind that race are in [kube-proxy and the dataplane](/routing/kube-proxy-and-the-dataplane/).
-
-If your pods show the 5-second signature and per-pod `single-request-reopen` isn't enough, "please evaluate NodeLocal DNSCache" is the correct platform escalation — with your timing evidence attached.
+The full treatment — the DaemonSet shape, the one-command detection from your own seat, the conntrack-race mechanics, and the exact ticket to file — lives in the [NodeLocal DNSCache deep dive](/cluster-networking/nodelocal-dnscache/).
 
 ## Scaling and health: reading CoreDNS from your seat
 

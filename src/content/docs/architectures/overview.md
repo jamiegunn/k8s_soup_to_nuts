@@ -29,7 +29,10 @@ The rest of this site explains *how things work*. This section is different: eac
 
 | Architecture | What it demonstrates |
 |---|---|
-| [Valkey: Two StatefulSets, One MetalLB VIP](/architectures/valkey-shared-vip/) | Read/write splitting over a single shared VIP separated by port (`metallb.io/allow-shared-ip`), StatefulSet replication, and honest single-replica failover trade-offs |
+| [Valkey: Two StatefulSets, One MetalLB VIP](/architectures/valkey-shared-vip/) | Read/write splitting over a single shared VIP separated by port (`metallb.io/allow-shared-ip`), StatefulSet replication, and honest single-replica failover trade-offs — the raw build the three deep dives below extend |
+| ↳ [Valkey on Kubernetes: A Helm Chart Deep Dive](/architectures/valkey-helm-deep-dive/) | Packaging that build as a Helm chart on Longhorn — values vs a templated `valkey.conf`, cluster mode with 16384 hash slots, and cross-cluster active/passive over `replicaof` |
+| ↳ [Valkey Ingress: VIPs, TCP Routing, and cluster-announce](/architectures/valkey-ingress-and-cluster-announce/) | How a connection actually reaches the right pod — L4/TCP exposure, ClusterIP vs headless DNS, MetalLB VIPs, TCPRoute, and the `cluster-announce` fix for MOVED-to-unreachable-IP |
+| ↳ [Valkey Data Access: Commands, Read/Write Split, Cluster Semantics](/architectures/valkey-data-access-patterns/) | How clients talk to Valkey verb by verb — reads vs writes, replica staleness, pub/sub, streams, transactions, and the CROSSSLOT and MOVED rules cluster mode adds |
 | [PostgreSQL: Production Reference Architecture](/architectures/postgresql-ha/) | A 3-instance CloudNativePG cluster with quorum-synchronous replication, PgBouncer pooling, continuous S3 backup, and a restore drill |
 | [IBM MQ: Production Reference Architecture](/architectures/ibm-mq/) | A Native HA queue manager (3 pods, Raft-replicated logs, no shared storage), TLS channels, external clients via a MetalLB VIP, and quorum-loss behavior |
 | [RabbitMQ: Production Reference Architecture](/architectures/rabbitmq/) | A 3-node cluster with quorum queues, the memory-watermark-vs-container-limit handshake, AMQPS via MetalLB, and partition/alarm drills |
@@ -49,6 +52,9 @@ Start from the requirement, not the technology. Each row is the shortest honest 
 | I need… | Build | Why this one |
 |---|---|---|
 | An HA cache with a stable address | [Valkey: Shared VIP](/architectures/valkey-shared-vip/) | Read/write split over one VIP, and an honest account of what single-replica failover actually costs |
+| To package that cache as a chart, or shard it | [Valkey: Helm Deep Dive](/architectures/valkey-helm-deep-dive/) | Values vs templated conf, cluster mode's 16384 hash slots, and active/passive across clusters |
+| To expose Valkey to clients outside the pod network | [Valkey: Ingress & cluster-announce](/architectures/valkey-ingress-and-cluster-announce/) | L4/TCP exposure done right — and why `cluster-announce` is the fix when clients get MOVED to an IP they can't reach |
+| To know which command goes where (reads, writes, slots) | [Valkey: Data Access](/architectures/valkey-data-access-patterns/) | The client's-eye view: replica staleness, CROSSSLOT, MOVED, streams and pub/sub semantics |
 | A relational store that survives node loss | [PostgreSQL HA](/architectures/postgresql-ha/) | Quorum-synchronous replication means a confirmed commit exists on two nodes — plus a restore drill, because a backup you haven't restored is a hope |
 | Ordered, transactional messaging — MQ is mandated | [IBM MQ](/architectures/ibm-mq/) | You run MQ because the mainframe or the vendor contract says so; this build makes Native HA survive what the mandate didn't anticipate |
 | Ordered, transactional messaging — broker is my choice | [RabbitMQ](/architectures/rabbitmq/) | Quorum queues give the same delivery guarantees without the license; the discriminator with MQ is *who chose the protocol*, not features |

@@ -49,6 +49,10 @@ kubectl logs <pod-name> --previous
 | Run setup steps or a helper container alongside my app | [Init and Sidecar Containers](/workloads/init-and-sidecar-containers/) |
 | Control which nodes my pods land on (affinity, taints, spread) | [Scheduling](/workloads/scheduling/) |
 | Fix manifests before an API version gets removed in the next upgrade | [API Deprecations](/operations/api-deprecations/) |
+| Add a sidecar the right way — log shipper, config reloader, secrets fetcher | [Sidecars](/sidecars/overview/) |
+| Stop dropping requests during deploys — the termination lifecycle | [Graceful Shutdown](/workloads/graceful-shutdown/) |
+| Tune rollout pacing and the shutdown budget (surge, grace, preStop) | [Rollout & Shutdown Knobs](/tuning/rollout-shutdown-knobs/) |
+| Deploy a complete, tested build — golden service, zero-downtime, locked-down namespace, canary, KEDA, Valkey, PostgreSQL, IBM MQ, RabbitMQ, Kafka, front door | [Reference Architectures](/architectures/overview/) |
 
 ## Scale and stay up
 
@@ -61,6 +65,10 @@ kubectl logs <pod-name> --previous
 | Write PromQL that answers "is this pod actually starved?" | [PromQL for Resources](/observability/promql-for-resources/) |
 | Get startup/readiness/liveness probes right (and not cause outages with them) | [Health Checks](/workloads/health-checks/) |
 | Keep replicas alive during voluntary disruptions (PDBs, graceful shutdown) | [High Availability](/workloads/high-availability/) |
+| Tune probe timings, JVM memory flags, or requests/limits with real numbers | [Knobs & Levers](/tuning/overview/) |
+| Retrofit sane requests/limits onto a fleet that grew organically | [Requests & Limits on a Running Fleet](/tuning/brownfield-resources/) |
+| Design health endpoints properly (and fix a fleet of bad probes safely) | [Health Check Design](/tuning/health-check-design/) |
+| Size a new service from zero, step by step | [Sizing Walkthrough](/tuning/sizing-walkthrough/) |
 
 ## Configure my app
 
@@ -71,6 +79,20 @@ kubectl logs <pod-name> --previous
 | Mount config as files without hitting the `subPath` update trap | [Config as Files](/workloads/config-files-and-volumes/) |
 | Store secrets properly and keep them out of git | [Secrets](/workloads/secrets/) |
 | Rotate a ConfigMap or Secret and have pods actually pick it up | [ConfigMap and Secret Rotation](/operations/configmap-secret-rotation/) |
+
+## Helm & packaging
+
+| I want to… | Read |
+|---|---|
+| Write, template, and override Helm charts properly | [Helm Deep Dive](/helm/overview/) |
+| Figure out which values file/flag wins in a Helm override fight | [Values and Overrides](/helm/values-and-overrides/) |
+
+## Cost & capacity
+
+| I want to… | Read |
+|---|---|
+| Cut namespace cost without causing an OOM storm | [Cost and Rightsizing](/operations/cost-and-rightsizing/) |
+| Request GPUs and keep a 40GB model load from killing the pod | [GPUs and AI Workloads](/workloads/gpu-and-ai-workloads/) |
 
 ## Debug a broken pod
 
@@ -83,46 +105,13 @@ kubectl logs <pod-name> --previous
 | Work out why my pod was killed with exit code 137 | [OOMKilled](/troubleshooting/oomkilled/) |
 | Diagnose a pod stuck on a mount, or a PVC that won't attach | [Volume Failures](/troubleshooting/volume-failures/) |
 | Find out what's behind my StorageClass (Longhorn, Ceph, Harvester…) | [Storage Controllers](/controllers/storage-controllers/) |
-| Deploy a complete, tested build — golden service, zero-downtime, locked-down namespace, canary, KEDA, Valkey, PostgreSQL, IBM MQ, RabbitMQ, Kafka, front door | [Reference Architectures](/architectures/overview/) |
 | Look up an exact error message and jump to its playbook | [Error Message Index](/troubleshooting/error-index/) |
-| Follow a curated track instead of browsing 180 pages | [Learning Paths](/learning-paths/) |
-| Build and ship a real Java API on my Mac, step by step (Lima + kind + Helm) | [Hands-On Labs](/labs/overview/) |
-| Write HTTPRoutes on a platform-run Gateway | [Gateway API for App Teams](/networking/gateway-api/) |
-| Finally understand L2/L4/L7 and what a VIP actually is | [Network Layers and VIPs](/networking/layers-and-vips/) |
-| Trace one request end to end — DNS to VIP to pod and back | [Life of a Request](/routing/life-of-a-request/) |
-| Find out which NAT ate my client IPs — and how to get them back | [SNAT and DNAT](/routing/nat/) |
-| Understand what actually answers my DNS queries (and tune it) | [CoreDNS Deep Dive](/routing/coredns-deep-dive/) |
-| Get a DNS record pointed at my service the right way | [DNS Integration](/routing/dns-integration/) |
-| Write, template, and override Helm charts properly | [Helm Deep Dive](/helm/overview/) |
-| Figure out which values file/flag wins in a Helm override fight | [Values and Overrides](/helm/values-and-overrides/) |
-| Cut namespace cost without causing an OOM storm | [Cost and Rightsizing](/operations/cost-and-rightsizing/) |
-| Request GPUs and keep a 40GB model load from killing the pod | [GPUs and AI Workloads](/workloads/gpu-and-ai-workloads/) |
-| See every point where the JVM and Kubernetes interlock | [The JVM–Kubernetes Coupling Map](/java/jvm-kubernetes-coupling/) |
-| Run .NET on Kubernetes — GC vs limits, dumps from runtime-only images | [.NET on Kubernetes](/dotnet/overview/) |
-| Change log levels or pull a heap dump over HTTP — no redeploy, no JDK | [Actuator as an Ops Surface](/java/actuator/) |
-| Get the actuator-style ops API for .NET (dumps, traces, collection rules) | [.NET Operational Endpoints](/dotnet/operational-endpoints/) |
-| Add a sidecar the right way — log shipper, config reloader, secrets fetcher | [Sidecars](/sidecars/overview/) |
-| Tune probe timings, JVM memory flags, or requests/limits with real numbers | [Knobs & Levers](/tuning/overview/) |
-| Retrofit sane requests/limits onto a fleet that grew organically | [Requests & Limits on a Running Fleet](/tuning/brownfield-resources/) |
-| Design health endpoints properly (and fix a fleet of bad probes safely) | [Health Check Design](/tuning/health-check-design/) |
-| Stop dropping requests during deploys — the termination lifecycle | [Graceful Shutdown](/workloads/graceful-shutdown/) |
-| Tune rollout pacing and the shutdown budget (surge, grace, preStop) | [Rollout & Shutdown Knobs](/tuning/rollout-shutdown-knobs/) |
-| Decode a 502/503/504 from the front door, layer by layer | [502, 503, 504 from the Front Door](/troubleshooting/front-door-5xx/) |
 | Triage "it's slow, not down" — latency with everything green | [It's Slow, Not Down](/troubleshooting/its-slow/) |
 | Unstick a pod, PVC, or namespace stuck Terminating | [Stuck Terminating](/troubleshooting/stuck-terminating/) |
-| Trust the corporate CA from my containers (and fix x509 errors) | [TLS and Corporate CAs](/networking/tls-and-corporate-cas/) |
-| Set request and idle timeouts coherently across every hop | [The End-to-End Timeout Budget](/tuning/timeout-budget/) |
-| Connect an in-cluster app to an out-of-cluster database properly | [The External Database](/architectures/external-database/) |
-| Prepare for my first deploy to a real namespace | [Day-1 Checklist](/start/day-1-checklist/) |
-| Practice fixing the classic failures on my lab cluster | [Lab 5: Break It, Then Fix It](/labs/lab-5-break-and-fix/) |
-| Map my lab skills onto the org's real pipeline and registry | [From the Lab to the Paved Road](/labs/from-lab-to-prod/) |
-| Size a new service from zero, step by step | [Sizing Walkthrough](/tuning/sizing-walkthrough/) |
 | Tell whether it's my pod or the node (evictions, `Terminating`, `Unknown`) | [Node Problems](/troubleshooting/node-problems/) |
 | Shell into a distroless container, or debug one that dies before I can exec | [Debugging Toolbox](/troubleshooting/debugging-toolbox/) |
 | Get a full Unix toolkit into a shell-less pod with one tiny image | [The BusyBox Toolkit](/troubleshooting/busybox/) |
 | Read /proc and cgroup files like a pro once I'm exec'd in | [Linux Inside the Pod](/troubleshooting/linux-inside-the-pod/) |
-| Build CI on GitHub Actions + Artifactory — templates, charts, tests | [CI with GitHub & Artifactory](/ci/overview/) |
-| Test my Helm chart in CI (units, rendered manifests, ephemeral k3d) | [Testing in CI](/ci/testing-in-ci/) |
 | Find out why my pods never appear even though the Deployment applied | [Pod Security](/workloads/pod-security/) |
 
 ## Debug networking and traffic
@@ -144,7 +133,21 @@ kubectl logs <pod-name> --previous
 | Get how a LoadBalancer Service actually gets an IP on bare metal | [MetalLB](/controllers/metallb/) |
 | Understand how the F5 in front of my cluster learns about my Services | [F5 CIS](/controllers/f5-cis/) |
 | Build a correct mental model of pod IPs, NAT-free flat networking | [The Networking Model](/networking/networking-model/) |
+| Write HTTPRoutes on a platform-run Gateway | [Gateway API for App Teams](/networking/gateway-api/) |
+| Finally understand L2/L4/L7 and what a VIP actually is | [Network Layers and VIPs](/networking/layers-and-vips/) |
+| Trace one request end to end — DNS to VIP to pod and back | [Life of a Request](/routing/life-of-a-request/) |
+| Find out which NAT ate my client IPs — and how to get them back | [SNAT and DNAT](/routing/nat/) |
+| Decode a 502/503/504 from the front door, layer by layer | [502, 503, 504 from the Front Door](/troubleshooting/front-door-5xx/) |
+| Set request and idle timeouts coherently across every hop | [The End-to-End Timeout Budget](/tuning/timeout-budget/) |
 | Get the lay of the whole networking stack first | [Networking Overview](/networking/overview/) |
+
+## Networking & DNS
+
+| I want to… | Read |
+|---|---|
+| Understand what actually answers my DNS queries (and tune it) | [CoreDNS Deep Dive](/routing/coredns-deep-dive/) |
+| Get a DNS record pointed at my service the right way | [DNS Integration](/routing/dns-integration/) |
+| Trust the corporate CA from my containers (and fix x509 errors) | [TLS and Corporate CAs](/networking/tls-and-corporate-cas/) |
 
 ## Java and JVM work
 
@@ -159,7 +162,16 @@ kubectl logs <pod-name> --previous
 | Pick and tune a GC for container-sized heaps | [GC and Performance](/java/gc-and-performance/) |
 | Export JVM metrics, and see GC/heap/threads in Grafana | [Java Observability](/java/java-observability/) |
 | Wire Spring Boot's actuator, probes, and graceful shutdown into Kubernetes | [Spring Boot](/java/spring-boot/) |
+| Change log levels or pull a heap dump over HTTP — no redeploy, no JDK | [Actuator as an Ops Surface](/java/actuator/) |
+| See every point where the JVM and Kubernetes interlock | [The JVM–Kubernetes Coupling Map](/java/jvm-kubernetes-coupling/) |
 | Start with the JVM-on-Kubernetes big picture | [Java Overview](/java/overview/) |
+
+## .NET
+
+| I want to… | Read |
+|---|---|
+| Run .NET on Kubernetes — GC vs limits, dumps from runtime-only images | [.NET on Kubernetes](/dotnet/overview/) |
+| Get the actuator-style ops API for .NET (dumps, traces, collection rules) | [.NET Operational Endpoints](/dotnet/operational-endpoints/) |
 
 ## Run stateful services
 
@@ -171,6 +183,7 @@ kubectl logs <pod-name> --previous
 | Run Valkey/Redis as a cache or store in-cluster | [Valkey and Redis](/stateful/valkey-and-redis/) |
 | Run PostgreSQL in Kubernetes without regretting it | [PostgreSQL](/stateful/postgresql/) |
 | Connect to (or reluctantly run) Oracle from the cluster | [Oracle](/stateful/oracle/) |
+| Connect an in-cluster app to an out-of-cluster database properly | [The External Database](/architectures/external-database/) |
 | Run Kafka/RabbitMQ/other brokers on Kubernetes | [Message Queues](/stateful/message-queues/) |
 | Use an operator to run my database instead of hand-rolling it | [Operators for State](/stateful/operators-for-state/) |
 | Back up my data and have a disaster-recovery story | [Backup and DR](/stateful/backup-and-dr/) |
@@ -220,6 +233,23 @@ kubectl logs <pod-name> --previous
 | Sign images, scan for CVEs, and pin what actually runs | [Supply Chain Security](/operations/supply-chain-security/) |
 | Harden pods — securityContext, non-root, Pod Security Standards | [Pod Security](/workloads/pod-security/) |
 | Run a realistic Kubernetes on my laptop for the inner loop | [Local Development](/start/local-development/) |
+
+## Labs & onboarding
+
+| I want to… | Read |
+|---|---|
+| Prepare for my first deploy to a real namespace | [Day-1 Checklist](/start/day-1-checklist/) |
+| Follow a curated track instead of browsing ~220 pages | [Learning Paths](/learning-paths/) |
+| Build and ship a real Java API on my Mac, step by step (Lima + kind + Helm) | [Hands-On Labs](/labs/overview/) |
+| Practice fixing the classic failures on my lab cluster | [Lab 5: Break It, Then Fix It](/labs/lab-5-break-and-fix/) |
+| Map my lab skills onto the org's real pipeline and registry | [From the Lab to the Paved Road](/labs/from-lab-to-prod/) |
+
+## CI/CD
+
+| I want to… | Read |
+|---|---|
+| Build CI on GitHub Actions + Artifactory — templates, charts, tests | [CI with GitHub & Artifactory](/ci/overview/) |
+| Test my Helm chart in CI (units, rendered manifests, ephemeral k3d) | [Testing in CI](/ci/testing-in-ci/) |
 
 ## Learn the fundamentals
 

@@ -139,7 +139,7 @@ Choose `Local` when your app needs real client IPs (audit, geo, per-IP rate limi
 
 Sometimes the external IP must be *known in advance* — firewall rules, DNS records, and change tickets all want it before the Service exists. Options, in order of preference:
 
-- **Ask for a reservation.** Cloud: the platform team reserves a static IP and you reference it via provider annotation. MetalLB: they carve a pool or a specific address and you request it with `metallb.universe.tf/loadBalancerIPs: "10.60.5.40"` (or the pool annotation).
+- **Ask for a reservation.** Cloud: the platform team reserves a static IP and you reference it via provider annotation. MetalLB: they carve a pool or a specific address and you request it with `metallb.io/loadBalancerIPs: "10.60.5.40"` (or the pool annotation).
 - **`spec.loadBalancerIP`** is deprecated and provider-dependent — avoid it in new manifests; use the provider's annotation instead.
 - **Never squat.** Requesting an arbitrary IP that "seems free" works right up until MetalLB assigns it to another team's Service and ARP fights break out. IP allocation is platform-owned bookkeeping; go through them.
 

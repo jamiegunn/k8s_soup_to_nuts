@@ -140,40 +140,11 @@ spec:
 
 Priority matters in two moments: when the scheduler must **preempt** lower-priority pods to place yours, and when the kubelet chooses **eviction victims** under node pressure (alongside [QoS](/workloads/resources-and-qos/)). Find out what classes exist (`kubectl get priorityclass` if you're allowed, otherwise ask) and use the one your service tier deserves. Don't self-promote to the highest class "just in case" — platform teams notice, and preemption cuts both ways.
 
-## Graceful shutdown: the part everyone skips
+## Graceful shutdown: why it belongs in the HA story
 
-Every drain, rollout, and scale-down delivers SIGTERM to your containers. What happens next is the difference between zero dropped requests and a spike of 502s on every deploy.
+Every node drain, cluster upgrade, and voluntary disruption ends by delivering SIGTERM to your pods — so whether a drain is a non-event or a spike of 502s is decided by how cleanly they terminate. A PDB and good spread only get pods evicted *safely one at a time*; graceful shutdown is what makes each of those evictions dropless. The mirror-image HA caveat lives on the same dial: because drains and rollouts wait for a pod to actually die, an oversized `terminationGracePeriodSeconds` makes every drain and cluster upgrade crawl — sized honestly, it protects requests without slowing maintenance.
 
-The termination sequence:
-
-1. Pod is marked Terminating; it's removed from Service endpoints — **in parallel**, not before anything else.
-2. `preStop` hook runs (if defined), then SIGTERM goes to PID 1 of each container.
-3. After `terminationGracePeriodSeconds` (default 30) from the start of termination, SIGKILL.
-
-The race in step 1 is the classic wound: kube-proxy on every node must observe the endpoint removal, and that takes hundreds of milliseconds to a few seconds. If your app exits instantly on SIGTERM, it dies while nodes are still routing new connections to it. The boring, bulletproof fix is a short sleep:
-
-```yaml
-spec:
-  template:
-    spec:
-      terminationGracePeriodSeconds: 45
-      containers:
-        - name: payments
-          lifecycle:
-            preStop:
-              exec:
-                command: ["sh", "-c", "sleep 8"]
-```
-
-The sleep holds the pod alive-and-serving while endpoint removal propagates; *then* SIGTERM arrives and your app drains in-flight requests. Requirements on the app side:
-
-- **Actually handle SIGTERM**: stop accepting new connections, finish in-flight work, exit. Most frameworks have this (Spring `server.shutdown=graceful`, Go `http.Server.Shutdown`); it's usually not on by default.
-- **Make sure SIGTERM reaches your process.** If your entrypoint is `sh -c "java -jar app.jar"`, the shell is PID 1 and shells don't forward signals — your app gets no SIGTERM, just a SIGKILL 30s later. Use exec-form ENTRYPOINT or `exec` in the wrapper script.
-- **Size the grace period honestly**: preStop sleep + worst-case request drain + buffer. A 60s long-poll endpoint with a 30s grace period drops connections on every single deploy.
-
-:::caution
-`terminationGracePeriodSeconds` is a *ceiling*, not a delay — exiting early is fine and normal. But note that drains and rollouts wait for the pod to actually die, so a 300s grace period on a slow-exiting app makes every deploy and every node drain crawl.
-:::
+The full termination model — the SIGTERM/endpoint-removal race, the preStop pattern, the Path A/Path B timeline, and how to size the grace period — is the subject of its own article: **[Graceful Shutdown](/workloads/graceful-shutdown/)**. Read it before you sign off on any service's HA posture.
 
 ## The drain-survival checklist
 

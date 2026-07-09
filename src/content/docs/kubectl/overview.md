@@ -19,7 +19,7 @@ sidebar:
 
 The [kubectl survival kit](/start/kubectl-survival-kit/) covers the daily 20%: get, describe, logs, exec, apply. If you only ever learn that, you'll be fine — right up until the day a command hangs for thirty seconds, or returns something forbidden you *know* you should be allowed to see, or you need the image of every container in the namespace and you're clicking through `describe` output pod by pod like it's 2015.
 
-This section is the deep end. Three articles, each self-contained, each answering a different flavor of "kubectl, but properly":
+This section is the deep end. Three core articles, each self-contained, each answering a different flavor of "kubectl, but properly" — plus a standalone Vim-for-the-CKAD add-on for terminal-only YAML editing:
 
 ## The map
 

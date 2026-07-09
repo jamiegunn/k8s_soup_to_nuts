@@ -21,6 +21,8 @@ excerpt: >-
   Our migration Job had backoffLimit 3, because retries are good, right? Then a lock timeout killed the first run halfway through a column rename, the retry ran the same non-idempotent SQL against a half-migrated table, and a "defensive" IF EXISTS guard quietly destroyed the only copy of the data. At 11pm we were choosing between a backup restore and a hand-written repair.
 ---
 
+*Not to be confused with [The Migration Job That Ran Twice](/blog/the-migration-job-that-ran-twice/) — a different incident, same shape: that one is Postgres, a probe-killed Job, and a non-idempotent `ALTER TABLE` left mid-backfill. This one is a MariaDB lock-timeout retry where a destructive `DROP COLUMN IF EXISTS` rename ate data.*
+
 The most dangerous line in this incident was written months before it, by someone being careful:
 
 ```yaml

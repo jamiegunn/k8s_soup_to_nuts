@@ -134,7 +134,7 @@ Interpreting results:
 | Everything resolves but slowly (2–5 s) | ndots walk + a slow/dropping resolver; conntrack races on UDP | Mitigate with FQDNs; report to platform |
 | Resolves in netshoot pod, fails in your app | App-level: stale DNS cache, musl vs glibc quirks in Alpine, hardcoded resolver | Yours |
 
-That 2–5 second signature deserves a note: 5 seconds is the default resolver timeout, so "every Nth request takes exactly 5 extra seconds" means one DNS packet is being dropped and retried — historically a conntrack race with parallel UDP queries. `single-request-reopen` in `dnsConfig.options` or NodeLocal DNSCache (platform) are the fixes.
+That 2–5 second signature deserves a note: 5 seconds is the default resolver timeout, so "every Nth request takes exactly 5 extra seconds" means one DNS packet is being dropped and retried — historically a conntrack race with parallel UDP queries. `single-request-reopen` in `dnsConfig.options` or NodeLocal DNSCache (platform) are the fixes — the [NodeLocal DNSCache deep dive](/cluster-networking/nodelocal-dnscache/) walks the conntrack race and how the per-node cache removes it.
 
 ## The knobs you own: dnsPolicy and dnsConfig
 

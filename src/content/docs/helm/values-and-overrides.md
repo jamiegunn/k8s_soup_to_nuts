@@ -68,6 +68,17 @@ web-service:
 
 `helm get values` shows only what *you* supplied; add `-a`/`--all` to see the fully merged result including chart defaults. When prod is doing something weird, `helm get values -a` is forensics — see [Drift and CI/CD](/operations/drift-and-cicd/) for how release state and cluster state diverge.
 
+:::caution[The `--reuse-values` upgrade trap — "my setting disappeared after upgrade"]
+A plain `helm upgrade rel chart` does **not** carry your previous overrides forward. It renders from the chart's defaults plus *only* the `-f`/`--set` flags you pass on **this** command. Anything you set last time but omit now silently reverts to the chart default — the number-one cause of "my setting vanished after an upgrade."
+
+The two flags that change this both have sharp edges:
+
+- **`--reuse-values`** reuses the previous release's *computed* values and merges this command's `--set`/`-f` on top. But it will **not** pick up new keys or new defaults introduced by a newer chart version — so after a chart bump you can miss required config entirely. Mixing `--reuse-values` with `-f` has also been unreliable across Helm versions. Use with caution.
+- **`--reset-values`** discards the previous release's values and starts fresh from chart defaults plus this command's flags — the explicit "clean slate" option.
+
+**Don't rely on `--reuse-values` in CI.** Keep the full desired state in version-controlled values files and always pass them (`-f values.yaml -f values-prod.yaml`) on every upgrade, so each upgrade is deterministic and reproducible regardless of what the previous release happened to contain.
+:::
+
 ## Merge semantics: maps deep-merge, lists replace
 
 This is the number-one surprise in all of Helm, so it gets its own section.
