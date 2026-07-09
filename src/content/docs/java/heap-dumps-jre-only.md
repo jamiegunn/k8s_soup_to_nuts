@@ -91,8 +91,12 @@ kubectl exec myapp-7d4b9c6f5d-x2klm -- wget -O /tmp/jattach \
   https://artifacts.internal.example.com/tools/jattach && \
 kubectl exec myapp-7d4b9c6f5d-x2klm -- chmod +x /tmp/jattach
 
-# (c) best: bake it into the image at build time
-#   COPY --from=ghcr.io/jattach/jattach:v2.2 /jattach /usr/local/bin/jattach
+# (c) best: bake it into the image at build time — download a pinned release
+#     and verify its checksum, as the jattach deep dive recommends:
+#   ADD --checksum=sha256:<digest from the releases page> \
+#     https://github.com/jattach/jattach/releases/download/v2.2/jattach \
+#     /usr/local/bin/jattach
+#   RUN chmod 755 /usr/local/bin/jattach
 ```
 
 Then:

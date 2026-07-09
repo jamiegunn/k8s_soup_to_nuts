@@ -176,9 +176,10 @@ kubectl get pods
 ```
 
 ```console
-NAME                            READY   STATUS    RESTARTS   AGE
-cache-valkey-7d9c6b5f4-x2m8k    1/1     READY     0          15s
+NAME                           READY   STATUS    RESTARTS   AGE
+cache-valkey-7d9c6b5f4-x2m8k   1/1     Running   0          15s
 orders-api-6f8d9c7b5-qw4rt     1/1     Running   0          2d
+orders-api-6f8d9c7b5-tj6mp     1/1     Running   0          2d
 ```
 
 `READY 1/1` on the Valkey pod means the authenticated probe passed. Now talk to it directly:
@@ -205,7 +206,7 @@ Add the Redis starter (Valkey speaks the Redis protocol) to `app/pom.xml`, next 
 </dependency>
 ```
 
-Then update the controller so `GET /api/orders/{id}` reads through the cache. Replace `app/src/main/java/com/example/orders/OrderController.java` (keep your package name if yours differs from Lab 1 — only the caching logic is new):
+Then update the controller so `GET /api/orders/{id}` reads through the cache. Replace the contents of `app/src/main/java/com/example/orders/OrderController.java` — the file you created in Lab 1 — with:
 
 ```java
 package com.example.orders;
@@ -260,6 +261,8 @@ public class OrderController {
     }
 }
 ```
+
+Two deliberate changes ride along with the caching logic. The dataset is new — ids `1001`–`1003`, priced in coffee — so from here on every verify step (and every later lab) curls `/api/orders/1001`, not `/api/orders/1`. And `/api/hello` retires with the old controller: it existed to demonstrate the `GREETING` hook, and Lab 2's `/api/config` — which lives in `ConfigController`, untouched by this replacement — still reports the greeting along with every other channel.
 
 The two `try/catch` blocks are the **graceful degradation** path: if Valkey is gone, every request quietly becomes a cache miss and the API keeps answering. A cache outage should cost you latency, never availability. For that to hold, the client must fail *fast* — Lettuce's default timeout is a leisurely 60 seconds. Cap it in `app/src/main/resources/application.yaml`:
 
@@ -386,7 +389,7 @@ kubectl scale deploy/orders-api --replicas=3
 kubectl rollout status deploy/orders-api
 ```
 
-Curl `/api/orders/1002` a few times through the port-forward. The first hit says `live`; every subsequent hit says `cache` — *regardless of which replica served it*, because all three replicas talk to the same `cache-valkey`. Contrast with an in-process cache, where each replica would pay its own miss. Scale back with `kubectl scale deploy/orders-api --replicas=1`. (Note that `kubectl scale` drifts from your chart's values — the next `helm upgrade` snaps it back. That's a feature, and a Lab 1 lesson revisited.)
+Curl `/api/orders/1002` a few times through the port-forward. The first hit says `live`; every subsequent hit says `cache` — *regardless of which replica served it*, because all three replicas talk to the same `cache-valkey`. Contrast with an in-process cache, where each replica would pay its own miss. Scale back with `kubectl scale deploy/orders-api --replicas=2`. (Note that `kubectl scale` drifts from your chart's values — while scaled to 3 you were one plain `helm upgrade` away from snapping back to the file's `replicaCount: 2`; scaling back by hand just restored the truth early. A Lab 1 lesson revisited.)
 
 **Drill 3: delete the Secret and roll.**
 
@@ -398,11 +401,13 @@ kubectl get pods
 
 ```console
 NAME                           READY   STATUS                       RESTARTS   AGE
+cache-valkey-7d9c6b5f4-x2m8k   1/1     Running                      0          14m
 orders-api-5b7f8d9c6-k8s2p     0/1     Init:CreateContainerConfigError   0    10s
 orders-api-6f8d9c7b5-qw4rt     1/1     Running                      0          9m
+orders-api-6f8d9c7b5-tj6mp     1/1     Running                      0          9m
 ```
 
-Decode it: `CreateContainerConfigError` means the kubelet couldn't *assemble* the container — here, an env var points at a Secret that doesn't exist. `kubectl describe pod <new-pod>` says it plainly: `Error: secret "cache-auth" not found`. Notice two mercies: the old pod keeps serving (the rolling update won't proceed past a broken new pod), and the running Valkey pod is untouched — its env was injected at *its* start. Recreate the Secret and the kubelet's retry loop fixes the pod on its own, no redeploy needed:
+Decode it: `CreateContainerConfigError` means the kubelet couldn't *assemble* the container — here, an env var points at a Secret that doesn't exist. `kubectl describe pod <new-pod>` says it plainly: `Error: secret "cache-auth" not found`. Notice two mercies: the old pods keep serving (the rolling update won't proceed past a broken new pod), and the running Valkey pod is untouched — its env was injected at *its* start. Recreate the Secret and the kubelet's retry loop fixes the pod on its own, no redeploy needed:
 
 ```bash
 kubectl create secret generic cache-auth --from-literal=password=labs-cache-pw
@@ -415,7 +420,7 @@ This error and its cousins are cataloged in [CrashLoopBackOff and Friends](/trou
 The app image is a slim JRE — no `nslookup`, no `dig`, by design. So borrow a toolbox with an **ephemeral debug container** attached to the running API pod:
 
 ```bash
-POD=$(kubectl get pod -l app=orders-api -o name | head -1)
+POD=$(kubectl get pod -l app.kubernetes.io/name=orders-api -o name | head -1)
 kubectl debug -it $POD --image=busybox:1.37 --target=orders-api -- sh
 ```
 

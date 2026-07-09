@@ -1,5 +1,15 @@
 /* ===== K8s Soup to Nuts — theme ===== */
 
+/* ===== Layout: wide content pane =====
+   Starlight caps the main column at --sl-content-width (default 45rem),
+   which strands most of a wide monitor as whitespace. 90vw lets the pane
+   expand into all available space between the nav sidebar and the page
+   TOC while keeping a sliver of breathing room on ultrawide screens.
+   Long tables, code blocks, and Mermaid diagrams benefit most. */
+:root {
+	--sl-content-width: 90vw;
+}
+
 /* Accent palette: Kubernetes-inspired indigo/cyan, tuned for contrast. */
 :root {
 	--sl-color-accent-low: #1c2a5e;

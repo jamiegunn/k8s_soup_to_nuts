@@ -14,7 +14,7 @@ keywords:
   - heartbeat below idle timeout
   - perf-test verification drill
 sidebar:
-  order: 5
+  order: 8
 ---
 
 This is the build article. The broker survey — when RabbitMQ is the right answer at all — lives at [Message Queues on Kubernetes](/stateful/message-queues/). Here we deploy one production cluster, `rmq`, using the official **RabbitMQ Cluster Operator** and its `RabbitmqCluster` CR: three nodes, **quorum queues as the default queue type**, per-node PVCs, TLS to off-cluster clients over a MetalLB VIP, and the management UI kept strictly internal. Every manifest is complete and applied in order.
@@ -407,13 +407,23 @@ spec:
       restartPolicy: Never
       containers:
         - name: perf-test
-          image: pivotalrabbitmq/perf-test:latest
+          image: pivotalrabbitmq/perf-test:2.20.0   # pin it — check the perf-test releases page for current
           args:
-            - --uri, "amqps://rmq-admin:<password>@rabbitmq.example.internal:5671/%2f"
-            - --quorum-queue, --queue, verify.qq
-            - --producers, "2", --consumers, "2"
-            - --rate, "500", --time, "60"
-            - --flag, persistent                  # confirmed, quorum-committed publishes
+            - --uri
+            - amqps://rmq-admin:<password>@rabbitmq.example.internal:5671/%2f
+            - --quorum-queue
+            - --queue
+            - verify.qq
+            - --producers
+            - "2"
+            - --consumers
+            - "2"
+            - --rate
+            - "500"
+            - --time
+            - "60"
+            - --flag
+            - persistent                          # confirmed, quorum-committed publishes
 ```
 
 Expect a steady `sent/received ~1000 msg/s` summary and, critically, **consumer latency in low milliseconds** — that number is your fsync-latency conversation with the platform team, measured.

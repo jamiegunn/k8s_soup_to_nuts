@@ -15,7 +15,7 @@ keywords:
   - replica-serve-stale-data
   - READONLY READWRITE cluster replica reads
 sidebar:
-  order: 3
+  order: 5
 ---
 
 The parent of this page is the [Valkey Helm Chart Deep Dive](/architectures/valkey-helm-deep-dive/) — that page packages the *server*: the StatefulSets, the config surfaces, the storage, the topologies. This page is its **command/verb companion**: how your clients actually talk to that server, one verb at a time, and how every choice you make about a command interacts with the topology the platform team handed you. The Helm page decides *where the bytes live*; this page decides *what happens when you send `SET`, `XREADGROUP`, or `SSUBSCRIBE` at them*.

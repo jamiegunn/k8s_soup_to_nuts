@@ -235,7 +235,7 @@ SVC=$1; NS=${2:-$(kubectl config view --minify -o jsonpath='{..namespace}')}; NS
 echo "=== Service ==="
 kubectl -n "$NS" get svc "$SVC" -o wide || exit 1
 SELECTOR=$(kubectl -n "$NS" get svc "$SVC" -o jsonpath='{.spec.selector}' \
-  | tr -d '{}"' | tr ':' '=' | tr ',' ',')
+  | tr -d '{}"' | tr ':' '=')
 echo "=== Selector: $SELECTOR ==="
 echo "=== Pods matching selector ==="
 kubectl -n "$NS" get pods -l "$SELECTOR" -o wide

@@ -15,7 +15,7 @@ keywords:
   - flaky test quarantine re-run culture
   - api deprecations gate policy/v1beta1
 sidebar:
-  order: 5
+  order: 6
 ---
 
 This site draws a hard line for CI on shared runners: **unit tests always; integration tests only if you build the thing you're integrating with on the runner.** No CI job gets network access to a real cluster, a real database, or a shared staging environment — those tests belong to CD and live in [CI/CD Pipeline Design](/operations/cicd-pipeline-design/). Everything below that line, though, is fair game, and there's more below the line than most teams exploit. For a Kubernetes app the artifact under test is really two artifacts — the `orders-api` image and the `orders-api` chart — and the chart deserves the same test discipline as the code.

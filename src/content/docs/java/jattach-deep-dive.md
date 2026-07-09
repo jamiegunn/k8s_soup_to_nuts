@@ -1,6 +1,6 @@
 ---
 title: "jattach Deep Dive"
-description: The 30 KB static binary that speaks HotSpot dynamic attach with no JDK — live thread dumps, heap dumps, and jcmd from a pod or a bare-metal host.
+description: The ~50 KB static binary that speaks HotSpot dynamic attach with no JDK — live thread dumps, heap dumps, and jcmd from a pod or a bare-metal host.
 keywords:
   - Unable to open socket file target process not responding
   - HotSpot dynamic attach protocol
@@ -15,11 +15,11 @@ keywords:
   - inspectheap class histogram
   - SIGQUIT attach marker file
 sidebar:
-  order: 4
+  order: 6
 ---
 
 There is one tool that turns "this JRE has no `jstack`, no `jmap`, no `jcmd`"
-from a wall into a shrug: **jattach**. It's a ~30 KB self-contained static
+from a wall into a shrug: **jattach**. It's a ~50 KB self-contained static
 binary (Andrei Pangin's [jattach](https://github.com/jattach/jattach), also
 bundled inside async-profiler) that implements the HotSpot **Dynamic
 Attach** protocol directly. No JDK, no shared libraries, no runtime — you drop

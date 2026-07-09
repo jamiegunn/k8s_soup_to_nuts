@@ -62,8 +62,10 @@ A minimal AWS example of the annotation dialect (yours will differ — check you
 metadata:
   annotations:
     service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
-    service.beta.kubernetes.io/aws-load-balancer-internal: "true"   # keep it off the internet
+    service.beta.kubernetes.io/aws-load-balancer-scheme: "internal"   # keep it off the internet
 ```
+
+(That's the [AWS Load Balancer Controller's](https://kubernetes-sigs.github.io/aws-load-balancer-controller/) dialect; the legacy in-tree controller used `aws-load-balancer-internal: "true"` instead — which annotation set applies depends on which controller your platform runs.)
 
 Watch the Service's events while the controller works:
 

@@ -14,7 +14,7 @@ keywords:
   - partition ceiling max replicas
   - drain-safe scale-in idempotent consumer
 sidebar:
-  order: 11
+  order: 14
 ---
 
 The [HPA baseline](/workloads/autoscaling/) scales on CPU, and for request/response services that works because CPU tracks load almost instantly. For a queue consumer it fails in the worst possible way: **CPU is a lagging proxy for backlog**. A consumer that is starved — blocked on a slow downstream, rebalancing, or simply outnumbered by producers — shows *low* CPU while the queue explodes. The HPA looks at 30% utilization, concludes everything is fine, and scales you *down* into the incident. The signal you need is the queue itself: lag, depth, oldest-message age. That is what KEDA gives you.
@@ -51,7 +51,7 @@ The patient is **order-events-consumer**: a worker that reads the `order-events`
                      ▲ replicas
    KEDA operator ────┘ (owns keda-hpa-order-events-consumer)
         │ polls lag every 15s
-        └──▶ bootstrap: orders-kafka-kafka-bootstrap:9093 (SASL/TLS)
+        └──▶ bootstrap: kafka-kafka-bootstrap.kafka-prod.svc:9093 (SASL/TLS)
 ```
 
 ## 1. The consumer Deployment
@@ -90,7 +90,7 @@ spec:
           image: registry.example.com/orders/order-events-consumer:1.4.2
           env:
             - name: KAFKA_BOOTSTRAP
-              value: orders-kafka-kafka-bootstrap.kafka.svc:9093
+              value: kafka-kafka-bootstrap.kafka-prod.svc:9093
             - name: KAFKA_GROUP_ID
               value: order-events-consumer   # must match the ScaledObject
           # Measured under load, method per /tuning/requests-limits-knobs/:
@@ -139,7 +139,7 @@ stringData:
   tls: enable
   ca: |
     -----BEGIN CERTIFICATE-----
-    <cluster CA from orders-kafka-cluster-ca-cert>
+    <cluster CA from kafka-cluster-ca-cert>
     -----END CERTIFICATE-----
 ---
 apiVersion: keda.sh/v1alpha1
@@ -208,7 +208,7 @@ spec:
   triggers:
     - type: kafka
       metadata:
-        bootstrapServers: orders-kafka-kafka-bootstrap.kafka.svc:9093
+        bootstrapServers: kafka-kafka-bootstrap.kafka-prod.svc:9093
         consumerGroup: order-events-consumer   # MUST match the app's group.id
         topic: order-events
         # Target lag PER REPLICA, not total. desired ≈ ceil(totalLag / 100):
@@ -324,13 +324,15 @@ Decision rule: message processed in **seconds** → ScaledObject; **minutes, and
 **1. Burst and watch scale-out.** Publish 5,000 messages with the Strimzi perf producer, then watch both objects:
 
 ```bash
-kubectl -n kafka run producer -ti --rm --image=quay.io/strimzi/kafka:0.45.0-kafka-3.9.0 -- \
+kubectl -n kafka-prod run producer -ti --rm --image=quay.io/strimzi/kafka:0.46.0-kafka-4.0.0 -- \
   bin/kafka-producer-perf-test.sh --topic order-events --num-records 5000 \
   --record-size 512 --throughput -1 --producer-props \
-  bootstrap.servers=orders-kafka-kafka-bootstrap:9092
+  bootstrap.servers=kafka-kafka-bootstrap:9092
 
 kubectl -n orders get scaledobject,hpa -w
 ```
+
+One honesty note on that command: it assumes a **plaintext `9092` staging listener** that the production [Strimzi build](/architectures/kafka-strimzi/) deliberately does not expose — its internal listener is TLS + mTLS on `9093` only. Against the real cluster, point at `9093` and add `--producer.config` with a client-cert config built from a `KafkaUser` secret and the cluster CA.
 
 Expected phases — quiet, burst, drained:
 

@@ -21,7 +21,7 @@ Lab 4's pod-kill drill ran five polite requests per second through nginx and saw
 
 ## Prerequisites
 
-- [Lab 0](/labs/lab-0-cluster/) through [Lab 4](/labs/lab-4-ingress-end-to-end/) completed: the Lima VMs `docker` and `k3s`, releases `orders` (image `orders-api:0.3.0`, 2 replicas) and `cache` in the `labs` namespace. Labs [5](/labs/lab-5-break-and-fix/)–[7](/labs/lab-7-ci-locally/) are good company but change nothing this lab depends on.
+- [Lab 0](/labs/lab-0-cluster/) through [Lab 4](/labs/lab-4-ingress-end-to-end/) completed: the Lima VMs `docker` and `k3s`, releases `orders` (image `orders-api:0.3.0` — or `0.4.0` if you did [Lab 6](/labs/lab-6-observability/); either is fine, this lab never touches the app code) and `cache` in the `labs` namespace, 2 replicas. Labs [5](/labs/lab-5-break-and-fix/)–[7](/labs/lab-7-ci-locally/) are good company but change nothing this lab depends on.
 - If you took Lab 4's full-teardown option, you need the stack back: rerun [Lab 0](/labs/lab-0-cluster/), then the build-and-install steps of Labs 1–3. (This lab hits the Service directly, so ingress-nginx is optional today — more on why in step 1.)
 - If you paused between sittings, revive everything (the last command should show `lima-k3s … Ready`):
 
@@ -62,10 +62,10 @@ spec:
             - -c=8           # over 8 concurrent connections
             - -t=150s        # for 2.5 minutes — room to deploy mid-run
             - -timeout=2s
-            - http://orders-api.labs.svc/api/orders/1001
+            - http://orders-api.labs.svc:8080/api/orders/1001
 ```
 
-50 qps for 150 seconds is 7,500 requests — small by production standards, but plenty to catch a rollout in the act. The URL is the Service's cluster DNS name from Lab 3, on the Service port (80, so no port in the URL), hitting the cache-backed endpoint you built there.
+50 qps for 150 seconds is 7,500 requests — small by production standards, but plenty to catch a rollout in the act. The URL is the Service's cluster DNS name from Lab 3, on the Service port 8080, hitting the cache-backed endpoint you built there.
 
 Jobs are one-shot, and most of a Job's spec is immutable — so every run in this lab uses the same incantation: delete the old Job, apply a fresh one, follow the logs. Do the first run now, with **no deploy** — proving the harness reports a clean 100 % when nothing is happening is the control every experiment needs:
 
@@ -79,7 +79,7 @@ kubectl logs -f job/loadgen
 Two and a half minutes later, the tail of the log is your report:
 
 ```console
-Fortio 1.69.4 running at 50 queries per second, 4->4 procs, for 2m30s: http://orders-api.labs.svc/api/orders/1001
+Fortio 1.69.4 running at 50 queries per second, 4->4 procs, for 2m30s: http://orders-api.labs.svc:8080/api/orders/1001
 Starting at 50 qps with 8 thread(s) [gomax 4] : exactly 7500, 937 calls each (total 7496 + 4)
 Ended after 2m30.004s : 7500 calls. qps=49.999
 Aggregated Function Time : count 7500 avg 0.0029 …
@@ -333,6 +333,8 @@ orders-api-7b8d4c9f66-mv2ls   3m           301Mi
 orders-api-7b8d4c9f66-zk8fh   2m           298Mi
 ```
 
+(Don't compare those memory numbers against Lab 6's ~290Mi and worry — a JVM's working set sits anywhere in that 290–410Mi range depending on load history; under sustained traffic the hot pods drift high. The signal here is the *split*, not the absolute.)
+
 Two hot pods, two idle ones — you doubled capacity and gained almost nothing. That's not a bug: fortio opened 8 **keep-alive connections** at startup, Service load balancing happens at *connection* time, and established connections stay pinned to their pods. New pods only help clients that open new connections. This is the single most common "we scaled out and nothing improved" surprise in production — gRPC and HTTP/2 clients, connection pools, and message consumers all behave exactly like fortio here. The escape hatches (connection lifetimes, client-side balancing, meshes) live in [Long-Lived Connections](/networking/long-lived-connections/). See the counterfactual yourself if you like: add `-keepalive=false` to the Job's args on a later run and `kubectl top` shows four evenly warm pods.
 
 Now the direction that kills pods — scale back in, while the load still runs:
@@ -348,6 +350,18 @@ Code 200 : 15000 (100.0 %)
 ```
 
 Rollout, pod death, scale-in: three different triggers, one termination path, one fix covering all three.
+
+One last piece of housekeeping. The load generator is a *completed* Job, and completed Jobs — pod, logs, and all — sit around until someone deletes them:
+
+```bash
+kubectl delete job loadgen --ignore-not-found
+```
+
+```console
+job.batch "loadgen" deleted
+```
+
+(Keep `loadgen-job.yaml` on disk — the harness reruns any time you want to re-measure.)
 
 ## 7. The graduation: run the production checklist
 
@@ -384,7 +398,7 @@ When you're done for the day, the usual pause keeps everything (`limactl stop do
 - **`field is immutable` when re-applying the Job** — Jobs can't be updated in place; you skipped the delete. Always the pair: `kubectl delete job loadgen --ignore-not-found` then `kubectl apply -f loadgen-job.yaml`.
 - **Loadgen stuck in `ContainerCreating`** — first-time image pull from Docker Hub (see step 1's note). `kubectl describe pod -l app=loadgen` shows `Pulling image`; wait it out. If it shows `ErrImagePull`, the k3s VM has no internet route — check the VM is healthy with `limactl list`.
 - **The load finished before you deployed** — the 150-second window closed while you were typing in terminal B. Rerun the Job and have the `helm upgrade` command staged and ready before you start it.
-- **Errors *after* the fix** — first verify the fix actually landed on the running pods: `kubectl get pod -l app.kubernetes.io/name=orders-api -o yaml | grep -c "preStop\|terminationGracePeriodSeconds: 40"` should be nonzero, and `helm get manifest orders | grep -A4 rollingUpdate` should show `maxUnavailable: 0`. If the settings are live and errors persist, check the errors' *code*: `Code 503` (a real HTTP status) isn't the shutdown race at all — it's readiness failing, which is Lab 4 step 4's diagnosis, starting from `kubectl get endpoints orders-api`.
+- **Errors *after* the fix** — first verify the fix actually landed on the running pods: `kubectl get pod -l app.kubernetes.io/name=orders-api -o yaml | grep -c "preStop\|terminationGracePeriodSeconds: 40"` should be nonzero, and `helm get manifest orders | grep -A4 rollingUpdate` should show `maxUnavailable: 0`. If the settings are live and errors persist, check the errors' *code*: `Code 503` (a real HTTP status) isn't the shutdown race at all — it's readiness failing, which is Lab 4 step 4's diagnosis, starting from `kubectl get endpointslices -l kubernetes.io/service-name=orders-api`.
 - **`kubectl top` says `metrics not available yet`** — metrics-server samples on a ~60-second cadence; new pods take a minute to appear. Ask again shortly.
 - **Everything is slow and fans are loud** — 4 replicas of a JVM plus fortio plus Valkey is a real bite out of the k3s VM's 4 GiB. Scale back to 2 replicas between drills, and check for `Insufficient memory` events if pods go `Pending`.
 :::

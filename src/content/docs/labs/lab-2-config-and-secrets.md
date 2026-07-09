@@ -106,32 +106,21 @@ management:
   endpoint.health.probes.enabled: true
 ```
 
-Two imports, both `optional:` so the app still boots locally where the paths don't exist. `file:` reads a whole Spring YAML file the chart will mount; `configtree:` turns a directory into properties — each *filename* becomes a property name, each file's *content* its value, which is precisely the shape of a mounted Secret (it even follows the kubelet's symlink dance you'll meet in Step 6). Now replace `app/src/main/java/labs/OrdersApplication.java` in full:
+Two imports, both `optional:` so the app still boots locally where the paths don't exist. `file:` reads a whole Spring YAML file the chart will mount; `configtree:` turns a directory into properties — each *filename* becomes a property name, each file's *content* its value, which is precisely the shape of a mounted Secret (it even follows the kubelet's symlink dance you'll meet in Step 6). Now give the app its reporting endpoint — a **new** controller, `app/src/main/java/com/example/orders/ConfigController.java`, next to Lab 1's two classes. A separate class on purpose: Lab 3 replaces `OrderController` wholesale, and this endpoint should outlive that. (`OrderController` keeps `/api/orders` and `/api/hello` untouched.)
 
 ```java
-package labs;
+package com.example.orders;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.web.bind.annotation.*;
 
-@SpringBootApplication
 @RestController
-public class OrdersApplication {
-    public static void main(String[] args) {
-        SpringApplication.run(OrdersApplication.class, args);
-    }
-    private static final List<Map<String, Object>> ORDERS = List.of(
-            Map.of("id", 1, "item", "mechanical keyboard", "quantity", 1),
-            Map.of("id", 2, "item", "usb-c dock", "quantity", 2),
-            Map.of("id", 3, "item", "27-inch monitor", "quantity", 1));
+public class ConfigController {
     @Value("${GREETING:hello from the default}")
     private String greeting;               // channel 1: plain env
     @Value("${API_KEY:no-key-set}")
@@ -140,19 +129,7 @@ public class OrdersApplication {
     private String motd;                   // channel 4b: mounted Spring YAML
     @Value("${api-token:no-token-file}")
     private String apiToken;               // channel 5: configtree over the Secret mount
-    @GetMapping("/api/orders")
-    public List<Map<String, Object>> orders() {
-        return ORDERS;
-    }
-    @GetMapping("/api/orders/{id}")
-    public Map<String, Object> order(@PathVariable int id) {
-        return ORDERS.stream().filter(o -> o.get("id").equals(id))
-                .findFirst().orElse(Map.of("error", "no such order"));
-    }
-    @GetMapping("/api/hello")
-    public Map<String, String> hello() {
-        return Map.of("greeting", greeting);
-    }
+
     @GetMapping("/api/config")
     public Map<String, Object> config() {
         Map<String, Object> out = new LinkedHashMap<>();
@@ -322,7 +299,7 @@ deployment "orders-api" successfully rolled out
 Start a port-forward in a **second terminal** and leave it running:
 
 ```bash
-kubectl port-forward svc/orders-api 8080:80
+kubectl port-forward svc/orders-api 8080:8080
 ```
 
 :::note[Port-forwards die with their pod]

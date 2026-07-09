@@ -173,7 +173,7 @@ Ingress Class:    nginx
 Rules:
   Host                 Path  Backends
   ----                 ----  --------
-  orders.localtest.me  /     orders-api:8080 (10.42.0.19:8080)
+  orders.localtest.me  /     orders-api:8080 (10.42.0.19:8080,10.42.0.23:8080)
 Annotations:           nginx.ingress.kubernetes.io/proxy-read-timeout: 30
 Events:
   Type    Reason  Age   From                      Message
@@ -197,11 +197,15 @@ That access-log line is worth decoding once in your life, left to right: client 
 
 ## 4. Probes under fire
 
-The point of readiness probes plus a Service is that pods can die mid-traffic without anyone noticing. Prove it. First give the Deployment a partner, then start a request loop on your Mac:
+The point of readiness probes plus a Service is that pods can die mid-traffic without anyone noticing. Prove it. Your values file has kept the Deployment at two replicas since Lab 1 — confirm both are up, then start a request loop on your Mac:
 
 ```bash
-helm upgrade orders charts/orders-api --set replicaCount=2 --reuse-values
-kubectl rollout status deploy/orders-api
+kubectl get deploy orders-api
+```
+
+```console
+NAME         READY   UP-TO-DATE   AVAILABLE   AGE
+orders-api   2/2     2            2           3d
 ```
 
 ```bash
@@ -228,46 +232,83 @@ kubectl delete pod <one-of-the-orders-api-pod-names>
 
 Zero non-200s. That's not luck — it's the readiness probe (dying pod leaves the endpoint list before nginx sends it anything) and graceful shutdown working together, while the survivor absorbs the traffic. If you *do* see a stray 502, you've found the gap this drill exists to reveal — the preStop/termination choreography in [Zero-Downtime Deployments](/architectures/zero-downtime/) closes it.
 
-Now break it deliberately, because someday a bad readiness path will ship and you should recognize the blast pattern. Point the probe at a URL that 404s (the values key is the probe block you created in Lab 1 — adjust if yours differs):
+Now break it deliberately, because someday a bad readiness path will ship — and what actually happens is not what most people expect. Point the probe at a URL that 404s (the values key is the probe block you created in Lab 1), keeping the curl loop running:
 
 ```bash
 helm upgrade orders charts/orders-api --reuse-values \
   --set probes.readiness.path=/definitely-not-here
-kubectl get pods -w
+kubectl get pods
 ```
 
 ```console
-orders-api-8c6f7d9b4-p2x8n   0/1   Running   0   30s
-orders-api-8c6f7d9b4-w7k3m   0/1   Running   0   12s
+NAME                         READY   STATUS    RESTARTS   AGE
+orders-api-7c9f6d8b5-k4mzn   1/1     Running   0          3d
+orders-api-7c9f6d8b5-p8wlj   1/1     Running   0          3d
+orders-api-8c6f7d9b4-p2x8n   0/1     Running   0          45s
 ```
 
-Watch the failure spread in order: new pods run but never turn `READY` (the probe 404s), the rollout stalls, and once no ready pods back the Service, the endpoint list drains and nginx has nowhere to send traffic:
+Look closely — this is the part people get wrong. **One** new pod (note the new template hash), `0/1`, failing its new probe. The two old pods: untouched, `1/1`, still serving. Probes are baked into a pod when it's created — changing the template doesn't reconfigure running pods, it starts a **rolling update**. And the rolling update gates on readiness: with two replicas and the default strategy, the controller may surge one pod above desired (25% of 2 rounds *up* to 1) and delete none (25% rounds *down* to 0) until a replacement is Ready. The replacement never becomes Ready, so the rollout stalls at the gate:
 
 ```bash
-kubectl get endpoints orders-api
+kubectl rollout status deploy/orders-api
 ```
 
 ```console
-NAME         ENDPOINTS   AGE
-orders-api   <none>      3d
+Waiting for deployment "orders-api" rollout to finish: 1 out of 2 new replicas have been updated...
 ```
 
-Your curl loop is now printing `503` — nginx answers (the edge is fine!) but reports "no healthy upstream". This exact signature — Ingress fine, Service present, endpoints empty — is the most common "the site is down" shape in Kubernetes, and the diagnosis walk lives in [Service Unreachable](/troubleshooting/service-unreachable/) with the probe theory in [Health Checks](/workloads/health-checks/). Notice what *didn't* happen: the old ReplicaSet's pods were failing the same new probe, so this config change took out running pods too — readiness changes are not "safe because rolling".
+It hangs — `Ctrl-C` it. Meanwhile your curl loop never blinked: still wall-to-wall `200`s. Confirm what the Service sees — asking for the per-endpoint `ready` condition explicitly, because the plain listing's `ENDPOINTS` column never filters on readiness:
+
+```bash
+kubectl get endpointslices -l kubernetes.io/service-name=orders-api \
+  -o jsonpath='{range .items[*].endpoints[*]}{.addresses[0]}{"\t"}{.conditions.ready}{"\n"}{end}'
+```
+
+```console
+10.42.0.19	true
+10.42.0.23	true
+10.42.0.24	false
+```
+
+The old pods `true`, the doomed newcomer `false` — nginx keeps sending everything to the two `true`s. Why the newcomer fails is one `describe` away: `kubectl describe pod orders-api-8c6f7d9b4-p2x8n | grep -A2 Unhealthy` → `Readiness probe failed: HTTP probe failed with statuscode: 404`. Left alone for ten minutes, the Deployment would flip its `Progressing` condition to `False` with reason `ProgressDeadlineExceeded` — a status bit for your pipeline to read, **not** an automatic rollback; nothing undoes itself ([Rollout & Shutdown Knobs](/tuning/rollout-shutdown-knobs/) owns that dial, [Rollouts & Rollbacks](/workloads/rollouts-and-rollbacks/) the mechanics).
+
+So is a bad readiness path harmless, since the gate caught it? No — it's **latent**. The broken template is now the desired state, and every event that mints fresh pods from it (node reboot, drain, eviction, a scale cycle) detonates it. Play the part of that night's node patch:
+
+```bash
+kubectl scale deploy orders-api --replicas=0
+kubectl scale deploy orders-api --replicas=2
+kubectl get pods
+```
+
+```console
+NAME                         READY   STATUS    RESTARTS   AGE
+orders-api-8c6f7d9b4-w7k3m   0/1     Running   0          20s
+orders-api-8c6f7d9b4-x9q4d   0/1     Running   0          20s
+```
+
+The old-template pods are gone; both replacements come from the broken template, and neither will ever be Ready. The EndpointSlice now:
+
+```console
+10.42.0.24	false
+10.42.0.25	false
+```
+
+Addresses still listed, every one of them `false` — the selector wiring is fine, but nothing behind it is willing to take traffic. Your curl loop is now printing `503` — nginx answers (the edge is fine!) but reports "no healthy upstream". This exact signature — Ingress fine, Service present, zero ready endpoints — is the most common "the site is down" shape in Kubernetes, and the diagnosis walk lives in [Service Unreachable](/troubleshooting/service-unreachable/) with the probe theory in [Health Checks](/workloads/health-checks/).
 
 Revert with the tool built for exactly this:
 
 ```bash
 helm rollback orders
-kubectl get endpoints orders-api
+kubectl get endpointslices -l kubernetes.io/service-name=orders-api
 ```
 
 ```console
 Rollback was a success! Happy Helming!
-NAME         ENDPOINTS                         AGE
-orders-api   10.42.0.19:8080,10.42.0.23:8080   3d
+NAME               ADDRESSTYPE   PORTS   ENDPOINTS               AGE
+orders-api-x7k2m   IPv4          8080    10.42.0.26,10.42.0.27   3d
 ```
 
-The curl loop returns to `200`s. Stop it with `Ctrl-C`.
+The curl loop returns to `200`s. Stop it with `Ctrl-C`. Take away **two** lessons where most people carry one: the rolling update's readiness gate protected you at deploy time — that stall was a feature, not a failure — and the broken template it stranded was a time bomb, armed until the next thing recycled your pods. "The rollout stalled" is never "safe to leave for tomorrow."
 
 ## 5. The full-stack tour
 
@@ -337,7 +378,7 @@ You've graduated from the labs; here's where the reference sections pick up the 
 - **404 from nginx** (`404 Not Found` with a `nginx` server header) — the controller answered but matched no rule. Either the `Host` header doesn't say `orders.localtest.me` (curling by IP? a typo'd hostname?) or the Ingress wasn't adopted: check `kubectl get ingress` shows CLASS `nginx` and that `ingressClassName` made it into the rendered manifest (`helm get manifest orders`). With two controllers installed there's a new suspect too: did **Traefik** answer instead? A 404 *without* the `nginx` server header means the wrong controller adopted your Ingress — check which class it landed under.
 - **Connection refused on 30080** — the path from Mac to node is broken, not Kubernetes. Is the `k3s` VM running (`limactl list`)? Is the controller's Service actually on that port (`kubectl get svc -n ingress-nginx` should show `80:30080/TCP`)? Lima only forwards ports the guest is listening on, so a missing NodePort means nothing ever reaches your Mac's 30080 — verify the values file made it into the install with `helm get values ingress-nginx -n ingress-nginx`.
 - **ingress-nginx pod `Pending`** — the single node couldn't schedule it, which on this cluster almost always means resources. `kubectl describe pod -n ingress-nginx` and look for `Insufficient cpu`/`Insufficient memory`; free some headroom (scale `orders-api` down a replica) and the pod schedules immediately.
-- **503 from nginx** — the edge is fine, the backends are gone. Straight to step 4's diagnosis: `kubectl get endpoints orders-api`, then [Service Unreachable](/troubleshooting/service-unreachable/).
+- **503 from nginx** — the edge is fine, the backends are gone. Straight to step 4's diagnosis: `kubectl get endpointslices -l kubernetes.io/service-name=orders-api`, then [Service Unreachable](/troubleshooting/service-unreachable/).
 :::
 
 ## Where you are now

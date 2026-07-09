@@ -59,6 +59,12 @@ livenessProbe:
 startupProbe:
   exec:                         # exit 0 = pass. For things without a port.
     command: ["sh", "-c", "test -S /tmp/app.sock"]
+```
+
+And the fourth, for gRPC services (shown separately — a container spec can
+only declare one `readinessProbe`):
+
+```yaml
 readinessProbe:
   grpc:                         # standard gRPC health-checking protocol
     port: 9090

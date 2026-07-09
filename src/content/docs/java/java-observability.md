@@ -14,7 +14,7 @@ keywords:
   - logstash-logback-encoder
   - native leak detection kubectl top
 sidebar:
-  order: 9
+  order: 10
 ---
 
 Everything else in this section is reactive: something broke, go capture

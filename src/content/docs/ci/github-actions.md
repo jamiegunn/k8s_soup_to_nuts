@@ -348,4 +348,4 @@ ImageID / Digest
   digest: sha256:7c1e88f0a4b52c9d…
 ```
 
-One workflow, two personalities, no rebuilds, no mutable tags, no secrets exposed to PR builds. Next: stop every repo in the org from maintaining its own copy of this file — [Reusable Workflows and Templates](/ci/reusable-workflows/).
+One workflow, two personalities, no rebuilds, no mutable tags, no secrets exposed to PR builds. The machinery underneath this file — trigger semantics, `${{ }}` injection, OIDC done right, caching, and the ARC runners the platform team operates — gets its own treatment in the [GitHub Actions Deep Dive](/ci/github-actions-deep-dive/). Next: stop every repo in the org from maintaining its own copy of this file — [Reusable Workflows and Templates](/ci/reusable-workflows/).

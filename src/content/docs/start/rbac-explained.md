@@ -148,7 +148,7 @@ rules:
 | `delete` | Remove one object by name |
 | `deletecollection` | Remove everything matching a selector in one call — far more destructive than `delete`; grant separately, reluctantly |
 
-**`resourceNames`** restricts a rule to specific object names — useful for "may update this one ConfigMap." Two hard limits: it **cannot restrict `create`** (the object doesn't exist yet, so there's no name to check — the API rejects the combination as meaningless), and **`list`/`watch`/`deletecollection` don't honor it** (collection requests aren't name-scoped, so a rule granting `list` with `resourceNames` grants nothing usable for `list`). `resourceNames` works cleanly with `get`, `update`, `patch`, `delete`.
+**`resourceNames`** restricts a rule to specific object names — useful for "may update this one ConfigMap." Two hard limits: it **cannot restrict `create`** (the object doesn't exist yet, so a create request carries no name to check — and the API *accepts* the combination without complaint, so the rule just silently never matches; worse than a rejection, because the Role looks scoped while granting nothing for `create`), and **`list`/`watch`/`deletecollection` don't honor it** (collection requests aren't name-scoped, so a rule granting `list` with `resourceNames` grants nothing usable for `list`). `resourceNames` works cleanly with `get`, `update`, `patch`, `delete`.
 
 **Subresources** are separate grant targets, written `resource/subresource`:
 

@@ -17,7 +17,7 @@ sidebar:
 
 In [Lab 0](/labs/lab-0-cluster/) you built a cluster. Now you'll give it something to run: `orders-api`, a small Spring Boot REST service. You'll build the image without installing Java or Maven (the Dockerfile does both), get it into the cluster the one way that works, and then — the heart of this lab — author a Helm chart from an empty directory and use it to install, verify, and upgrade the app.
 
-**What you'll have at the end:** `orders-api:0.1.0` running as a 3-replica Deployment in the `labs` namespace, installed as Helm release `orders` from a chart you wrote yourself, answering `curl` on `/api/orders` and passing actuator health probes.
+**What you'll have at the end:** `orders-api:0.1.0` running as a 2-replica Deployment in the `labs` namespace, installed as Helm release `orders` from a chart you wrote yourself, answering `curl` on `/api/orders` and passing actuator health probes.
 
 ## Prerequisites
 
@@ -39,10 +39,10 @@ lima-k3s   Ready    control-plane,master   1d    v1.31.5+k3s1
 
 ## Step 1: The application source
 
-Three files, no database, nothing beyond Spring Boot itself. Create the skeleton:
+Four files, no database, nothing beyond Spring Boot itself. Create the skeleton:
 
 ```bash
-mkdir -p ~/k8s-labs/app/src/main/java/labs ~/k8s-labs/app/src/main/resources && cd ~/k8s-labs
+mkdir -p ~/k8s-labs/app/src/main/java/com/example/orders ~/k8s-labs/app/src/main/resources && cd ~/k8s-labs
 ```
 
 First the build definition, `app/pom.xml` — two dependencies: `web` for REST endpoints, `actuator` for the health endpoints Kubernetes will probe, the standard Spring-on-K8s pairing ([Spring Boot on Kubernetes](/java/spring-boot/)):
@@ -55,7 +55,7 @@ First the build definition, `app/pom.xml` — two dependencies: `web` for REST e
     <artifactId>spring-boot-starter-parent</artifactId>
     <version>3.3.5</version>
   </parent>
-  <groupId>labs</groupId>
+  <groupId>com.example</groupId>
   <artifactId>orders-api</artifactId>
   <version>0.1.0</version>
   <properties>
@@ -73,25 +73,35 @@ First the build definition, `app/pom.xml` — two dependencies: `web` for REST e
 </project>
 ```
 
-Next, the whole application in one file, `app/src/main/java/labs/OrdersApplication.java`. Note the `GREETING` line: it reads an environment variable nothing sets yet, so `/api/hello` returns the default — the hook [Lab 2](/labs/lab-2-config-and-secrets/) turns into a full tour of Kubernetes configuration:
+Next, the application itself — two Java classes, split on purpose. The boot class, `app/src/main/java/com/example/orders/OrdersApplication.java`, does nothing but start Spring; component scanning begins at *its* package (`com.example.orders`), which is why every class in this app lives beside it:
 
 ```java
-package labs;
+package com.example.orders;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class OrdersApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(OrdersApplication.class, args);
+    }
+}
+```
+
+Then the endpoints, `app/src/main/java/com/example/orders/OrderController.java`. Keeping the controller in its own file isn't ceremony: later labs evolve the controller (Lab 3 replaces it wholesale) while the boot class never changes again. Note the `GREETING` line: it reads an environment variable nothing sets yet, so `/api/hello` returns the default — the hook [Lab 2](/labs/lab-2-config-and-secrets/) turns into a full tour of Kubernetes configuration:
+
+```java
+package com.example.orders;
 
 import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.web.bind.annotation.*;
 
-@SpringBootApplication
 @RestController
-public class OrdersApplication {
+public class OrderController {
 
-    public static void main(String[] args) {
-        SpringApplication.run(OrdersApplication.class, args);
-    }
     private static final List<Map<String, Object>> ORDERS = List.of(
             Map.of("id", 1, "item", "mechanical keyboard", "quantity", 1),
             Map.of("id", 2, "item", "usb-c dock", "quantity", 2),
@@ -231,17 +241,19 @@ image:
 fullnameOverride: orders-api
 
 service:
-  port: 80
+  port: 8080
 managementPort: 8081
 probes:
-  liveness: /actuator/health/liveness
-  readiness: /actuator/health/readiness
+  liveness:
+    path: /actuator/health/liveness
+  readiness:
+    path: /actuator/health/readiness
 resources:
   requests: {cpu: 100m, memory: 384Mi}
   limits: {memory: 512Mi}
 ```
 
-*What to notice:* `values.yaml` is the chart's public API — everything a user may vary, with defaults. `pullPolicy: IfNotPresent` is **load-bearing for imported images**: `Always` makes the kubelet contact a registry even though the image is already in the node's containerd store, and fail. The JVM-ish resources (generous memory, no CPU limit) follow [Resources and QoS](/workloads/resources-and-qos/).
+*What to notice:* `values.yaml` is the chart's public API — everything a user may vary, with defaults. `pullPolicy: IfNotPresent` is **load-bearing for imported images**: `Always` makes the kubelet contact a registry even though the image is already in the node's containerd store, and fail. The probes are nested maps rather than bare strings (`probes.readiness.path`, not `probes.readiness`) — structured values leave room to grow (a timeout here, a threshold there) without breaking every existing override, and later labs override exactly the `probes.readiness.path` key with `--set`. The JVM-ish resources (generous memory, no CPU limit) follow [Resources and QoS](/workloads/resources-and-qos/).
 
 And `fullnameOverride` deserves its comment: Helm's conventional `fullname` helper names resources `<release>-<chart>` so two releases of one chart can coexist in a namespace — install release `orders` from chart `orders-api` and you'd get a Deployment named `orders-orders-api`. Correct, collision-proof, and silly-looking. This chart is only ever installed once per namespace here, so we override to the clean name `orders-api` — but keep the helper below, because it's the convention every chart you'll ever read uses.
 
@@ -294,12 +306,12 @@ spec:
               containerPort: {{ .Values.managementPort }}
           livenessProbe:
             httpGet:
-              path: {{ .Values.probes.liveness }}
+              path: {{ .Values.probes.liveness.path }}
               port: management
             initialDelaySeconds: 10
           readinessProbe:
             httpGet:
-              path: {{ .Values.probes.readiness }}
+              path: {{ .Values.probes.readiness.path }}
               port: management
             periodSeconds: 5
           resources:
@@ -326,7 +338,7 @@ spec:
       targetPort: http
 ```
 
-*What to notice:* the Service's `selector` uses the **same** `selectorLabels` helper as the pod template — one source of truth, so they can never drift and silently select nothing. `port: 80` outside, `targetPort: http` (the named container port, 8080) inside. That's the whole chart — five files ([Chart Anatomy](/helm/chart-anatomy/) has the full tour).
+*What to notice:* the Service's `selector` uses the **same** `selectorLabels` helper as the pod template — one source of truth, so they can never drift and silently select nothing. `port: 8080` outside, `targetPort: http` (the named container port, also 8080) inside — a Service *may* remap (port 80 outside is common), but these labs keep one number end to end, so every port-forward, Ingress backend, and in-cluster URL from here to Lab 8 says `8080` and means the same thing. That's the whole chart — five files ([Chart Anatomy](/helm/chart-anatomy/) has the full tour).
 
 ## Step 6: Render first, install second
 
@@ -361,14 +373,14 @@ kubectl get pods,svc
 NAME                              READY   STATUS    RESTARTS   AGE
 pod/orders-api-7d9c6b58d4-8kwzr   1/1     Running   0          40s
 pod/orders-api-7d9c6b58d4-tj6mp   1/1     Running   0          40s
-NAME                 TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)   AGE
-service/orders-api   ClusterIP   10.43.114.23   <none>        80/TCP    40s
+NAME                 TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)    AGE
+service/orders-api   ClusterIP   10.43.114.23   <none>        8080/TCP   40s
 ```
 
 (Pods showing `0/1` for a few seconds is the readiness probe doing its job.) Thanks to `fullnameOverride`, the Service is `orders-api`, not `orders-orders-api`. Port-forward through it — backgrounded, so one terminal suffices — and hit the API:
 
 ```bash
-kubectl port-forward svc/orders-api 8080:80 >/dev/null & PF_PID=$!
+kubectl port-forward svc/orders-api 8080:8080 >/dev/null & PF_PID=$!
 sleep 2
 curl -s localhost:8080/api/orders/2
 curl -s localhost:8080/api/hello
@@ -422,7 +434,21 @@ deployment "orders-api" successfully rolled out
 
 `kubectl rollout status` blocks until the new replica is Ready — the observable form of the surge-and-drain dance in [Rollouts and Rollbacks](/workloads/rollouts-and-rollbacks/).
 
-But `--set` has a catch: it lives only in that release revision, invisible to anyone reading your files. Run a plain `helm upgrade orders charts/orders-api` tomorrow and — since each upgrade replaces the previous values wholesale — `replicaCount` snaps back to 2. Flags are for experiments; **files are for decisions.** Persist it: edit `charts/orders-api/values.yaml`, set `replicaCount: 3`, and run `helm upgrade orders charts/orders-api` again. Revision 3, same manifests, and now the file is the truth. The full precedence rules (`-f` stacks, `--set`, `--reuse-values`) live in [Values and Overrides](/helm/values-and-overrides/) — Lab 2 exercises them.
+But `--set` has a catch: it lives only in that release revision, invisible to anyone reading your files. Watch it bite — run a plain upgrade, exactly what you (or a teammate) would type tomorrow:
+
+```bash
+helm upgrade orders charts/orders-api
+kubectl get deploy orders-api
+```
+
+```console
+Release "orders" has been upgraded. Happy Helming!
+REVISION: 3
+NAME         READY   UP-TO-DATE   AVAILABLE   AGE
+orders-api   2/2     2            2           25m
+```
+
+Back to 2 — each upgrade replaces the previous values wholesale, so the flag-only 3 evaporated without a warning. Flags are for experiments; **files are for decisions.** Two replicas *is* the right size for this lab sequence (later labs scale up when there's a reason, and say so), so `values.yaml` keeps saying `replicaCount: 2` — but the day a value should change for real, the move is: edit the file, then a plain `helm upgrade`. The full precedence rules (`-f` stacks, `--set`, `--reuse-values`) live in [Values and Overrides](/helm/values-and-overrides/) — Lab 2 exercises them.
 
 ## Step 9: Inspect the release
 
@@ -445,7 +471,7 @@ sh.helm.release.v1.orders.v2  helm.sh/release.v1   1      4m
 sh.helm.release.v1.orders.v3  helm.sh/release.v1   1      1m
 ```
 
-`helm get values` shows `null` because revision 3 used pure chart defaults — the `--set` from revision 2 is gone, which is exactly Step 8's point. Each `sh.helm.release.v1.orders.vN` Secret is one revision: chart, values, and rendered manifests, gzipped. One Secret per revision — you've made three (install, `--set` upgrade, file-backed upgrade), so all three are there, which is how `helm rollback` can replay any of them. That's Helm's entire memory, and it's what `helm rollback` replays — full story in [Release Lifecycle and Operations](/helm/lifecycle-and-operations/).
+`helm get values` shows `null` because revision 3 used pure chart defaults — the `--set` from revision 2 is gone, which is exactly Step 8's point. Each `sh.helm.release.v1.orders.vN` Secret is one revision: chart, values, and rendered manifests, gzipped. One Secret per revision — you've made three (install, `--set` upgrade, plain upgrade), so all three are there, which is how `helm rollback` can replay any of them. That's Helm's entire memory, and it's what `helm rollback` replays — full story in [Release Lifecycle and Operations](/helm/lifecycle-and-operations/).
 
 ## Troubleshooting
 
@@ -459,6 +485,6 @@ sh.helm.release.v1.orders.v3  helm.sh/release.v1   1      1m
 
 ## Where you are now
 
-Running in the `labs` namespace: Helm release `orders`, revision 3 — a 3-replica Deployment of `orders-api:0.1.0` with actuator-backed probes, behind ClusterIP Service `orders-api:80`. On disk: `~/k8s-labs/app/` and `~/k8s-labs/charts/orders-api/`.
+Running in the `labs` namespace: Helm release `orders`, revision 3 — a 2-replica Deployment of `orders-api:0.1.0` with actuator-backed probes, behind ClusterIP Service `orders-api:8080`. On disk: `~/k8s-labs/app/` and `~/k8s-labs/charts/orders-api/`.
 
 Stopping for the day? `limactl stop docker && limactl stop k3s` pauses everything; the revival snippet at the top brings it back. `helm uninstall orders` would remove the release cleanly — **but don't**: [Lab 2](/labs/lab-2-config-and-secrets/) picks up with `orders` installed and teaches it to consume configuration every way Kubernetes knows how.

@@ -29,7 +29,7 @@ This section assumes three things and doesn't re-teach them:
 - **The app.** [Lab 1](/labs/lab-1-java-api/) built `orders-api` by hand — Maven build, multi-stage Dockerfile, Helm chart from scratch. This section automates that exact sequence, so the manual version is the mental model for every automated step.
 - **The chart-consumer mindset.** [Helm Deep Dive](/helm/overview/) — because the platform/app split in CI mirrors the chart author/consumer split, and the reusable-workflows article leans on that analogy hard.
 
-And to set expectations for what this section is *not*: it's not a general GitHub Actions tutorial (the [official docs](https://docs.github.com/en/actions) cover the long tail), and it's not the CD story — nothing in these four articles runs `kubectl apply` or `helm upgrade` against a real cluster. The pipeline ends at the artifact and the git commit; [GitOps for Tenants](/operations/gitops-for-tenants/) picks up from there.
+And to set expectations for what this section is *not*: it's not a general GitHub Actions tutorial (the [official docs](https://docs.github.com/en/actions) cover the long tail), and it's not the CD story — nothing in these five articles runs `kubectl apply` or `helm upgrade` against a real cluster. The pipeline ends at the artifact and the git commit; [GitOps for Tenants](/operations/gitops-for-tenants/) picks up from there.
 
 ## Who owns what
 
@@ -63,6 +63,7 @@ Failures split along the same line, and knowing which side you're on saves the f
 | Article | What it covers |
 | --- | --- |
 | [GitHub Actions for K8s App Teams](/ci/github-actions/) | Workflow anatomy, permissions and secrets, auth to Artifactory, the complete annotated build for `orders-api` |
+| [GitHub Actions Deep Dive](/ci/github-actions-deep-dive/) | The machinery underneath: trigger semantics, contexts and injection, OIDC, caching and artifacts, ARC runners, debugging |
 | [Reusable Workflows and Templates](/ci/reusable-workflows/) | The paved-road pattern: platform-published golden workflows, how to call them, how they're versioned |
 | [Artifactory as the Artifact Hub](/ci/artifactory/) | Repo types (local/remote/virtual), image and chart publishing, dependency proxying, retention |
 | [Testing in CI](/ci/testing-in-ci/) | Unit vs integration in the pipeline, testcontainers, ephemeral clusters (k3d), chart testing |

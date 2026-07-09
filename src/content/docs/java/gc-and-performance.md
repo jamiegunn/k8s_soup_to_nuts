@@ -15,7 +15,7 @@ keywords:
   - p99 latency spikes
   - Metadata GC Threshold metaspace
 sidebar:
-  order: 7
+  order: 8
 ---
 
 Most "the JVM is slow in Kubernetes" investigations end in one of three

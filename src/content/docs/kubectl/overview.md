@@ -28,8 +28,9 @@ This section is the deep end. Three articles, each self-contained, each answerin
 | [How kubectl Actually Works](/kubectl/how-kubectl-works/) | What happens between pressing Enter and seeing output: kubeconfig, auth plugins, API discovery, verbosity levels, server-side vs client-side. | kubectl is slow, weird, or lying to you — or ideally, *before* that. |
 | [Output and Queries](/kubectl/output-and-queries/) | Getting exactly the data you want: JSONPath from zero to real, custom-columns, sort-by, label and field selectors, and when to pipe to `jq`. | You're eyeballing `describe` output for the fourth pod in a row. |
 | [Tips and Tricks](/kubectl/tips-and-tricks/) | Shell setup, krew plugins that need no cluster install, manifest scaffolding, `kubectl wait`, and prod safety habits. | Today. It's the fastest payoff of the three. |
+| [Vim for the CKAD](/kubectl/vim-for-ckad/) | The twenty Vim commands, three vimrc lines, and two paste tricks that make terminal-only YAML editing fast — built for the exam, useful forever. | You booked a CKAD date, or `kubectl edit` keeps dumping you into an editor you fight. |
 
-Read them in order the first time — the second and third assume the mental model the first one builds. After that they're references; each section stands alone.
+Read the first three in order the first time — the second and third assume the mental model the first one builds. After that they're references; each section stands alone. The Vim guide is standalone — read it whenever the exam (or an editor you can't exit) looms.
 
 ## Self-assessment: can you do these 8 things without a search engine?
 

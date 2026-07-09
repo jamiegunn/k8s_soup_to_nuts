@@ -17,7 +17,7 @@ sidebar:
   order: 16
 ---
 
-Pod security splits cleanly along the ownership line this whole guide assumes. You own `securityContext` in your pod specs — who the process runs as, what it can write, which kernel capabilities it holds. The platform team owns the walls you run into: Pod Security Admission labels on your namespace, Kyverno/Gatekeeper policies, node and runtime configuration. This article covers both sides — your knobs, and how to read the rejection when you hit their walls.
+Pod security splits cleanly along the ownership line this whole guide assumes. You own `securityContext` in your pod specs — who the process runs as, what it can write, which kernel capabilities it holds. The platform team owns the walls you run into: Pod Security Admission labels on your namespace, Kyverno/Gatekeeper policies, node and runtime configuration. This article covers both sides — your knobs, and how to read the rejection when you hit their walls. (What each knob actually *is* in the kernel — capability masks, `no_new_privs`, seccomp filters — is mapped in [Kubernetes Is Linux](/troubleshooting/kubernetes-is-linux/).)
 
 ## securityContext: pod level vs container level
 

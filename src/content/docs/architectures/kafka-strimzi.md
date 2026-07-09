@@ -14,7 +14,7 @@ keywords:
   - consumer group lag
   - NotEnoughReplicas offline partitions
 sidebar:
-  order: 7
+  order: 10
 ---
 
 This is the build article. Whether Kafka is the right broker at all — versus RabbitMQ, IBM MQ, or a managed stream — is argued in [Message Queues on Kubernetes](/stateful/message-queues/). Here we deploy one production cluster, `kafka`, using **Strimzi**: three KRaft-mode nodes running combined controller+broker roles via a `KafkaNodePool`, TLS everywhere, topics and users as CRs, external access over MetalLB, and the durability contract (`RF=3`, `min.insync.replicas=2`, `acks=all`) wired in from the first manifest. Every manifest is complete and applied in order.

@@ -14,7 +14,7 @@ keywords:
   - 403 RBAC denial missing verb
   - seccompProfile runAsNonRoot drop ALL
 sidebar:
-  order: 10
+  order: 13
 ---
 
 Security controls fail in a predictable way: they get bolted on after the app already works, the app breaks under them, and within a week someone has an exception ticket that never gets revoked. The `readOnlyRootFilesystem: true` that crashed the pod gets commented out. The default-deny NetworkPolicy that broke DNS gets deleted "temporarily." Six months later the namespace has five security labels and zero security.

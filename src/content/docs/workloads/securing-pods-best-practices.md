@@ -15,7 +15,7 @@ keywords:
   - least privilege service account token
   - dry-run pod security admission
 sidebar:
-  order: 16
+  order: 17
 ---
 
 [Pod Security](/workloads/pod-security/) is the *reference* — every `securityContext` field explained, and how Pod Security Admission rejects your workloads. This page is the *playbook*: the practices in the order you should apply them, copy-paste manifests, and — the part most guides skip — the **commands to audit what you already run and prove a pod is actually hardened**. A `securityContext` block in your YAML is a claim; these commands are how you check it's true.

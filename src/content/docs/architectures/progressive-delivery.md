@@ -14,7 +14,7 @@ keywords:
   - Deployment to Rollout conversion
   - Gateway API traffic router
 sidebar:
-  order: 12
+  order: 15
 ---
 
 A perfect rolling update proves exactly one thing: the new pods became **Ready**. Readiness is a [health check](/workloads/health-checks/) — it says the process is up, the port answers, the dependencies connect. It says nothing about whether the new version is *correct*. A release that returns 5xx on 8% of requests passes readiness on every pod. A release whose p99 doubled because someone dropped an index hint passes readiness on every pod. The [zero-downtime build](/architectures/zero-downtime/) makes the *mechanics* of the swap lossless; the [manual two-Deployment canary](/workloads/rollouts-and-rollbacks/) puts a human in front of a Grafana dashboard to judge correctness. This article is the layer above both: **shift a slice of real traffic to the new version, measure it against explicit statistical gates, and promote or roll back automatically** — no human watching a dashboard at 2 a.m.

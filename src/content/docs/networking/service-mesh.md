@@ -62,7 +62,7 @@ Istio: `istio-injection=enabled` or the revision form `istio.io/rev=1-22`. Linke
 - **mTLS between pods.** The proxies exchange workload certificates (rotated automatically); traffic between meshed pods is encrypted and identity-authenticated. Verify it's actually on rather than assuming:
 
   ```bash
-  istioctl x describe pod orders-7d9f6c5b8-x2krn   # if you're allowed istioctl
+  istioctl describe pod orders-7d9f6c5b8-x2krn   # if you're allowed istioctl
   ```
 
   ```console

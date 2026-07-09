@@ -14,7 +14,7 @@ keywords:
   - replication lag stale reads
   - RPO zero data loss
 sidebar:
-  order: 3
+  order: 6
 ---
 
 This is the build. The argument for *why* an operator, and why CloudNativePG (CNPG) specifically, lives in [PostgreSQL on Kubernetes](/stateful/postgresql/) — read that first if you're not sold. Here we deploy the whole thing: a 3-instance cluster with quorum synchronous replication, PgBouncer in front, continuous backup to S3, network policy, alerts, and the drills that prove it actually fails over.

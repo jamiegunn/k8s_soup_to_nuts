@@ -14,7 +14,7 @@ keywords:
   - 502 503 at the edge
   - wildcard default TLS certificate
 sidebar:
-  order: 8
+  order: 11
 ---
 
 Most of this site is written for teams who own their applications but not the cluster. This article is the exception: it is the **platform-side build** — the stack your platform team runs so that your `Ingress` resource turns into a URL. We assemble the whole thing end to end for two audiences: app teams who want to debug against the edge (and propose fixes with evidence, per [Working with Your Platform Team](/operations/working-with-platform-team/)), and smaller shops wearing both hats who need to build it themselves.
@@ -231,7 +231,26 @@ spec:
 
 **TLS terminates at ingress-nginx — a decision, not a default.** With the appliance in passthrough mode, cert-manager keeps doing everything it does below: per-host certs from Ingress annotations, the wildcard default cert, automatic renewal, SNI routing across hundreds of hostnames — all inside the cluster, zero tickets per app. The variant your network team may propose — terminate TLS *on the F5* (their cert tooling, their HSM, their compliance story) — is legitimate but costs exactly those things: certificates become network-team change requests instead of annotations, cert-manager is reduced to internal traffic, and every new hostname needs appliance-side SNI/cert config. If the org mandates it, run the appliance L7 with re-encryption to the pool member and switch the client-IP strategy to `X-Forwarded-For` as described above. Default to passthrough; concede it only deliberately.
 
-**DNS-01 as the wildcard alternative.** HTTP-01 cannot issue wildcard certificates. If you want a real `*.apps.example.com` cert (recommended as the default cert), add a DNS-01 solver: cert-manager writes a TXT record via your DNS provider's API instead of serving a token. Trade-off: it needs API credentials for your DNS zone living in the cluster — a real secret with real blast radius — but it works for wildcards and for hosts not reachable from the internet.
+**DNS-01 as the wildcard alternative.** HTTP-01 cannot issue wildcard certificates. If you want a real `*.apps.example.com` cert (recommended as the default cert), add a DNS-01 solver: cert-manager writes a TXT record via your DNS provider's API instead of serving a token. Trade-off: it needs API credentials for your DNS zone living in the cluster — a real secret with real blast radius — but it works for wildcards and for hosts not reachable from the internet. That means a second ClusterIssuer alongside the HTTP-01 one (which keeps serving the per-host certs):
+
+```yaml
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-dns
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: platform@example.com
+    privateKeySecretRef:
+      name: letsencrypt-dns-account-key
+    solvers:
+      - dns01:
+          cloudflare:                   # swap in your DNS provider's solver
+            apiTokenSecretRef:
+              name: cloudflare-api-token
+              key: api-token
+```
 
 The default certificate, wired into the controller:
 
@@ -244,7 +263,7 @@ metadata:
 spec:
   secretName: wildcard-apps-tls
   issuerRef:
-    name: letsencrypt-prod            # requires the DNS-01 solver
+    name: letsencrypt-dns             # the DNS-01 issuer above — HTTP-01 can't do wildcards
     kind: ClusterIssuer
   dnsNames:
     - "*.apps.example.com"

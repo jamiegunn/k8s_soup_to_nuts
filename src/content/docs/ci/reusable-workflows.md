@@ -15,7 +15,7 @@ keywords:
   - deprecation window changelog for callers
   - composite run steps must declare a shell
 sidebar:
-  order: 3
+  order: 4
 ---
 
 The [previous article](/ci/github-actions/) ended with a complete, correct `ci.yml` for `orders-api` — about a hundred lines. Now imagine your org's fortieth Spring Boot service. Forty repos copy that file, and from the moment of the paste they diverge: repo 12 never picks up the buildx cache fix, repo 23's checkout pin is eighteen months stale, repo 31 quietly dropped the login `if:` guard and pushes images from PRs, and when the platform team migrates Artifactory auth to OIDC, "update CI" becomes forty pull requests into forty codebases with forty review queues. Copy-paste CI doesn't fail loudly; it *rots*, one repo at a time.
@@ -121,7 +121,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     outputs:
-      digest: ${{ steps.build.outputs.digest }}
+      digest: ${{ steps.push.outputs.digest }}   # registry digest comes from the push step
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
@@ -154,20 +154,33 @@ jobs:
           password: ${{ secrets.artifactory-token }}
 
       - id: build
+        name: Build image (never pushes)
         uses: docker/build-push-action@471d1dc4e07e5cdedd4c2171150001c434f0b7a4 # v6
         with:
           context: app
-          push: ${{ inputs.push }}
+          push: false
+          load: true      # export to the runner's Docker daemon so the scanner can see it
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # Platform-owned gate: images that fail scanning never reach Artifactory.
+      # Platform-owned gate: the scan runs on the local image, before any push,
+      # so an image that fails scanning never reaches Artifactory.
       # Callers cannot remove this step — that is the point.
       - name: Scan image
+        run: ./scripts/scan.sh acme.jfrog.io/docker-local/${{ inputs.image-name }}:sha-${{ github.sha }}
+
+      - id: push
+        name: Push image
         if: inputs.push
-        run: ./scripts/scan.sh acme.jfrog.io/docker-local/${{ inputs.image-name }}@${{ steps.build.outputs.digest }}
+        uses: docker/build-push-action@471d1dc4e07e5cdedd4c2171150001c434f0b7a4 # v6
+        with:
+          context: app
+          push: true      # cache hit from the build step above — nothing is rebuilt
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
 
   chart:
     needs: build

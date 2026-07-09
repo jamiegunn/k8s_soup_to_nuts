@@ -20,7 +20,7 @@ sidebar:
 
 You're in. `kubectl exec -it` worked, you have a shell, and something is wrong. This page is about the next twenty minutes: which files to read, which commands to run, and — critically — how to *interpret* the output, because inside a container half of what Linux tells you is about the node, not about you. If you *can't* get a shell or the image has no tools at all, that's the sibling problem: [The BusyBox Toolkit](/troubleshooting/busybox/) covers getting tools in. This page assumes you're inside and covers what to do there.
 
-The organizing trick for tool-less images: almost every question below has two answers — the comfortable command, and the `/proc` file it reads under the hood. When the command is missing, the file is still there. [proc(5)](https://man7.org/linux/man-pages/man5/proc.5.html) is *the* reference for this whole page; keep it open.
+The organizing trick for tool-less images: almost every question below has two answers — the comfortable command, and the `/proc` file it reads under the hood. When the command is missing, the file is still there. [proc(5)](https://man7.org/linux/man-pages/man5/proc.5.html) is *the* reference for this whole page; keep it open. And if you want to understand *why* these files are the truth — why a container is really just a Linux process wearing namespaces and a cgroup — the theory annex is [Kubernetes Is Linux](/troubleshooting/kubernetes-is-linux/); this page is its 2am companion.
 
 ## Where am I? (orientation in 60 seconds)
 

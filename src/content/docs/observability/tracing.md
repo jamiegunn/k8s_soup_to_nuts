@@ -46,8 +46,8 @@ For Java teams this is the single best deal in observability. The OTel javaagent
 Bake the agent into the image (or pull it via an init container) and wire it up:
 
 ```dockerfile
-# In your Dockerfile
-ADD https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/latest/download/opentelemetry-javaagent.jar /otel/opentelemetry-javaagent.jar
+# In your Dockerfile — pin the version; "latest" is a moving target you can't reproduce
+ADD https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/download/v2.8.0/opentelemetry-javaagent.jar /otel/opentelemetry-javaagent.jar
 ```
 
 ```yaml
@@ -59,6 +59,8 @@ env:
     value: "checkout-api"
   - name: OTEL_EXPORTER_OTLP_ENDPOINT
     value: "http://otel-collector.observability.svc:4317"   # ask platform for this
+  - name: OTEL_EXPORTER_OTLP_PROTOCOL
+    value: "grpc"   # agent 2.x defaults to http/protobuf (4318) — must match the port above
   - name: OTEL_RESOURCE_ATTRIBUTES
     value: "service.version=2.14.1,deployment.environment=prod"
   - name: OTEL_TRACES_SAMPLER

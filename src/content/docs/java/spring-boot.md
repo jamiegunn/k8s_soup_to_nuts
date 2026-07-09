@@ -14,7 +14,7 @@ keywords:
   - readiness flapping database indicator
   - SPRING_PROFILES_ACTIVE
 sidebar:
-  order: 10
+  order: 11
 ---
 
 Spring Boot ships more Kubernetes integration out of the box than any other JVM framework — and most teams wire half of it, wrong. This page is the Spring-specific playbook: what to turn on, what to skip, and the reference Deployment at the bottom that puts it all together. Generic JVM-in-a-container mechanics (heap sizing, container awareness, GC) live in [The JVM in Containers](/java/jvm-in-containers/) — this page assumes them.

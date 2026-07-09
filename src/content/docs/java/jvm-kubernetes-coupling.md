@@ -14,7 +14,7 @@ keywords:
   - terminationGracePeriodSeconds
   - liveness probe timeoutSeconds GC pause
 sidebar:
-  order: 11
+  order: 12
 ---
 
 The JVM and Kubernetes were designed a decade apart, for different problems —

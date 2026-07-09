@@ -39,7 +39,7 @@ resources:
     memory: 512Mi    # enforcement: OOMKill above this
 ```
 
-**Requests are a scheduling promise.** The scheduler places a pod only on a node whose *unreserved* capacity (allocatable minus the sum of existing requests — not actual usage) covers the pod's requests. After placement, requests also set the container's CPU weight (`cpu.weight` in cgroups): under CPU contention, containers share the node proportionally to their requests. Requests are never a cap — a container with `cpu: 100m` requested can happily burn 4 cores on an idle node.
+**Requests are a scheduling promise.** The scheduler places a pod only on a node whose *unreserved* capacity (allocatable minus the sum of existing requests — not actual usage) covers the pod's requests. After placement, requests also set the container's CPU weight (`cpu.weight` in cgroups): under CPU contention, containers share the node proportionally to their requests. Requests are never a cap — a container with `cpu: 100m` requested can happily burn 4 cores on an idle node. (How every field on this page maps to an actual kernel knob — cgroup files, the QoS tree, the OOM killer — is [Kubernetes Is Linux](/troubleshooting/kubernetes-is-linux/).)
 
 **Limits are runtime enforcement**, and CPU and memory enforce very differently:
 

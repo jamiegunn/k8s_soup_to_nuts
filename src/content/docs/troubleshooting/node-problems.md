@@ -135,7 +135,7 @@ When you're not sure whether to debug your app or draft an escalation, three com
 
 ```bash
 # 1. Do failures cluster on a node?
-kubectl get pods -o wide | awk '{print $8}' | sort | uniq -c | sort -rn
+kubectl get pods -o custom-columns=NODE:.spec.nodeName --no-headers | sort | uniq -c | sort -rn
 
 # 2. Are there evictions or node-taint events?
 kubectl get events --sort-by=.lastTimestamp | grep -Ei 'evict|taint|notready'

@@ -46,7 +46,7 @@ kubectl auth whoami
 ```
 
 ```console
-ATTRIBUTES   VALUES
+ATTRIBUTE    VALUE
 Username     jane@example.com
 Groups       [team-payments system:authenticated]
 ```

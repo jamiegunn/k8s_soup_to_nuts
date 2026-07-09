@@ -1,9 +1,17 @@
 // @ts-check
+import { readFileSync } from 'node:fs';
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import starlightBlog from 'starlight-blog';
 import { rehypeBaseLinks } from './src/plugins/rehype-base-links.mjs';
 import { remarkMermaid } from './src/plugins/remark-mermaid.mjs';
+
+// Shiki ships no PromQL grammar, so ```promql fences fell back to plain text
+// (with a build warning each). This vendored TextMate grammar fixes that —
+// provenance and local tweaks are documented in src/grammars/README.md.
+const promqlGrammar = JSON.parse(
+	readFileSync(new URL('./src/grammars/promql.tmLanguage.json', import.meta.url), 'utf8'),
+);
 
 // GitHub Pages: SITE is your GitHub Pages origin, BASE is the repo name.
 // If you rename the repo or move to a custom domain, update these two lines.
@@ -33,6 +41,11 @@ export default defineConfig({
 			// src/content.config.ts for the full mechanism.
 			components: {
 				MarkdownContent: './src/components/MarkdownContent.astro',
+			},
+			expressiveCode: {
+				shiki: {
+					langs: [promqlGrammar],
+				},
 			},
 			// Pagefind ranking tuned to favour relevance breadth over exact,
 			// term-dense matches — so pages that pertain to a query surface even
@@ -110,6 +123,12 @@ export default defineConfig({
 					label: 'kubectl Mastery',
 					items: [{ autogenerate: { directory: 'kubectl' } }],
 				},
+				// Section order follows the learning progression: workloads (what you
+				// run) → networking (how traffic reaches it) → state → the controller
+				// machinery → observing → tuning → operating → packaging (Helm) →
+				// pipelines (CI) → runtime-specific (Java/.NET) → applied builds.
+				// Runtime sections sit after the platform core deliberately: they're
+				// specialty tracks, not prerequisites.
 				{
 					label: 'Workloads & Deployments',
 					items: [
@@ -120,18 +139,6 @@ export default defineConfig({
 							items: [{ autogenerate: { directory: 'sidecars' } }],
 						},
 					],
-				},
-				{
-					label: 'Java on Kubernetes',
-					items: [{ autogenerate: { directory: 'java' } }],
-				},
-				{
-					label: '.NET on Kubernetes',
-					items: [{ autogenerate: { directory: 'dotnet' } }],
-				},
-				{
-					label: 'Stateful Apps',
-					items: [{ autogenerate: { directory: 'stateful' } }],
 				},
 				{
 					label: 'Networking & Routing',
@@ -151,6 +158,10 @@ export default defineConfig({
 					],
 				},
 				{
+					label: 'Stateful Apps',
+					items: [{ autogenerate: { directory: 'stateful' } }],
+				},
+				{
 					label: 'Controllers, CRDs & Operators',
 					items: [{ autogenerate: { directory: 'controllers' } }],
 				},
@@ -159,20 +170,28 @@ export default defineConfig({
 					items: [{ autogenerate: { directory: 'observability' } }],
 				},
 				{
-					label: 'Day-2 Operations',
-					items: [{ autogenerate: { directory: 'operations' } }],
+					label: 'Tuning: Knobs & Levers',
+					items: [{ autogenerate: { directory: 'tuning' } }],
 				},
 				{
-					label: 'CI with GitHub & Artifactory',
-					items: [{ autogenerate: { directory: 'ci' } }],
+					label: 'Day-2 Operations',
+					items: [{ autogenerate: { directory: 'operations' } }],
 				},
 				{
 					label: 'Helm Deep Dive',
 					items: [{ autogenerate: { directory: 'helm' } }],
 				},
 				{
-					label: 'Tuning: Knobs & Levers',
-					items: [{ autogenerate: { directory: 'tuning' } }],
+					label: 'CI with GitHub & Artifactory',
+					items: [{ autogenerate: { directory: 'ci' } }],
+				},
+				{
+					label: 'Java on Kubernetes',
+					items: [{ autogenerate: { directory: 'java' } }],
+				},
+				{
+					label: '.NET on Kubernetes',
+					items: [{ autogenerate: { directory: 'dotnet' } }],
 				},
 				{
 					label: 'Reference Architectures',
@@ -181,6 +200,13 @@ export default defineConfig({
 				{
 					label: 'Hands-On Labs',
 					items: [{ autogenerate: { directory: 'labs' } }],
+				},
+				{
+					label: 'Pass the CKAD',
+					items: [
+						{ autogenerate: { directory: 'ckad' } },
+						{ label: 'Vim for the CKAD ↗', link: '/kubectl/vim-for-ckad/' },
+					],
 				},
 				{
 					label: 'About & Methodology',

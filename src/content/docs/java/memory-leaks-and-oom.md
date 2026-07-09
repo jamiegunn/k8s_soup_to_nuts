@@ -15,7 +15,7 @@ keywords:
   - Inflater Deflater native leak
   - heap dump dominator tree MAT
 sidebar:
-  order: 8
+  order: 9
 ---
 
 "The Java service keeps OOMing" describes at least five different diseases

@@ -14,7 +14,7 @@ keywords:
   - noexecute tolerationseconds
   - exec format error wrong arch
 sidebar:
-  order: 18
+  order: 19
 ---
 
 You don't own the nodes. The platform team decides what hardware exists, how pools are labeled and tainted, and when nodes get drained. What *you* own is the set of constraints in your pod spec that tells the scheduler where your pods may, may not, and would prefer to land. This article is the complete mechanics of those constraints. If you only care about spreading replicas for availability, [High Availability](/workloads/high-availability/) has the opinionated recipe; this is the reference for everything underneath it.

@@ -15,7 +15,7 @@ keywords:
   - concurrency cancel-in-progress prod deploy
   - workflow_run chaining schedule cron
 sidebar:
-  order: 2
+  order: 3
 ---
 
 [GitHub Actions for K8s App Teams](/ci/github-actions/) is the foundations: workflow anatomy, the four triggers you actually use, least-privilege `GITHUB_TOKEN`, and the complete annotated build-test-push pipeline for `orders-api`. Read it first — this page assumes you already have a working `ci.yml` and now want to understand the machinery *underneath* it, because that machinery is where the security incidents live.

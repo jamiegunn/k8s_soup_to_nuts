@@ -14,7 +14,7 @@ keywords:
   - Monday morning first query hangs
   - Postgres on VMs egress identity
 sidebar:
-  order: 13
+  order: 16
 ---
 
 The other stateful builds in this section put the database *inside* the cluster. In most corporate shops, that's the rarer case. The common one is this: your app runs in Kubernetes, and the data lives where it has lived for fifteen years — Oracle on an Exadata appliance, Postgres on a pair of VMs, DB2 within arm's reach of the mainframe. Nobody is migrating that database this quarter, and nobody should have to. This is the reference build for that shape: **orders-api** in namespace `orders-prod`, talking to an Oracle 19c service the DBA team runs on hardware you will never SSH into. Every manifest below is complete and internally consistent; swap the host, port, and driver details for your Postgres-on-VMs and the architecture is identical.

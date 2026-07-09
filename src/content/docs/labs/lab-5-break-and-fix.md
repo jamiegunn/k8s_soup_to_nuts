@@ -182,13 +182,14 @@ while true; do
 done
 ```
 
-**Inject** (in your action terminal — the values key is the probe block from Lab 1; adjust if yours differs):
+**Inject** (in your action terminal — the values key is the probe block from Lab 1). Two commands this time, because Lab 4 proved the first one alone can't cause an outage — the rollout gate strands the bad probe at one unready surge pod while the old pods keep serving. The scale bounce plays the part of that night's node patch, recycling every pod from the now-broken template:
 
 ```bash
 helm upgrade orders charts/orders-api --reuse-values --set probes.readiness.path=/nope
+kubectl scale deploy/orders-api --replicas=0 && kubectl scale deploy/orders-api --replicas=2
 ```
 
-**Observe** — within a couple of minutes the loop degrades from `200` to `503`. That number alone is a diagnosis waiting to be read.
+**Observe** — within seconds the loop degrades from `200` to `503`. That number alone is a diagnosis waiting to be read.
 
 **Triage** — the [front-door 5xx playbook](/troubleshooting/front-door-5xx/) opens with two facts: *a 5xx is evidence, not absence* — something answered, so DNS, TCP, and routing all work — and exactly one proxy in the chain *minted* the error. Its first move is fingerprinting who:
 
@@ -208,33 +209,34 @@ Bare HTML with the `<hr><center>nginx</center>` footer: ingress-nginx wrote this
 
 ```bash
 kubectl get pods -l app.kubernetes.io/name=orders-api
-kubectl get endpoints orders-api
+kubectl get endpointslices -l kubernetes.io/service-name=orders-api \
+  -o jsonpath='{range .items[*].endpoints[*]}{.addresses[0]}{"\t"}{.conditions.ready}{"\n"}{end}'
 ```
 
 ```console
 NAME                         READY   STATUS    RESTARTS   AGE
 orders-api-9b8d7f6c5-mq2vx   0/1     Running   0          2m
 orders-api-9b8d7f6c5-sl8dn   0/1     Running   0          2m
-NAME         ENDPOINTS   AGE
-orders-api   <none>      3d
+10.42.0.24	false
+10.42.0.25	false
 ```
 
-`Running` but `0/1 READY` — the playbook's exact words: a NotReady pod is *deliberately removed from the Service*; all replicas NotReady means zero endpoints means every request fails "even though everything is running". The playbook says stop here — everything downstream is fine — and ask why the probe fails: `kubectl describe pod orders-api-9b8d7f6c5-mq2vx | grep -A2 Unhealthy` answers `Readiness probe failed: HTTP probe failed with statuscode: 404`. A 404 from your own app: the probe is asking for a path that doesn't exist. Probe theory — what readiness should check and what it must never check — is [Health Checks](/workloads/health-checks/).
+`Running` but `0/1 READY`, and every endpoint in the Service's EndpointSlice reporting `ready: false` — the playbook's exact words: a NotReady pod is *deliberately removed from load balancing*; all replicas NotReady means zero ready endpoints means every request fails "even though everything is running". The playbook says stop here — everything downstream is fine — and ask why the probe fails: `kubectl describe pod orders-api-9b8d7f6c5-mq2vx | grep -A2 Unhealthy` answers `Readiness probe failed: HTTP probe failed with statuscode: 404`. A 404 from your own app: the probe is asking for a path that doesn't exist. Probe theory — what readiness should check and what it must never check — is [Health Checks](/workloads/health-checks/).
 
 **Fix:**
 
 ```bash
 helm rollback orders
-kubectl get endpoints orders-api
+kubectl get endpointslices -l kubernetes.io/service-name=orders-api
 ```
 
 ```console
 Rollback was a success! Happy Helming!
-NAME         ENDPOINTS                         AGE
-orders-api   10.42.0.19:8080,10.42.0.23:8080   3d
+NAME               ADDRESSTYPE   PORTS   ENDPOINTS               AGE
+orders-api-x7k2m   IPv4          8080    10.42.0.19,10.42.0.23   3d
 ```
 
-**Verify:** the loop returns to `200`s. Leave it running — drill 5 wants it. **Lesson:** a readiness probe change is a traffic change — "no healthy upstream" at the edge is usually a probe story, not an nginx story, and the endpoints list is where the two meet.
+**Verify:** the loop returns to `200`s. Leave it running — drill 5 wants it. **Lesson:** a readiness probe change is a traffic change with a delay on it — the rollout gate stops it at deploy time (drills 1 and 6 lean on the same gate), but the broken template detonates whenever something recycles every pod. "No healthy upstream" at the edge is usually a probe story, not an nginx story, and the EndpointSlice is where the two meet.
 
 ## 5. Drill 4: death by 64Mi
 
@@ -312,18 +314,18 @@ kubectl patch svc orders-api -p '{"spec":{"selector":{"app.kubernetes.io/name":"
 
 ```bash
 kubectl get pods -l app.kubernetes.io/name=orders-api
-kubectl get endpoints orders-api
+kubectl get endpointslices -l kubernetes.io/service-name=orders-api
 ```
 
 ```console
 NAME                         READY   STATUS    RESTARTS   AGE
 orders-api-7c9f6d8b5-k4mzn   1/1     Running   0          25m
 orders-api-7c9f6d8b5-p8wlj   1/1     Running   0          24m
-NAME         ENDPOINTS   AGE
-orders-api   <none>      3d
+NAME               ADDRESSTYPE   PORTS   ENDPOINTS   AGE
+orders-api-x7k2m   IPv4          8080    <none>      3d
 ```
 
-Compare with drill 3: same `503`, same empty endpoints — but the pods are `1/1 READY`. Hop 1 of [Service Unreachable](/troubleshooting/service-unreachable/) passes, which sends you to Hop 2, the one the playbook calls **the #1 cause**: *does the selector actually match the labels?* A Service that selects nothing still resolves in DNS and still accepts connections — it just has nowhere to send them.
+Compare with drill 3: same `503` — but where drill 3's slice still listed both addresses (present, merely `ready: false`), this one lists **none at all**, while the pods are `1/1 READY`. Hop 1 of [Service Unreachable](/troubleshooting/service-unreachable/) passes, which sends you to Hop 2, the one the playbook calls **the #1 cause**: *does the selector actually match the labels?* A Service that selects nothing still resolves in DNS and still accepts connections — it just has nowhere to send them.
 
 **Triage** — the playbook's label-compare drill, verbatim:
 
@@ -353,12 +355,12 @@ There's your outage, in one line.
 
 ```bash
 helm upgrade orders charts/orders-api
-kubectl get endpoints orders-api
+kubectl get endpointslices -l kubernetes.io/service-name=orders-api
 ```
 
 ```console
-NAME         ENDPOINTS                         AGE
-orders-api   10.42.0.19:8080,10.42.0.23:8080   3d
+NAME               ADDRESSTYPE   PORTS   ENDPOINTS               AGE
+orders-api-x7k2m   IPv4          8080    10.42.0.19,10.42.0.23   3d
 ```
 
 Nothing in the chart changed — so why did the upgrade fix it? Because Helm applies a **three-way merge**: it compares the rendered manifest against the *live* object, not just against the previous release, and reasserts every field the chart owns. Your `kubectl patch` was drift, and drift on Helm-managed resources lives on borrowed time — the next routine upgrade silently repairs it (or, if the drift was your hotfix, silently *reverts* it, which is the scarier direction). Same lesson as `kubectl scale` in Lab 3, now with an outage attached. Note also what *didn't* happen: no pod restarted — Service changes take effect instantly through the endpoints controller.
@@ -435,7 +437,7 @@ The symptom names a suspect (`503` vs `ImagePullBackOff` vs `Init:0/1`), `kubect
 |---|---|---|---|
 | Bad tag | `ImagePullBackOff` | `describe` → pull error text | [ImagePullBackOff](/troubleshooting/imagepullbackoff/) |
 | Missing Secret | `CreateContainerConfigError` | `describe` → `secret … not found` | [Error Index](/troubleshooting/error-index/) |
-| Broken readiness | `503`, pods `0/1` | nginx fingerprint → empty endpoints | [Front-door 5xx](/troubleshooting/front-door-5xx/), [Service Unreachable](/troubleshooting/service-unreachable/) |
+| Broken readiness | `503`, pods `0/1` | nginx fingerprint → endpoints all `ready: false` | [Front-door 5xx](/troubleshooting/front-door-5xx/), [Service Unreachable](/troubleshooting/service-unreachable/) |
 | Memory limit | `OOMKilled`, exit 137 | `Last State` + logs that just stop | [OOMKilled](/troubleshooting/oomkilled/) |
 | Selector drift | `503`, pods `1/1` | selector vs labels mismatch | [Service Unreachable](/troubleshooting/service-unreachable/) |
 | Dead dependency | `Init:0/1` | `logs -c wait-for-cache` | [Triage Methodology](/troubleshooting/triage-methodology/) |
@@ -444,7 +446,7 @@ The symptom names a suspect (`503` vs `ImagePullBackOff` vs `Init:0/1`), `kubect
 
 The drills you invent teach more than the ones you're given. Each of these is one command against your stack; predict the symptom *before* you inject, then triage by the book:
 
-- `--set probes.liveness.path=/nope` — how does a liveness break differ from drill 3's readiness break, and why is it worse? ([Health Checks](/workloads/health-checks/))
+- `--set probes.liveness.path=/nope` — no scale bounce needed this time. Which gate does a liveness break sneak past that drill 3's readiness break couldn't, and why is the result worse? ([Health Checks](/workloads/health-checks/))
 - Recreate `cache-auth` with the key `pass` instead of `password`, then roll — same status as drill 2, different message. ([Error Index](/troubleshooting/error-index/))
 - `kubectl scale deploy/cache-valkey --replicas=0` — nothing pages and every response says `"source":"live"`. Is silent degradation a feature or a bug here, and what would make it visible?
 - `--set resources.requests.cpu=64` — a request no node can satisfy. New status, new playbook. ([Error Index](/troubleshooting/error-index/), then follow its pointer)

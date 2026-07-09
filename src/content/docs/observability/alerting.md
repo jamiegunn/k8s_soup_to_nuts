@@ -102,8 +102,10 @@ metadata:
   name: checkout-api-alerts
   namespace: myteam
   labels:
-    team: myteam            # ask platform which labels their Prometheus's
-    release: kube-prometheus # ruleSelector requires — wrong labels = silently ignored
+    # Ask the platform team which labels their Prometheus's ruleSelector
+    # requires — wrong labels mean the rule is silently ignored.
+    team: myteam
+    release: kube-prometheus
 spec:
   groups:
     - name: checkout-api.symptoms

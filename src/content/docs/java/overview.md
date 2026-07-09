@@ -113,7 +113,7 @@ branches on them.
 2. **Modules that happened to be included.** If `jdk.jcmd` made it into the
    jlink image, use `jcmd` like the manuals say. Check, don't assume.
 3. **Bring a tiny tool to the pod.** [jattach](https://github.com/jattach/jattach)
-   is a static binary well under 1 MB that speaks the JVM's dynamic attach
+   is a ~50 KB static binary that speaks the JVM's dynamic attach
    protocol — thread dumps, heap dumps, and full `jcmd` passthrough without a
    JDK. Copy it in with `kubectl cp` or bake it into your image (recommended).
 4. **Bring a whole JDK in an ephemeral container.** `kubectl debug --target`

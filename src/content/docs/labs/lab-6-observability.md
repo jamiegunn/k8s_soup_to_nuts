@@ -22,7 +22,7 @@ Everything you've built so far reports its health one pod at a time: `kubectl ge
 ## Prerequisites
 
 - [Lab 0](/labs/lab-0-cluster/) through [Lab 4](/labs/lab-4-ingress-end-to-end/) completed: the Lima VMs `docker` and `k3s`, releases `orders` (image `orders-api:0.3.0`) and `cache` in the `labs` namespace, and ingress-nginx answering on `http://orders.localtest.me:30080` (the load generator in step 7 uses it).
-- **RAM headroom.** The monitoring stack is the biggest thing you've installed — roughly 1–1.5 GiB inside the k3s VM once Prometheus warms up. The default 4 GiB VM handles it; step 3 trims `orders-api` to two replicas to keep the node comfortable.
+- **RAM headroom.** The monitoring stack is the biggest thing you've installed — roughly 1–1.5 GiB inside the k3s VM once Prometheus warms up. The default 4 GiB VM handles it; `orders-api`'s two replicas (your values default since Lab 1) leave the node comfortable.
 - If you paused between sittings, revive everything:
 
 ```bash
@@ -156,7 +156,7 @@ docker build -t orders-api:0.4.0 app/
 docker save orders-api:0.4.0 | limactl shell k3s sudo k3s ctr images import -
 ```
 
-In `charts/orders-api/values.yaml`, set `tag: "0.4.0"` — and while you're there, set `replicaCount: 2`: monitoring is the hungriest tenant this node has hosted, and the third replica is pure RAM with no lesson left in it. Then:
+In `charts/orders-api/values.yaml`, set `tag: "0.4.0"`. (Leave `replicaCount: 2` alone: monitoring is the hungriest tenant this node has hosted, and two replicas is exactly the footprint it leaves room for.) Then:
 
 ```bash
 helm upgrade orders charts/orders-api && kubectl rollout status deploy/orders-api
@@ -450,7 +450,7 @@ kubectl get crd -o name | grep monitoring.coreos.com | xargs kubectl delete
 :::caution[When output doesn't match]
 **Stack install times out** — first-run image pulls on a slow connection. `kubectl get pods -n monitoring` to see what's stuck; `helm upgrade --install monitoring ... ` with the same flags is safe to re-run.
 
-**Pods `Pending` after installing the stack** — the node is out of allocatable memory. Did you trim `replicaCount` to 2 in step 2? `kubectl describe pod -n monitoring <pod>` will show `Insufficient memory`.
+**Pods `Pending` after installing the stack** — the node is out of allocatable memory. Is `orders-api` still at 2 replicas (`kubectl get deploy orders-api`), or did an experiment leave it scaled up? `kubectl describe pod -n monitoring <pod>` will show `Insufficient memory`.
 
 **No `orders-api` target in Prometheus** — the two classic bugs: the ServiceMonitor is missing `release: monitoring` (check `kubectl get servicemonitor orders-api -o yaml`), or its `port: management` doesn't match a *named* port on the Service (`kubectl get svc orders-api -o yaml`). Both fail silently; [Metrics](/observability/metrics/) explains why.
 

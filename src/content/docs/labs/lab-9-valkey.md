@@ -535,8 +535,10 @@ kubectl exec valkey-replica-0 -n labs -- valkey-cli -h valkey-rw GET promoted
 ```
 
 ```console
+        - valkey-cli INFO replication | grep -Eq 'role:master|master_link_status:up'
+      failureThreshold: 3
 OK
-role:master
+service/valkey-rw patched
 OK
 yes
 ```
@@ -601,7 +603,7 @@ rm valkey-backup.rdb
 
 ## 7. A config change rolls the pods
 
-This ties §2's `checksum/config` annotation to something you can watch. Note the primary's current checksum, bump `maxmemory`, then upgrade:
+This ties §3's `checksum/config` annotation to something you can watch. Note the primary's current checksum, bump `maxmemory`, then upgrade:
 
 ```bash
 kubectl get pod valkey-primary-0 -n labs -o jsonpath='{.metadata.annotations.checksum/config}{"\n"}'

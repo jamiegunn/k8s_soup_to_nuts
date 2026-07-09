@@ -27,7 +27,7 @@ Every ClusterIP comes out of one cluster-wide range — the **service CIDR** —
 kube-apiserver --service-cluster-ip-range=10.96.0.0/12
 ```
 
-You can't read that flag (it's control-plane config you don't have access to), but you don't need to. You can **infer the range** from a Service that every cluster has: the `kubernetes` Service in the `default` namespace, which always holds the *first usable IP* of the range.
+You can't read that flag (it's control-plane config you don't have access to), but you don't need to. You can **infer where the range starts** from a Service that every cluster has: the `kubernetes` Service in the `default` namespace, which always holds the *first usable IP* of the range.
 
 ```bash
 kubectl get svc kubernetes -n default
@@ -38,7 +38,7 @@ NAME         TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
 kubernetes   ClusterIP   10.96.0.1    <none>        443/TCP   287d
 ```
 
-`10.96.0.1` is the bottom of the pool, so the range here is `10.96.0.0/12` (roughly `10.96.0.0`–`10.111.255.255`). Write that number in your team runbook next to the pod CIDR and node range — it turns every "why won't this Service come up" conversation from guesswork into arithmetic. (Same trick, other ranges, in the [networking model](/networking/networking-model/) orientation commands.)
+`10.96.0.1` is the bottom of the pool, so the range starts at `10.96.0.0`. What the first IP *can't* tell you is the mask — `10.96.0.0/12`, `/16`, and `/24` all begin with the same address — so the pool's size is platform config: ask, or on 1.31+ run `kubectl get servicecidr` (shown below). This cluster's range is `10.96.0.0/12` (roughly `10.96.0.0`–`10.111.255.255`). Write that number in your team runbook next to the pod CIDR and node range — it turns every "why won't this Service come up" conversation from guesswork into arithmetic. (Same trick, other ranges, in the [networking model](/networking/networking-model/) orientation commands.)
 
 ## How a Service gets its IP
 

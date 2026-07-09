@@ -231,7 +231,6 @@ containers:
       - name: JAVA_TOOL_OPTIONS
         value: >-
           -Djavax.net.ssl.trustStore=/work/cacerts
-          -Djavax.net.ssl.trustStoreType=JKS
           -Djavax.net.ssl.trustStorePassword=changeit
     volumeMounts:
       - { name: truststore, mountPath: /work, readOnly: true }

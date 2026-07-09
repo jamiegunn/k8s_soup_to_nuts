@@ -122,7 +122,9 @@ The hook points: `pre-install`, `post-install`, `pre-upgrade`, `post-upgrade`, `
 ```yaml
 "helm.sh/hook-weight": "-5"   # wait-for-db Job runs first
 "helm.sh/hook-weight": "0"    # migrate Job runs after it succeeds
-``` Delete policies matter more than they look: `before-hook-creation` (delete the previous run before creating the new one — almost always wanted, since Jobs are immutable), `hook-succeeded`, `hook-failed`. The combination above keeps failed Jobs around for log-reading and cleans up successes.
+```
+
+Delete policies matter more than they look: `before-hook-creation` (delete the previous run before creating the new one — almost always wanted, since Jobs are immutable), `hook-succeeded`, `hook-failed`. The combination above keeps failed Jobs around for log-reading and cleans up successes.
 
 The failure mode is structural: **a stuck hook is a stuck release**. Helm waits for `pre-upgrade` hooks to complete before touching your Deployment, so a migration Job that hangs (locked table, unreachable DB, image typo) hangs the whole `helm upgrade` until timeout, after which the release lands in `failed` — with the *old* pods still running, which is the good news. The triage sequence:
 

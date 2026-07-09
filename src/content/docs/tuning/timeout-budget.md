@@ -207,6 +207,7 @@ spec:
 ```
 
 Annotations scope per-Ingress, so `/reports` gets 300s while the rest of the host keeps the tight fleet default ([ingress-nginx](/networking/ingress-nginx/)). Two caveats: the *client* calling `/reports` needs its timeout raised too (Rule 1 still applies — 300s nginx under a 100s `HttpClient` default just moves the failure), and anything beyond ~5 minutes should stop being a synchronous request at all — return `202 Accepted` + a status URL.
+
 ## Failure signatures: when budgets disagree
 
 Each row is a real mismatch between two adjacent hops, with its decoder. The timing of the failure *is* the diagnosis — exact, repeatable numbers mean a timer, not a bug.

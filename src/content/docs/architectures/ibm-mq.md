@@ -14,7 +14,7 @@ keywords:
   - amqsputc amqsgetc CCDT reconnect
   - MQSC MCAUSER least privilege
 sidebar:
-  order: 4
+  order: 7
 ---
 
 This is the build article. The survey of brokers on Kubernetes — and why MQ's HA story is unusual — lives at [Message Queues on Kubernetes](/stateful/message-queues/). Here we deploy one production queue manager, `QM1`, in **Native HA** mode: three pods, one active, two replicas, RAFT-style replication of the recovery log over the network. Every manifest below is complete and applied in order.

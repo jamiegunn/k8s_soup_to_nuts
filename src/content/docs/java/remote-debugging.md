@@ -14,7 +14,7 @@ keywords:
   - Listening for transport dt_socket
   - JAVA_TOOL_OPTIONS debug flag
 sidebar:
-  order: 6
+  order: 7
 ---
 
 Sometimes logs and dumps aren't enough and you need to *watch the code run*.

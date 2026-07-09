@@ -94,7 +94,7 @@ pod log, and `Thread.print -l` adds ownable-synchronizer detail. Same
 underlying data. `jcmd <pid> help` lists everything else you just gained
 (heap dumps, JFR, VM.flags...).
 
-## Option 3: jattach — bring the attach protocol in a 50 KB binary
+## Option 3: jattach — bring the attach protocol in a ~50 KB binary
 
 [jattach](https://github.com/jattach/jattach) reimplements the JVM's dynamic
 attach client as a small static binary with zero dependencies. It gives you

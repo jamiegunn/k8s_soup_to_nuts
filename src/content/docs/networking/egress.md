@@ -79,7 +79,7 @@ This is the **"give the DB team one IP to allow"** pattern, and for authorizatio
 Implementations you'll meet:
 
 - **Calico egress gateway** — a per-namespace/per-pod gateway; traffic from selected pods SNATs to the gateway's IP.
-- **Cilium egress gateway** — an `CiliumEgressGatewayPolicy` selecting pods and a fixed egress IP on a chosen node.
+- **Cilium egress gateway** — a `CiliumEgressGatewayPolicy` selecting pods and a fixed egress IP on a chosen node.
 - **A plain NAT gateway / egress node** — no fancy [CRD](/controllers/crds-explained/): route the namespace's egress through one node with a stable IP and let it masquerade. Cloud clusters often already have a managed NAT gateway with a static IP for exactly this.
 
 :::tip[A stable SNAT is a feature, not a defeat]

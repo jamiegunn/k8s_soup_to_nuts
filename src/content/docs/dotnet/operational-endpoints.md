@@ -128,7 +128,7 @@ the boring, supported thread dump.
 **`/metrics` — Prometheus text.** `System.Runtime` counters (GC, thread
 pool, exceptions, allocation rate) by default; add your own
 `System.Diagnostics.Metrics` Meters by name
-(`Metrics__Providers__0__ProviderName: MyApi.Checkout`). Runtime metrics
+(`DotnetMonitor_Metrics__Providers__0__ProviderName: MyApi.Checkout`). Runtime metrics
 with zero app changes — scraping in [Metrics](/observability/metrics/):
 
 ```console

@@ -13,7 +13,7 @@ keywords:
   - node agent pod
   - allocatable vs capacity
 sidebar:
-  order: 20
+  order: 21
 ---
 
 A DaemonSet runs **one pod per eligible node**. That's the whole contract. There is no `replicas` field, no HPA hook, no scaling knob — the scale of a DaemonSet *is* the size of the cluster (or the labeled slice of it you scope to). When a node joins, the controller creates a pod for it; when a node is deleted, the pod goes with it. Membership is driven by node existence, not by a desired count you set.

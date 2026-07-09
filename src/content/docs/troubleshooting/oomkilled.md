@@ -18,7 +18,7 @@ sidebar:
   order: 6
 ---
 
-**Symptom:** container restarts with exit code 137, `describe` shows `Reason: OOMKilled`. The kernel killed your process because the container's memory cgroup hit its limit. It is instant and unlogged — the app gets no signal, no chance to flush, no stack trace. Your logs just *stop*.
+**Symptom:** container restarts with exit code 137, `describe` shows `Reason: OOMKilled`. The kernel killed your process because the container's memory cgroup hit its limit. On cgroup-v2 clusters (the kubelet sets `memory.oom.group` since Kubernetes 1.28) the kill takes out *every* process in the container's cgroup at once — not one unlucky victim. It is instant and unlogged — the app gets no signal, no chance to flush, no stack trace. Your logs just *stop*.
 
 :::tip[War story]
 The Java special has a Field Note: [OOMKilled, but the Heap Was Fine](/blog/oomkilled-but-the-heap-was-fine/) — direct buffers, metaspace, and thread stacks eating the budget while the heap dump looked healthy.

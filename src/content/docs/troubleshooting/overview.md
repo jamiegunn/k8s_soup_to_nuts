@@ -143,7 +143,7 @@ NS=payments; APP=api
   kubectl -n $NS get events --sort-by=.lastTimestamp | tail -30
   for p in $(kubectl -n $NS get pods -l app=$APP -o name); do
     echo "==== $p ===="
-    kubectl -n $NS describe $p | grep -A12 "Last State\|Conditions:"
+    kubectl -n $NS describe $p | grep -E -A12 "Last State|Conditions:"
     kubectl -n $NS logs $p --previous --tail=40 2>/dev/null
   done
 } > incident-$(date -u +%Y%m%dT%H%M%S).txt

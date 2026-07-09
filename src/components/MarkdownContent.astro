@@ -32,12 +32,21 @@ import BlogAwareMarkdownContent from 'starlight-blog/overrides/MarkdownContent.a
 
 const keywords = Astro.locals.starlightRoute.entry.data.keywords as string[] | undefined;
 const keywordText = keywords?.filter(Boolean).join(', ');
+// Descriptions are benefit-phrased summaries that often contain search terms
+// the body never uses verbatim; index them the same way as keywords so a
+// query matching only the description still surfaces the page.
+const description = Astro.locals.starlightRoute.entry.data.description as string | undefined;
+const hiddenText = [keywordText, description].filter(Boolean).join('. ');
 ---
 
 {
-	keywordText && (
-		<span class="sr-only" aria-hidden="true" data-pagefind-meta={`keywords:${keywordText}`}>
-			{keywordText}
+	hiddenText && (
+		<span
+			class="sr-only"
+			aria-hidden="true"
+			data-pagefind-meta={keywordText ? `keywords:${keywordText}` : undefined}
+		>
+			{hiddenText}
 		</span>
 	)
 }

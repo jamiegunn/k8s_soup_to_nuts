@@ -15,7 +15,7 @@ keywords:
   - retention cleanup policy deleted my tag
   - maven mirrorof settings.xml dependency cache
 sidebar:
-  order: 4
+  order: 5
 ---
 
 Your org runs Artifactory so that every artifact your pipeline produces or consumes — Docker images, Helm charts, Maven jars, npm packages — flows through one system with one auth model, one retention policy, and one audit trail. From the app-team seat you don't administer it; you publish to it, pull from it, and occasionally file a ticket when something 403s. This article is the working knowledge you need for all three, using the `orders-api` image and chart from [the build job article](/ci/github-actions/) as the running example.

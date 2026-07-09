@@ -14,7 +14,7 @@ keywords:
   - minReadySeconds soak
   - connection refused dropped requests
 sidebar:
-  order: 9
+  order: 12
 ---
 
 The other builds in this section are topologies — brokers, databases, edges. This one is a *behavior*: a service that never drops a request while pods are being created, killed, drained, and rescheduled underneath it. The mechanics live scattered across this site — probes in [Health Checks](/workloads/health-checks/), the PDB in [High Availability](/workloads/high-availability/), surge math in [Rollouts and Rollbacks](/workloads/rollouts-and-rollbacks/), propagation lag in [Services Deep Dive](/networking/services-deep-dive/). Here they are assembled into one internally consistent artifact — and then **drilled**, because a zero-downtime configuration you haven't load-tested through a deploy is a hypothesis, not a property.

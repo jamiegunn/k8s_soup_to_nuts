@@ -14,7 +14,7 @@ keywords:
   - kueue job queue
   - vllm triton model serving
 sidebar:
-  order: 19
+  order: 20
 ---
 
 GPUs in Kubernetes are simultaneously simpler and stricter than everything else you schedule. Simpler: there's one line of YAML. Stricter: that line follows rules that CPU and memory don't, the failure modes are more expensive, and in a shared cluster the etiquette matters because a hoarded GPU is $2–10 an hour of someone else's blocked work.
@@ -105,7 +105,7 @@ Events:
 Read that message like a census, not an error. It's telling you two different stories:
 
 - **"8 Insufficient nvidia.com/gpu"** — eight GPU-capable nodes exist but their GPUs are all claimed (or you asked for 2 and every node has at most 1 free). GPUs free up when pods *end*, so this either resolves when a batch job finishes or never resolves because serving pods hold everything 24/7. Check `kubectl describe node | grep -A5 'Allocated resources'` on a GPU node if you can, or ask.
-- **"untolerated taint"** — platforms tain GPU pools so ordinary pods don't waste expensive nodes. Your GPU pod must carry the matching toleration — [taints and tolerations mechanics here](/workloads/scheduling/):
+- **"untolerated taint"** — platforms taint GPU pools so ordinary pods don't waste expensive nodes. Your GPU pod must carry the matching toleration — [taints and tolerations mechanics here](/workloads/scheduling/):
 
 ```yaml
 tolerations:

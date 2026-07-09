@@ -160,7 +160,7 @@ at the cluster scope
 ...that's your cue to file a platform request, not to escalate your own permissions. A request that gets approved quickly looks like:
 
 > We'd like to use **cert-manager** (or: the `external-secrets` operator, etc.).
-> - **CRDs needed:** `certificates.cert-manager.io`, `issuers.cert-manager.io` (chart version X.Y, apps/v1 CRDs from the official chart)
+> - **CRDs needed:** `certificates.cert-manager.io`, `issuers.cert-manager.io` (chart version X.Y, CRDs from the official chart)
 > - **Controller:** runs cluster-scoped or per-namespace — whichever fits your model; we only need it reconciling namespace `team-payments`
 > - **RBAC we need:** create/get/list/watch on the namespaced kinds in our namespace
 > - **Why:** replacing hand-rotated TLS secrets; reduces our cert-expiry incidents

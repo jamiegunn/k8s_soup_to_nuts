@@ -113,7 +113,10 @@ spec:
           while true; do
             inotifywait -e delete_self /etc/app-config/..data 2>/dev/null
             echo "config changed, signaling app"
-            pkill -HUP -f '^/usr/sbin/nginx' || echo "app process not found"
+            # -o = oldest matching process: the nginx master, which owns
+            # reload. (nginx rewrites its process title to "nginx: master
+            # process ...", so matching on the binary path finds nothing.)
+            pkill -HUP -o nginx || echo "app process not found"
           done
       securityContext:
         runAsUser: 101                     # SAME UID as the app, or the signal is denied
@@ -124,7 +127,9 @@ spec:
         limits: { memory: 32Mi }
   containers:
     - name: app
-      image: nginx:1.27
+      image: nginxinc/nginx-unprivileged:1.27   # stock nginx needs root for port 80
+      ports:
+        - containerPort: 8080                   # unprivileged image listens on 8080
       securityContext:
         runAsUser: 101
       volumeMounts:

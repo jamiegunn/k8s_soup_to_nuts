@@ -45,7 +45,7 @@ The app has no tests yet; CI with nothing to run is theater. First give it one h
 </dependency>
 ```
 
-New file `app/src/test/java/com/example/orders/OrderControllerTest.java` (match your package name from Labs 1–3). It tests the controller as a plain object — no Spring context, no Redis, just a mock that always misses:
+New file `app/src/test/java/com/example/orders/OrderControllerTest.java` (the same `com.example.orders` package the app has used since Lab 1). It tests the controller as a plain object — no Spring context, no Redis, just a mock that always misses:
 
 ```java
 package com.example.orders;
@@ -232,11 +232,11 @@ Under 100 ms for the suite — the cheapest regression net in this whole lab. (T
 
 ## 4. Rung 4: kubeconform on the rendered output
 
-helm-unittest checks the paths you asserted; [kubeconform](https://github.com/yannh/kubeconform) checks that *everything* the chart renders is a schema-valid Kubernetes object — offline, against a pinned API version. Pin it to what your cluster actually runs (`kubectl get nodes` said `v1.31.x`):
+helm-unittest checks the paths you asserted; [kubeconform](https://github.com/yannh/kubeconform) checks that *everything* the chart renders is a schema-valid Kubernetes object — offline, against a pinned API version. Pin the Kubernetes version to what your cluster actually runs (`kubectl get nodes` said `v1.31.x`) — and pin the image tag too, per the labs' standing rule (`latest-alpine` exists, and `latest` is how surprises ship):
 
 ```bash
 helm template orders charts/orders-api \
-  | docker run -i --rm ghcr.io/yannh/kubeconform:latest-alpine \
+  | docker run -i --rm ghcr.io/yannh/kubeconform:v0.6.7-alpine \
       -strict -summary -kubernetes-version 1.31.0
 ```
 
@@ -368,7 +368,7 @@ docker run --rm -v "$PWD":/apps helmunittest/helm-unittest charts/orders-api
 
 echo "==> Rung 4: rendered-manifest validation"
 helm template orders charts/orders-api \
-  | docker run -i --rm ghcr.io/yannh/kubeconform:latest-alpine \
+  | docker run -i --rm ghcr.io/yannh/kubeconform:v0.6.7-alpine \
       -strict -summary -kubernetes-version 1.31.0
 
 echo "==> Rung 4.5: golden diff"

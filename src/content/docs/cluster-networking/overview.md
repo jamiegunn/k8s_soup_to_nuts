@@ -88,7 +88,7 @@ kubectl get pods -o wide
 cat /etc/resolv.conf   # run inside a pod, e.g. via kubectl exec or a debug container
 ```
 
-That first one is worth internalizing: the `kubernetes` Service in the `default` namespace is **always assigned the first usable IP of the service CIDR**. See `10.96.0.1` and you know ClusterIPs are being carved from `10.96.0.0/12`. It's the cheapest possible way to learn the service range of a cluster you've never seen.
+That first one is worth internalizing: the `kubernetes` Service in the `default` namespace is **always assigned the first usable IP of the service CIDR**. See `10.96.0.1` and you know the service range *starts* at `10.96.0.0` — though not how big it is; the mask is platform config (ask, or on 1.31+ run `kubectl get servicecidr`). It's still the cheapest possible way to orient on the service range of a cluster you've never seen.
 
 :::caution[A ClusterIP is not a real interface]
 Nothing in the cluster owns a ClusterIP as an address on a NIC. It exists only as packet-rewriting rules on every node. You generally can't ping one, `arp` won't find it, and that's all completely normal — it's the point of [Services Deep Dive](/networking/services-deep-dive/). Keep this straight before you go chasing the service CIDR.

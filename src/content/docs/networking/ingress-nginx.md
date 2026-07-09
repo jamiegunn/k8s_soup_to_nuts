@@ -18,7 +18,11 @@ sidebar:
   order: 13
 ---
 
-Most clusters you'll ever touch route HTTP through **ingress-nginx**. The generic Ingress model — resource anatomy, host/path rules, pathTypes, the controller/resource split — lives in [Ingress and Routing](/networking/ingress-and-routing/). This page is the controller-specific layer: the annotations, defaults, and failure modes of ingress-nginx specifically, from the seat of someone who owns Ingress resources but not the controller.
+:::caution[Project status: retired]
+The ingress-nginx project [announced its retirement in November 2025](https://kubernetes.io/blog/2025/11/11/ingress-nginx-retirement/); best-effort maintenance wound down in March 2026, and no new releases or security fixes are coming. Existing deployments keep working — nothing stops routing on retirement day — but every org running it needs a migration plan, and the recommended successor is [Gateway API](/networking/gateway-api/). Everything below stays accurate for the installed base you'll be operating during the transition; just don't build anything *new* on it.
+:::
+
+An enormous installed base of clusters — very likely including the one you're on — routes HTTP through **ingress-nginx**, and will for years yet, even as new builds move to Gateway API. The generic Ingress model — resource anatomy, host/path rules, pathTypes, the controller/resource split — lives in [Ingress and Routing](/networking/ingress-and-routing/). This page is the controller-specific layer: the annotations, defaults, and failure modes of ingress-nginx specifically, from the seat of someone who owns Ingress resources but not the controller.
 
 ## Which nginx do you have?
 

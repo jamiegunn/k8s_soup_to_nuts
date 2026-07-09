@@ -10,6 +10,7 @@ keywords:
   - on-call and pager preparation track
   - shipping to production checklist track
   - running stateful services track
+  - ckad exam preparation study track
   - which pages to read in order
 ---
 
@@ -132,6 +133,21 @@ Time estimates assume reading plus trying things against a real (dev) namespace.
 8. [Volume Failures](/troubleshooting/volume-failures/) — the failure modes you'll actually see: Multi-Attach, FailedMount, stuck PVCs.
 
 **You're done when you can:** explain what happens to your data when a node dies mid-write, perform a restore from backup into a scratch namespace and verify the data, and survive a single-replica failure with no client-visible outage.
+
+## 7. Passing the CKAD
+
+**Who it's for:** you want the Certified Kubernetes Application Developer credential — and you want one plan, not forty browser tabs.
+**Time:** four weeks at about an hour a day (or two weeks if you already deploy to Kubernetes weekly).
+
+This track has its own section with a full day-by-day plan; the short version:
+
+1. [The Survival Guide](/ckad/overview/) — what the exam is, how it's scored, and the three skills that decide it.
+2. [The Five Domains, Mapped](/ckad/exam-domains/) — the curriculum decoded into tasks, routed to the pages that teach each piece.
+3. [The Speed System](/ckad/speed-system/) + [Vim for the CKAD](/kubectl/vim-for-ckad/) — the mechanics that make two hours enough.
+4. [The Four-Week Study Plan](/ckad/study-plan/) — the actual schedule, built on [Labs 0–5](/labs/overview/).
+5. [Timed Drills](/ckad/drills/) — thirteen exam-style tasks with par times; your readiness meter.
+
+**You're done when you can:** score ≥10/13 on the drills within par, and your second [killer.sh](https://killer.sh/) session comes back comfortably above passing.
 
 ## Not on a track?
 

@@ -14,7 +14,7 @@ keywords:
   - micrometer prometheus scrape
   - git commit id which version running
 sidebar:
-  order: 12
+  order: 13
 ---
 
 On a cluster you don't administer, you can't install tools. No node access, no debug sidecars without a change request, a production image that is JRE-only and distroless-adjacent. What you *do* have is whatever your application compiled in — and Spring Boot Actuator is an entire HTTP ops API baked into the app at build time. Every endpoint you enable before the incident is a tool you'll have during it. Every endpoint you didn't is a redeploy away, which during an incident means it might as well not exist.
@@ -197,8 +197,9 @@ That `******` is the sharp edge and the safety net at once: since Spring Boot 3,
 management.endpoint.env.show-values=when-authorized
 # or, live dangerously (never in prod):
 # management.endpoint.env.show-values=always
-# and add your own patterns to the mask list:
-management.sanitize.additional-keys-to-sanitize=apikey,connectionstring
+# and add your own patterns to the mask list (per endpoint):
+management.endpoint.env.additional-keys-to-sanitize=apikey,connectionstring
+management.endpoint.configprops.additional-keys-to-sanitize=apikey,connectionstring
 ```
 
 `show-values=always` on an exposed endpoint reproduces the classic pre-Boot-3 breach pattern in one line of config. Use `when-authorized` with Spring Security on the management port, or leave it masked and use `/actuator/env/{property}` just to confirm *which source* a value came from — during a "wrong database" incident, the source name is usually the answer. Never confirm [Secret](/workloads/secrets/) *values* through this endpoint when confirming the *key and source* will do.
