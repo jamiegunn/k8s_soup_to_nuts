@@ -31,6 +31,16 @@ There are four layers, and each one beats everything before it:
 3. `-f`/`--values` files, **in the order given on the command line** — later files win
 4. `--set`, `--set-string`, `--set-file`, `--set-json` — last flag wins, and this layer beats all files
 
+The stack, lowest priority at the bottom, each layer overriding everything beneath it:
+
+```mermaid
+flowchart TD
+    set["4. --set / --set-string / --set-file / --set-json<br/>(last flag wins; beats all files)"] --> files["3. -f / --values files<br/>(in command-line order; later files win)"]
+    files --> parent["2. Parent chart's overrides of a subchart"]
+    parent --> defaults["1. Chart's own values.yaml<br/>(defaults, lowest priority)"]
+    defaults -. "higher layer overrides lower" .-> set
+```
+
 One worked example, one key, overridden at every layer. The `web-service` chart ships:
 
 ```yaml
@@ -78,6 +88,16 @@ The two flags that change this both have sharp edges:
 
 **Don't rely on `--reuse-values` in CI.** Keep the full desired state in version-controlled values files and always pass them (`-f values.yaml -f values-prod.yaml`) on every upgrade, so each upgrade is deterministic and reproducible regardless of what the previous release happened to contain.
 :::
+
+The three upgrade modes, and what each one starts from:
+
+```mermaid
+flowchart TD
+    up{"helm upgrade — which mode?"}
+    up -->|"default (no flag)"| plain["Chart defaults + ONLY this command's -f / --set.<br/>Previous overrides you omit revert to defaults"]
+    up -->|"--reuse-values"| reuse["Previous release's computed values<br/>+ this command's --set.<br/>MISSES new chart keys / defaults after a bump"]
+    up -->|"--reset-values"| reset["Clean slate: chart defaults<br/>+ this command's flags only"]
+```
 
 ## Merge semantics: maps deep-merge, lists replace
 

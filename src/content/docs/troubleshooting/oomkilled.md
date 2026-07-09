@@ -135,6 +135,23 @@ A BestEffort pod on a stressed node dies for other people's sins. If a workload 
 
 ## Decision path
 
+```mermaid
+flowchart TD
+    describe["kubectl describe pod<br/>read Last State + Reason"] --> reason{"Reason?"}
+    reason -->|"OOMKilled"| container{"Which container?<br/>(sidecars count)"}
+    reason -->|"Evicted<br/>(Status: Failed)"| evicted["Node-level pressure<br/>→ Node Problems"]
+    reason -->|"Error, during<br/>rollout / drain / delete"| sigterm["Ignored SIGTERM<br/>→ fix shutdown handling"]
+    container -->|"sidecar"| sidecar["Sidecar limit too low<br/>(cause 5) → raise its limit"]
+    container -->|"app container"| shape{"Working-set shape<br/>over days?"}
+    shape -->|"plateau at limit<br/>under load"| toolow["Limit too low (cause 1)<br/>→ right-size from peak"]
+    shape -->|"monotonic sawtooth,<br/>load-independent"| leak["Memory leak (cause 3)<br/>→ heap dump, fix app"]
+    shape -->|"spike at boot,<br/>then settles"| startup["Startup spike (cause 4)<br/>→ cover peak or stream"]
+    shape -->|"heap fine,<br/>container still grows"| jvm["JVM native overhead (cause 2)<br/>→ Memory Leaks and OOM"]
+    toolow --> qos["After any limit change:<br/>re-check QoS didn't drop"]
+    startup --> qos
+    jvm --> qos
+```
+
 1. `describe` → is Reason actually `OOMKilled`? If `Evicted` → [Node Problems](/troubleshooting/node-problems/); if grace-period kill → fix SIGTERM handling.
 2. Which container? (Sidecars count.)
 3. Graph working set over days. Plateau-at-limit under load → raise limit with data (cause 1). Monotonic sawtooth → leak (cause 3). Dies at boot → startup spike (cause 4).

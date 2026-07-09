@@ -145,6 +145,24 @@ Whether you're allowed to use one is a platform policy question.
 
 ## Decision table
 
+```mermaid
+flowchart TD
+    start{"describe pod:<br/>FailedScheduling<br/>event present?"}
+    start -->|"no event, PVC Pending"| wffc["WaitForFirstConsumer:<br/>find the real blocker<br/>(cause 6)"]
+    start -->|"no event"| noevt["nodeSelector/affinity<br/>matches nothing, or<br/>platform (cause 3)"]
+    start -->|"yes"| msg{"Which message<br/>fragment?"}
+    msg -->|"Insufficient cpu/mem"| ins{"Your request<br/>too big?"}
+    ins -->|"yes"| lower["Right-size requests<br/>(cause 1)"]
+    ins -->|"no, cluster full"| cap["Capacity escalation<br/>with evidence (cause 1)"]
+    msg -->|"didn't match affinity/selector"| aff["Fix labels/affinity<br/>in manifest (cause 3)"]
+    msg -->|"untolerated taint"| taint["Ask what pool is for<br/>before tolerating (cause 4)"]
+    msg -->|"Too many pods"| density["Density limit;<br/>report to platform<br/>(cause 5)"]
+    msg -->|"volume node affinity conflict"| vol["Loosen placement<br/>or escalate (cause 6)"]
+    msg -->|"No preemption victims"| pri["PriorityClass /<br/>preemption (cause 7)"]
+    other{"No Pending pod,<br/>Deployment stuck<br/>READY n/m?"}
+    other -->|"exceeded quota on RS"| quota["Trim usage or<br/>request quota bump<br/>(cause 2)"]
+```
+
 | Message fragment | Owner | Fix |
 |---|---|---|
 | `Insufficient cpu/memory` + your request is large | You | Lower requests |

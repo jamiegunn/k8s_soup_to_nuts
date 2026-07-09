@@ -249,6 +249,28 @@ Every search result for "namespace stuck terminating" offers the same move: stri
 
 ## The force-delete decision table
 
+Before the table, the decision as a tree — start from *why* it's stuck, because the answer decides whether `--force` is a cleanup or a data-loss event:
+
+```mermaid
+flowchart TD
+    start["Pod stuck Terminating"] --> why{"Why? Check jsonpath<br/>+ node + events"}
+    why -->|"Elapsed &lt; grace period"| grace["Not stuck — draining.<br/>Do NOT touch it (cause 1)"]
+    why -->|"finalizers non-empty"| fin["Waiting on a controller (cause 2)"]
+    why -->|"node NotReady / unreachable"| node["Kubelet can't confirm death (cause 3)"]
+    why -->|"grace over, node Ready,<br/>FailedKillPod / no events"| sig["Runtime can't kill / SIGTERM ignored (cause 4)"]
+
+    fin --> finfix["Resolve what it waits for;<br/>finalizer clears itself"]
+    finfix --> finguard["Force-delete does NOTHING to finalizers.<br/>Do NOT patch finalizers off unless<br/>the owning controller is confirmed gone forever"]
+
+    sig --> sigfix["Fix SIGTERM handling / node runtime.<br/>Do NOT force-delete — it hides the bug"]
+
+    node --> dead{"Has platform confirmed<br/>the node is dead / fenced?"}
+    dead -->|"No — state unknown"| wait["Do NOT force-delete.<br/>Old instance may still be running<br/>against the same disk"]
+    dead -->|"Yes — deprovisioned / powered off"| kind{"Stateless, or<br/>StatefulSet / RWO-backed?"}
+    kind -->|"Stateless Deployment pod"| ok["SAFE: force-delete —<br/>replacement already running,<br/>just clearing a ghost object"]
+    kind -->|"StatefulSet / holds RWO PVC"| danger["Force-delete ONLY after node<br/>confirmed dead: frees the identity,<br/>risks Multi-Attach / split-brain<br/>if old instance still runs"]
+```
+
 ```bash
 kubectl -n myteam delete pod api-7d4b9c6f8-2xkqp --grace-period=0 --force
 ```

@@ -302,36 +302,37 @@ Retry count ≥ 2 with a timeout shorter than the callee's realistic worst case,
 
 The whole page compressed into the 2am read order:
 
-```text
-Get p50 + p99, per endpoint. No numbers, no triage.
-│
-├─ latency AND traffic climbing together, demand flat?
-│    → STOP: check retries first (cause 8) — anything you do
-│      that adds load makes amplification worse
-│
-├─ p50 shifted, ONE endpoint
-│    → what changed? deploy / data / query plan — ordinary debugging,
-│      back to Triage Methodology step 1
-│
-├─ p50 shifted, ALL endpoints
-│    → shared downstream (4: trace it)
-│    → capacity / node pressure (7)
-│    → retry storm already running (8)
-│
-├─ p99 only, ONE endpoint
-│    → ceiling is a round number? → pool exhaustion (3)
-│    → else trace 3 slow requests (4), read the widest span
-│      → DB span wide? → pg_stat_statements (4)
-│
-└─ p99 only, ALL endpoints              ← the classic 2am quadrant
-     → throttle ratio (1)  — high? fix limits, done. ~half of all cases
-     → JVM? GC log (2)     — but only convict GC if (1) was clean
-     → delays quantized at 2s/5s?      → DNS (5)
-     → flat 1s/3s stalls, 1-in-N conns? → dataplane (6)
-     → slow pods share a node?          → noisy neighbor (7)
+```mermaid
+flowchart TD
+    start["Get p50 + p99, per endpoint<br/>(no numbers, no triage)"] --> retry{"Latency AND traffic<br/>climbing together,<br/>demand flat?"}
+    retry -->|"yes"| c8["STOP: check retries first<br/>(cause 8)"]
+    retry -->|"no"| q1{"Did p50 shift,<br/>or is it p99 only?"}
+    q1 -->|"p50 shifted"| p50scope{"One endpoint<br/>or all?"}
+    q1 -->|"p99 only"| p99scope{"One endpoint<br/>or all?"}
+    p50scope -->|"one"| changed["What changed?<br/>deploy / data / query plan<br/>(Triage step 1)"]
+    p50scope -->|"all"| systemic["Shared downstream (4)<br/>capacity / node pressure (7)<br/>retry storm running (8)"]
+    p99scope -->|"one"| round{"Ceiling is a<br/>round number?"}
+    round -->|"yes"| pool["Pool exhaustion (3)"]
+    round -->|"no"| trace["Trace 3 slow requests (4)<br/>read the widest span"]
+    trace --> dbspan{"DB span wide?"}
+    dbspan -->|"yes"| pgstat["pg_stat_statements (4)"]
+    p99scope -->|"all — classic 2am quadrant"| throttle{"Throttle ratio high?<br/>(cause 1)"}
+    throttle -->|"yes"| fixlimits["Fix limits, done<br/>(~half of all cases)"]
+    throttle -->|"no"| gc{"JVM? GC log<br/>(cause 2)"}
+    gc -->|"long pauses"| convictgc["Convict GC only<br/>if throttle was clean"]
+    gc -->|"clean"| dns{"Delays quantized<br/>at 2s / 5s?"}
+    dns -->|"yes"| dnscause["DNS (5)"]
+    dns -->|"no"| dataplane{"Flat 1s / 3s stalls,<br/>1-in-N connections?"}
+    dataplane -->|"yes"| dpcause["Dataplane / conntrack (6)"]
+    dataplane -->|"no"| neighbor{"Slow pods<br/>share a node?"}
+    neighbor -->|"yes"| noisy["Noisy neighbor (7)"]
 ```
 
-Note the order inside the last branch is the base-rate order — check the cheap, common causes before the exotic ones, exactly per [the methodology](/troubleshooting/triage-methodology/).
+The order inside the last branch (throttle → GC → DNS → dataplane → noisy neighbor) is the base-rate order — check the cheap, common causes before the exotic ones, exactly per [the methodology](/troubleshooting/triage-methodology/). The leaf-level details the diagram can't carry:
+
+- **Retry check comes first** because anything you do that adds load makes amplification worse — clear it before touching anything else.
+- **p50 shifted, one endpoint** → ordinary debugging: what changed on that path (deploy, data, query plan)? Back to [Triage Methodology step 1](/troubleshooting/triage-methodology/).
+- **p99 only, all endpoints** → convict GC *only* after the throttle ratio came back clean; a throttled GC burst reads as a long pause but is really cause 1 in a costume.
 
 ## The evidence bundle for escalation
 

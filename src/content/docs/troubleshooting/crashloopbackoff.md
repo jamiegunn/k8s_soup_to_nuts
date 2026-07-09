@@ -152,6 +152,23 @@ while true; do kubectl logs -f <pod> || sleep 1; done
 
 ## Decision path
 
+```mermaid
+flowchart TD
+    start{"Init: prefix<br/>in status?"}
+    start -->|"yes"| initc["Debug the init container<br/>logs -c &lt;init&gt; --previous<br/>(cause 6)"]
+    start -->|"no"| oom{"describe pod:<br/>Reason: OOMKilled?"}
+    oom -->|"yes"| oomkilled["OOMKilled during startup<br/>(cause 3)"]
+    oom -->|"no"| logs{"logs --previous:<br/>explicit fatal<br/>message?"}
+    logs -->|"yes"| fatal{"What does it say?"}
+    fatal -->|"missing config/secret"| cfg["Fix ConfigMap/Secret<br/>key + mount path<br/>(cause 1)"]
+    fatal -->|"connection refused"| dep["Dependency unreachable;<br/>retry, don't crash<br/>(cause 1)"]
+    fatal -->|"exec / no such file"| entry["Bad command / arch<br/>mismatch (cause 4)"]
+    fatal -->|"read-only fs / permission"| perm["securityContext /<br/>fsGroup fix (cause 5)"]
+    logs -->|"no / empty"| exit{"Exit 143 or 137<br/>WITH Unhealthy /<br/>Killing events?"}
+    exit -->|"yes"| probe["Liveness killed a<br/>slow starter; add<br/>startupProbe (cause 2)"]
+    exit -->|"no, dies instantly"| repro["Entrypoint/permission;<br/>reproduce with<br/>--copy-to (cause 4, 5)"]
+```
+
 1. `kubectl logs <pod> --previous` — explicit fatal error? → fix config/dependency/code (cause 1, 4, 5).
 2. `kubectl describe pod` → `Reason: OOMKilled`? → [OOMKilled](/troubleshooting/oomkilled/).
 3. Exit 143 *or* 137 + `Unhealthy`/`Killing` events? → liveness probe (cause 2). (137 without those events and `Reason: OOMKilled` is step 2 — the events are the discriminator.)
