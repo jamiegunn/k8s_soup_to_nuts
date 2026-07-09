@@ -45,7 +45,7 @@ One question with four axes:
 
 - **One pod or all replicas?** One pod → node-local or data-dependent problem. All replicas → spec, config, image, or dependency.
 - **One node?** `kubectl get pods -o wide` — if every broken pod shares a node, it's a [node problem](/troubleshooting/node-problems/), not your app.
-- **One namespace or everywhere?** If a neighboring team is also down, it's cluster-scoped. Escalate early.
+- **One namespace or everywhere?** If a neighboring team is also down, it's cluster-scoped. Escalate early. (If `kubectl` itself hangs or errors before returning anything, the control plane may be the problem, not your app — [kubectl Can't Reach the Cluster](/troubleshooting/api-server-broken/).)
 - **Since when?** Correlate with step 1. `kubectl get events --sort-by=.lastTimestamp` gives you the timeline.
 
 ### 3. Read the actual error — don't guess

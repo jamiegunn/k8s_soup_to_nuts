@@ -137,7 +137,7 @@ nslookup api                       # same namespace
 nslookup api.prod.svc.cluster.local
 ```
 
-`NXDOMAIN` for a Service that exists usually means wrong namespace (cross-namespace clients must use `api.prod`, not `api`), a typo, or — if *all* lookups fail/timeout — cluster DNS trouble, which is platform territory. Full decoding in [DNS](/networking/dns/).
+`NXDOMAIN` for a Service that exists usually means wrong namespace (cross-namespace clients must use `api.prod`, not `api`), a typo, or — if *all* lookups fail/timeout — cluster DNS trouble, which is platform territory. When resolution is the whole story — `NXDOMAIN`, 5-second timeouts, `Temporary failure in name resolution`, or an egress NetworkPolicy eating DNS — work the dedicated [DNS Resolution Failures](/troubleshooting/dns-failures/) playbook; the underlying mechanics are in [DNS](/networking/dns/).
 
 ## Hop 7: NetworkPolicy
 

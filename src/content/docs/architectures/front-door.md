@@ -215,7 +215,7 @@ The controller's own liveness/readiness probes ship sane in the chart (`/healthz
 
 ### 3. cert-manager: issuers and the default certificate
 
-Install cert-manager (Helm, `installCRDs: true`, defaults are fine). Then the issuer:
+Install cert-manager (Helm, `installCRDs: true`, defaults are fine). If the object model here — `ClusterIssuer`, `Certificate`, the ACME challenge chain — isn't second nature yet, [cert-manager](/controllers/cert-manager/) explains it from the consumer's seat before you wire it into the edge. Then the issuer:
 
 ```yaml
 apiVersion: cert-manager.io/v1

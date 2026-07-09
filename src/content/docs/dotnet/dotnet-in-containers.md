@@ -237,6 +237,71 @@ platform-level profilers. Choose it for CLI tools, scale-to-zero
 functions, and sidecar-sized utilities — not for the big stateful API you'll
 be debugging at 3 a.m.
 
+## A production Dockerfile
+
+Enough theory about knobs — here's the image they run in. A correct
+multi-stage build, annotated for the decisions that actually matter in a pod:
+
+```dockerfile
+# ---- build stage: the SDK, thrown away in the final image ----
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+# Copy ONLY the project file(s) first and restore. This layer is cached
+# and reused on every build where dependencies didn't change — the single
+# biggest CI build-time win. (Multi-project? Copy each .csproj to its path.)
+COPY MyApi.csproj ./
+RUN dotnet restore
+
+# Now the rest of the source. Editing code invalidates from here down,
+# but the restore layer above stays warm.
+COPY . .
+RUN dotnet publish -c Release -o /app/publish --no-restore
+
+# ---- runtime stage: no SDK, no compilers, just the app ----
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
+WORKDIR /app
+COPY --from=build /app/publish .
+
+# Modern MS images ship a built-in non-root user; $APP_UID resolves to it
+# (uid 1654). No useradd, no chown dance.
+USER $APP_UID
+
+# .NET 8+ containers default to ASPNETCORE_HTTP_PORTS=8080 (older images
+# used port 80 as root). Declaring it is documentation for the reader; set
+# your containerPort / Service targetPort to 8080 to match — see
+# /dotnet/aspnetcore-on-k8s/.
+EXPOSE 8080
+
+# Exec form (JSON array), NOT shell form. Shell form wraps the app in
+# /bin/sh -c, which does not forward SIGTERM — the app never drains and gets
+# SIGKILLed at the grace deadline. See /workloads/graceful-shutdown/.
+ENTRYPOINT ["dotnet", "MyApi.dll"]
+```
+
+A few substitutions worth knowing:
+
+- **Non-web apps** (workers, CLIs) don't need Kestrel — use the smaller
+  `mcr.microsoft.com/dotnet/runtime:8.0` runtime image instead of `aspnet`,
+  and drop the `EXPOSE`/port env entirely.
+- **Minimal base**: `mcr.microsoft.com/dotnet/aspnet:8.0-jammy-chiseled` is
+  a shell-less, package-manager-less, non-root image (the same uid 1654) —
+  smaller surface, smaller CVE count, and it already runs as `$APP_UID` by
+  default. The trade-off is debugging: no shell means no `kubectl exec … sh`,
+  no `kubectl cp`, no copying a tool in. Plan your diagnostics around
+  dotnet-monitor or ephemeral containers first — [Dumps and
+  diagnostics](/dotnet/diagnostics/) covers exactly what shell-less costs you.
+- **Trimming / Native AOT** (`PublishTrimmed=true`, or full AOT) shrink the
+  image further by stripping unused IL, but the trimmer can't see
+  reflection-based code and AOT drops the diagnostic socket entirely — you
+  can lose serializers, DI edge cases, and most of the diagnostics toolbox.
+  Honest default: ship untrimmed unless the image size is a real constraint
+  and you've tested the trimmed output end to end.
+
+Microsoft's ["Containerize a .NET app"
+guide](https://learn.microsoft.com/dotnet/core/docker/build-container) is the
+canonical reference for the image variants and the `$APP_UID` convention.
+
 ## Recipes: env blocks by pod size
 
 Set these in the Deployment (see

@@ -101,6 +101,7 @@ branches on them.
 | GC pause / throughput analysis | `-Xlog:gc*` to stdout or a volume; JFR recording | [GC and performance](/java/gc-and-performance/) |
 | CPU / allocation profile over time | JFR (`-XX:StartFlightRecording`), in every OpenJDK 11+ runtime | [Java observability](/java/java-observability/) |
 | Why the *container* was killed at exit 137 | That's the kernel, not the JVM — different workflow | [Memory leaks and OOM](/java/memory-leaks-and-oom/) |
+| The pod restarted with no log line, no OOM, no stack trace | A native JVM crash — preserve `hs_err_pid` before the restart eats it | [JVM native crashes](/java/jvm-crashes/) |
 | Why the heap keeps growing | Histograms over time → dump → Eclipse MAT dominator tree | [Memory leaks and OOM](/java/memory-leaks-and-oom/) |
 | Right-size heap vs container limits | Understand `MaxRAMPercentage` and the non-heap budget first | [JVM in containers](/java/jvm-in-containers/) |
 
@@ -164,6 +165,9 @@ storage — is yours.
   and CPU throttling masquerading as GC trouble.
 - [Memory leaks and OOM](/java/memory-leaks-and-oom/) — OOMKilled vs
   `OutOfMemoryError`, and the workflow for each flavor of leak.
+- [JVM Native Crashes and hs_err_pid](/java/jvm-crashes/) — the third way a
+  Java pod dies: a fatal native crash with no stack trace, and how to keep the
+  `hs_err_pid` fatal error log before the restart takes it.
 - [Spring Boot Actuator as an Ops Surface](/java/actuator/) — runtime log-level
   changes, heap and thread dumps over HTTP, and the endpoint hygiene that keeps
   it from becoming an attack surface.

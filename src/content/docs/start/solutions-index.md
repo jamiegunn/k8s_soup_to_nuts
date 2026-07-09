@@ -59,6 +59,7 @@ kubectl logs <pod-name> --previous
 | I want to… | Read |
 |---|---|
 | Autoscale on CPU/memory/custom metrics without replica thrash | [Autoscaling](/workloads/autoscaling/) |
+| Work out why my HPA won't scale up (or won't stop) | [HPA Not Scaling](/troubleshooting/hpa-not-scaling/) |
 | Survive node drains and cluster upgrades without an outage | [High Availability](/workloads/high-availability/) |
 | Set requests and limits honestly (and understand QoS classes) | [Resources and QoS](/workloads/resources-and-qos/) |
 | Right-size a service that's already in production, with data | [Resource Tuning in Prod](/operations/resource-tuning-in-prod/) |
@@ -105,6 +106,7 @@ kubectl logs <pod-name> --previous
 | Work out why my pod was killed with exit code 137 | [OOMKilled](/troubleshooting/oomkilled/) |
 | Diagnose a pod stuck on a mount, or a PVC that won't attach | [Volume Failures](/troubleshooting/volume-failures/) |
 | Find out what's behind my StorageClass (Longhorn, Ceph, Harvester…) | [Storage Controllers](/controllers/storage-controllers/) |
+| Fix kubectl itself failing to reach the cluster (kubeconfig, context, token, control plane) | [kubectl Can't Reach the Cluster](/troubleshooting/api-server-broken/) |
 | Look up an exact error message and jump to its playbook | [Error Message Index](/troubleshooting/error-index/) |
 | Triage "it's slow, not down" — latency with everything green | [It's Slow, Not Down](/troubleshooting/its-slow/) |
 | Unstick a pod, PVC, or namespace stuck Terminating | [Stuck Terminating](/troubleshooting/stuck-terminating/) |
@@ -147,6 +149,8 @@ kubectl logs <pod-name> --previous
 |---|---|
 | Understand what actually answers my DNS queries (and tune it) | [CoreDNS Deep Dive](/routing/coredns-deep-dive/) |
 | Get a DNS record pointed at my service the right way | [DNS Integration](/routing/dns-integration/) |
+| Debug DNS resolution failures — `no such host`, NXDOMAIN, 5-second stalls | [DNS Resolution Failures](/troubleshooting/dns-failures/) |
+| Automate TLS certificates — issue and renew certs with cert-manager | [cert-manager](/controllers/cert-manager/) |
 | Trust the corporate CA from my containers (and fix x509 errors) | [TLS and Corporate CAs](/networking/tls-and-corporate-cas/) |
 
 ## Java and JVM work
@@ -159,6 +163,7 @@ kubectl logs <pod-name> --previous
 | Attach a remote debugger to a JVM running in the cluster | [Remote Debugging](/java/remote-debugging/) |
 | Size heap vs container limit so the JVM stops getting OOMKilled | [JVM in Containers](/java/jvm-in-containers/) |
 | Hunt a memory leak, or decode `OutOfMemoryError` vs `OOMKilled` | [Memory Leaks and OOM](/java/memory-leaks-and-oom/) |
+| Diagnose a JVM that crashed natively — read and preserve `hs_err_pid` | [JVM Native Crashes](/java/jvm-crashes/) |
 | Pick and tune a GC for container-sized heaps | [GC and Performance](/java/gc-and-performance/) |
 | Export JVM metrics, and see GC/heap/threads in Grafana | [Java Observability](/java/java-observability/) |
 | Wire Spring Boot's actuator, probes, and graceful shutdown into Kubernetes | [Spring Boot](/java/spring-boot/) |

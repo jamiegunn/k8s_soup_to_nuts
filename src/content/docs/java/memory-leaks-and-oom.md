@@ -64,6 +64,13 @@ They can compound: a JVM with a too-big `-Xmx` will often get OOMKilled
 with no `OutOfMemoryError` in `--previous` logs = size the container/native
 side; `OutOfMemoryError` present = fix the named pool.
 
+There's a third sibling neither of those describes: a restart with **no**
+`OutOfMemoryError`, **no** `OOMKilled`, and no stack trace at all — just a gap
+in the logs. That's a native JVM crash (SIGSEGV/SIGABRT from `libjvm` or a JNI
+library), a different disease with a different artifact (`hs_err_pid`). If the
+memory picture looks innocent and the pod just *vanished*, switch tracks to
+[JVM native crashes and hs_err_pid](/java/jvm-crashes/).
+
 ## The triage tree
 
 ```text

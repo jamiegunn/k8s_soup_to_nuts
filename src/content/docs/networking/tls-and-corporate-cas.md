@@ -49,7 +49,7 @@ MetalLB and the appliance are invisible to TLS but not to *names*. The cert must
 
 ## Serving: getting a certificate as an app team
 
-On a platform-managed cluster you don't install cert-manager and you don't create issuers. The platform runs [cert-manager](https://cert-manager.io/docs/) with one or more **ClusterIssuers** wired to the corporate PKI — internal ACME, Vault, or a CA-key issuer. You find out what exists and use it:
+On a platform-managed cluster you don't install cert-manager and you don't create issuers. The platform runs [cert-manager](/controllers/cert-manager/) with one or more **ClusterIssuers** wired to the corporate PKI — internal ACME, Vault, or a CA-key issuer. If the `Certificate → CertificateRequest → Order → Challenge` object model below is new to you, that page walks it end to end from the consumer's seat. You find out what exists and use it:
 
 ```bash
 kubectl get clusterissuer

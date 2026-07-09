@@ -16,7 +16,7 @@ sidebar:
   order: 4
 ---
 
-An **operator** is a CRD (or several) plus a controller that encodes *operational knowledge* about one kind of software. The Postgres operator knows how to do a safe failover. The Kafka operator knows partition rebalancing. The cert-manager controller knows ACME renewal dances. Things a senior admin would do at 3 a.m., written into a reconcile loop that never sleeps.
+An **operator** is a CRD (or several) plus a controller that encodes *operational knowledge* about one kind of software. The Postgres operator knows how to do a safe failover. The Kafka operator knows partition rebalancing. The [cert-manager](/controllers/cert-manager/) controller knows ACME renewal dances — and is the operator most app teams consume first, which makes it the worked example to keep in mind through the mechanics below. Things a senior admin would do at 3 a.m., written into a reconcile loop that never sleeps.
 
 The formula:
 

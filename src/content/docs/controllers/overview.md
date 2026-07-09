@@ -71,6 +71,7 @@ That split — *they operate the controller, you drive it with resources* — is
 | [Reconciliation](/controllers/reconciliation/) | The control loop itself: observe → diff → act, level-triggered design, ownerReferences, finalizers, and how to stop fighting the machine |
 | [CRDs Explained](/controllers/crds-explained/) | How the API gets new types, how to discover what's installed in your cluster, and what happens when a CRD disappears |
 | [Operators](/controllers/operators/) | CRD + controller + baked-in ops knowledge; debugging an operator-managed app when you can't read the operator's logs |
+| [cert-manager](/controllers/cert-manager/) | The operator you consume most: TLS certs issued and renewed into Secrets, the two ways to request one, and walking the ACME chain when a Certificate stays stuck |
 | [MetalLB](/controllers/metallb/) | Where your `type: LoadBalancer` external IP actually comes from on bare metal; L2 vs BGP; the `<pending>` Service playbook |
 | [How MetalLB Chooses the Node](/controllers/metallb-node-selection/) | The mental model for *why one node (L2) or many (BGP)* answers for a VIP bound to no interface, and how to see the chosen node |
 | [F5 CIS](/controllers/f5-cis/) | The controller that programs BIG-IP from your Ingress/VirtualServer resources — and why people wrongly call it "F5 CSI" |

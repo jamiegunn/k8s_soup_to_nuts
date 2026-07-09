@@ -102,7 +102,7 @@ Events:
   Warning FailedGetResourceMetric  40s  horizontal-pod-autoscaler  missing request for cpu in container istio-proxy
 ```
 
-That last event is another classic: **every container in the pod needs a CPU request** for Utilization math to work. One request-less sidecar and the HPA goes blind.
+That last event is another classic: **every container in the pod needs a CPU request** for Utilization math to work. One request-less sidecar and the HPA goes blind. When the HPA won't move at all, the symptom-first walkthrough is [HPA Not Scaling](/troubleshooting/hpa-not-scaling/) — it starts from that same `kubectl describe hpa` output and works outward.
 
 ## VPA: mostly not yours
 

@@ -111,6 +111,79 @@ A raw volume snapshot captures the disk *mid-flight* — like yanking the power 
 
 Snapshots usually live in the same storage system as the volumes. A storage-array failure takes both. Snapshots are a recovery accelerator, not an off-site backup — pair with level 1 or replicated object storage.
 
+## Restoring into a StatefulSet's PVC
+
+The restore above lands the data in a *new* PVC (`pgdata-restored`) that a
+loose pod can mount. A StatefulSet is fussier, because it doesn't let you
+name the PVC — its `volumeClaimTemplates` do, deterministically:
+`<template>-<statefulset>-<ordinal>`, e.g. `data-valkey-0`. That naming
+rule is also the whole trick. When the controller starts a pod, it checks
+for a PVC with that exact name; if one already exists it **adopts it** instead
+of provisioning a fresh empty one. So you restore by pre-creating the
+correctly-named PVC — populated from your snapshot — *before* the StatefulSet
+(re)creates that ordinal's pod:
+
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: data-valkey-0          # EXACT name the template will look for:
+                               # <volumeClaimTemplate>-<statefulset>-<ordinal>
+spec:
+  dataSource:
+    name: valkey-0-snapshot    # your VolumeSnapshot
+    kind: VolumeSnapshot
+    apiGroup: snapshot.storage.k8s.io
+  accessModes: ["ReadWriteOnce"]   # must match the template
+  storageClassName: fast-ssd       # must match the template
+  resources:
+    requests:
+      storage: 10Gi                # must match (>=) the template's request
+```
+
+The `accessModes`, `storageClassName`, and `size` **must match** what the
+template declares. If they don't, the StatefulSet controller treats the PVC
+as wrong for the ordinal and won't use it the way you want — you get an empty
+volume or a stuck pod instead of your data. (A pre-populated PV works as the
+`dataSource` alternative to a snapshot, same idea.)
+
+The safe procedure:
+
+1. **Quiesce the slot.** Scale the StatefulSet to 0 (`kubectl scale sts
+   valkey --replicas=0`), or do this before the very first `apply` on a
+   fresh restore. You must not have a running pod already bound to a
+   different PVC for that ordinal.
+2. **Create the correctly-named PVC(s)** from the snapshot — one per ordinal
+   you're restoring (`data-valkey-0`, `data-valkey-1`, …). Wait for each to
+   reach `Bound`.
+3. **Scale/apply the StatefulSet.** As each pod starts, the controller finds
+   the existing PVC by name and binds it — the pod comes up on your restored
+   data instead of an empty volume.
+
+Caveats worth internalizing:
+
+- **Deleting a StatefulSet does not delete its PVCs** (they're `Retain` by
+  default — [StatefulSets
+  Fundamentals](/stateful/statefulsets-fundamentals/)). That's what makes
+  this restore possible, but it's the same reason stale data lingers: recreate
+  a StatefulSet over old PVCs and it adopts whatever was there, restored or
+  not. Confirm you're adopting the volume you meant to.
+- **Multi-replica sets restore per ordinal.** There's no "restore the
+  StatefulSet" button — you create `data-valkey-0`, `-1`, `-2` individually,
+  each from its own snapshot. For a clustered store, restoring only the
+  primary's ordinal and letting the others resync from it is often simpler
+  than restoring every ordinal.
+- **The snapshot must be from a consistent state.** Per the crash-consistent
+  vs app-consistent point above, a snapshot of a busy database is
+  crash-consistent at best; the pod will run journal recovery on first start.
+  For real consistency, snapshot a quiesced or checkpoint-aware volume.
+- Size/expansion rules and the immutable-template dance still apply — see
+  [Storage: PV, PVC, StorageClass](/stateful/storage-pv-pvc/), and
+  [CSI Drivers](/controllers/csi-drivers/) for what makes snapshot restore
+  work under the hood. Hedge the API version: current clusters use
+  `snapshot.storage.k8s.io/v1`, but confirm the group/version your
+  external-snapshotter serves.
+
 ## Level 3: Velero — namespace-level backup
 
 Velero backs up Kubernetes **objects** (all the YAML in a namespace) plus, optionally, volume data (via CSI snapshots or file-level copy with Kopia) to object storage. It answers a question levels 1–2 don't: *"restore my whole namespace — Deployments, Services, PVCs, Secrets, CRs — onto this or another cluster."*

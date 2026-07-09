@@ -207,7 +207,7 @@ spec:
       secretName: api-example-com-tls   # kubernetes.io/tls secret in YOUR namespace
 ```
 
-The secret lives in your namespace ([Secrets](/workloads/secrets/) covers creation and cert-manager). The trap is the fallback: if the secret is **missing, misnamed, malformed, or doesn't cover the host**, nginx doesn't error your Ingress — it serves the controller's *default certificate*. If that default is the self-signed **"Kubernetes Ingress Controller Fake Certificate"**, browsers scream; if platform installed a wildcard default, you might not even notice until someone hits a name it doesn't cover. Diagnose from outside:
+The secret lives in your namespace ([Secrets](/workloads/secrets/) covers creation; [cert-manager](/controllers/cert-manager/) is what usually writes and renews it). The trap is the fallback: if the secret is **missing, misnamed, malformed, or doesn't cover the host**, nginx doesn't error your Ingress — it serves the controller's *default certificate*. If that default is the self-signed **"Kubernetes Ingress Controller Fake Certificate"**, browsers scream; if platform installed a wildcard default, you might not even notice until someone hits a name it doesn't cover. Diagnose from outside:
 
 ```bash
 openssl s_client -connect api.example.com:443 -servername api.example.com </dev/null 2>/dev/null \

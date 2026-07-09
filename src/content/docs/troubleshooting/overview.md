@@ -77,13 +77,14 @@ Find your symptom, go to the playbook. When in doubt, start with [Triage Methodo
 | Restarts climbing but pod looks fine now | Restart count > 0, events show probe kills | [CrashLoopBackOff](/troubleshooting/crashloopbackoff/) (liveness section) |
 | Pod `Evicted` | `Status: Failed`, `Reason: Evicted` | [Node Problems](/troubleshooting/node-problems/) |
 | Slow, high latency, CPU pegged | Throttling, no crash | [Performance Analysis](/observability/performance-analysis/) |
+| Load is up but replica count won't grow | HPA `TARGETS` shows `<unknown>`, `ScalingActive False` | [HPA Not Scaling](/troubleshooting/hpa-not-scaling/) |
 
 ### Traffic problems
 
 | Symptom | Playbook |
 |---|---|
 | "The service is down" / connection refused / timeouts | [Service Unreachable](/troubleshooting/service-unreachable/) |
-| DNS lookup failures (`no such host`) | [Service Unreachable](/troubleshooting/service-unreachable/), then [DNS](/networking/dns/) |
+| DNS lookup failures (`no such host`, `NXDOMAIN`, 5s timeouts) | [DNS Resolution Failures](/troubleshooting/dns-failures/), then [DNS](/networking/dns/) |
 | Ingress returning 502/503/504 | [Service Unreachable](/troubleshooting/service-unreachable/) (ingress section) |
 | Works from one pod but not another | [Network Policies](/networking/network-policies/) |
 
@@ -95,6 +96,7 @@ Find your symptom, go to the playbook. When in doubt, start with [Triage Methodo
 | Pods evicted with ephemeral-storage messages | [Node Problems](/troubleshooting/node-problems/) |
 | `Error from server (Forbidden)` on any kubectl command | [RBAC Denied](/troubleshooting/rbac-denied/) |
 | Your app's in-cluster API calls getting 403 | [RBAC Denied](/troubleshooting/rbac-denied/) |
+| `kubectl` itself hangs, times out, or errors on x509/Unauthorized | [kubectl Can't Reach the Cluster](/troubleshooting/api-server-broken/) |
 
 ### You need to poke around
 

@@ -14,7 +14,7 @@ keywords:
   - hostNetwork hostPID shareProcessNamespace
   - kubernetes concepts mapped to linux primitives
 sidebar:
-  order: 17
+  order: 20
 ---
 
 Here is the sentence that reorganizes everything you know about Kubernetes: **there is no such thing as a container.** The kernel has no "container" object — no syscall creates one, no `ps` column shows one. What exists is an ordinary Linux process that has been given a *different view* of the machine (namespaces), a *budget* (cgroups), a *costume* (an overlayfs root filesystem), and *handcuffs* (capabilities and seccomp). A "container" is just the name we give a process wearing all four at once — and the kubelet plus container runtime are, at bottom, a program that makes those four arrangements via ordinary syscalls, then `exec`s your app.

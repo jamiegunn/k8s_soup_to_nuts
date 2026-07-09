@@ -213,5 +213,8 @@ file — a leftover dump means the next OOM captures nothing.
 
 Where the dumps come from: [thread dumps](/java/thread-dumps-jre-only/),
 [heap dumps](/java/heap-dumps-jre-only/), and
-[JFR recordings](/java/java-observability/). For the eviction mechanics you're
-avoiding, see [OOMKilled and friends](/troubleshooting/oomkilled/).
+[JFR recordings](/java/java-observability/). The same plumbing extracts a
+[JVM native crash's `hs_err_pid` log](/java/jvm-crashes/) — write it to a volume
+with `-XX:ErrorFile` first, or the restart takes it before you can `kubectl cp`.
+For the eviction mechanics you're avoiding, see
+[OOMKilled and friends](/troubleshooting/oomkilled/).

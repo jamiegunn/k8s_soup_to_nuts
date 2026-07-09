@@ -14,7 +14,7 @@ keywords:
   - kubectl debug node host filesystem
   - ephemeral container rbac forbidden
 sidebar:
-  order: 14
+  order: 17
 ---
 
 Modern production images are deliberately hostile to debugging: distroless, no shell, no package manager, read-only filesystem, non-root. Good for security, useless for `kubectl exec`. This page is the toolkit that works anyway — all of it namespace-scoped, none of it requiring node access.

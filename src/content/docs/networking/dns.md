@@ -20,6 +20,10 @@ sidebar:
 
 Every service call in your cluster starts with a DNS lookup, and a shocking fraction of "intermittent network issues" are actually DNS. The good news: the resolution path is completely deterministic once you've read one file — your pod's `/etc/resolv.conf`.
 
+:::tip[Something broken right now?]
+This page explains how DNS *works* from the pod's seat. If you're actively chasing a failure — `no such host`, NXDOMAIN, every Nth request stalling 5 seconds, or "it resolves in netshoot but not in my app" — jump to the symptom-first [DNS Resolution Failures](/troubleshooting/dns-failures/) playbook and come back here for the why.
+:::
+
 :::tip[Going deeper]
 This article covers DNS from the pod's seat. The [Routing & DNS Deep Dive](/routing/overview/) section goes beneath: [CoreDNS itself](/routing/coredns-deep-dive/) (the Corefile, plugin chain, caching, stub domains) and [how cluster DNS integrates with corporate DNS](/routing/dns-integration/) (external-dns, naming architecture, split-horizon).
 :::

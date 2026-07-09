@@ -14,7 +14,7 @@ keywords:
   - probe failed connection refused
   - Evicted pod ephemeral-storage
 sidebar:
-  order: 18
+  order: 21
 ---
 
 You have an error on your screen. This page maps the **literal string** to the playbook that fixes it — no concept-hunting required.
@@ -115,9 +115,11 @@ The pod is fine; nobody can talk to it — or it can't talk out.
 | `connection refused` | You reached the IP, nothing accepts on that port — wrong `targetPort`, app on localhost only, or pod not ready | [Service Unreachable](/troubleshooting/service-unreachable/#hop-4-port-chain--port-vs-targetport-vs-containerport), [Services Deep Dive](/networking/services-deep-dive/) |
 | `connection timed out` / `i/o timeout` | Packets are being **dropped** — NetworkPolicy or firewall, not a closed port | [Network Policies](/networking/network-policies/), [Debugging Network](/networking/debugging-network/) |
 | `no route to host` | No path to that IP — stale endpoint, dead node, or policy drop with reject | [Debugging Network](/networking/debugging-network/), [Service Unreachable](/troubleshooting/service-unreachable/) |
-| `Name or service not known` / `NXDOMAIN` | DNS says the name doesn't exist — typo, wrong namespace suffix, or missing Service | [DNS](/networking/dns/#debugging-dns-from-where-you-stand), [Service Unreachable](/troubleshooting/service-unreachable/#hop-6-dns) |
-| `server misbehaving` / `SERVFAIL` | DNS infrastructure itself failed (CoreDNS or upstream) — not a typo | [DNS](/networking/dns/), [Debugging Network](/networking/debugging-network/) |
-| `Temporary failure in name resolution` | DNS unreachable or overloaded — check CoreDNS, ndots, conntrack | [DNS](/networking/dns/) |
+| `Name or service not known` / `NXDOMAIN` | DNS says the name doesn't exist — typo, wrong namespace suffix, or missing Service | [DNS Resolution Failures](/troubleshooting/dns-failures/), [DNS](/networking/dns/#debugging-dns-from-where-you-stand), [Service Unreachable](/troubleshooting/service-unreachable/#hop-6-dns) |
+| `server can't find <name>` (nslookup/dig) | The resolver returned NXDOMAIN — short name vs FQDN, wrong search suffix, or the Service really is missing | [DNS Resolution Failures](/troubleshooting/dns-failures/), [DNS](/networking/dns/#debugging-dns-from-where-you-stand) |
+| `could not resolve host` (curl) / `getaddrinfo ENOTFOUND` | The name never resolved before the request left — same DNS chain as above, seen from the client library | [DNS Resolution Failures](/troubleshooting/dns-failures/), [Service Unreachable](/troubleshooting/service-unreachable/#hop-6-dns) |
+| `server misbehaving` / `SERVFAIL` | DNS infrastructure itself failed (CoreDNS or upstream) — not a typo | [DNS Resolution Failures](/troubleshooting/dns-failures/), [DNS](/networking/dns/), [Debugging Network](/networking/debugging-network/) |
+| `Temporary failure in name resolution` | DNS unreachable or overloaded — check CoreDNS, ndots, conntrack | [DNS Resolution Failures](/troubleshooting/dns-failures/), [DNS](/networking/dns/) |
 | `502 Bad Gateway` (from the edge/ingress) | Ingress reached the pod and got a broken/refused response — app crash mid-request or wrong port | [Front-Door 5xx](/troubleshooting/front-door-5xx/), [Ingress & Routing](/networking/ingress-and-routing/#debugging-502504-from-the-ingress) |
 | `503 Service Temporarily Unavailable` (from the edge/ingress) | **No ready endpoints** behind the Service — readiness failing or zero replicas | [Front-Door 5xx](/troubleshooting/front-door-5xx/), [Service Unreachable](/troubleshooting/service-unreachable/#hop-8-ingress-layer--decoding-502503504) |
 | `Service does not have any active Endpoint` (in ingress-nginx logs) | nginx's log-side twin of the 503 — the Service the Ingress points at has zero ready endpoints | [Front-Door 5xx](/troubleshooting/front-door-5xx/) |
@@ -149,11 +151,36 @@ Pod stuck at `ContainerCreating`, or data isn't where it should be.
 | `Error from server (Forbidden)` | RBAC denied the verb/resource/namespace combination — the message spells out exactly which | [RBAC Denied](/troubleshooting/rbac-denied/#parse-the-error--it-tells-you-everything), [RBAC Explained](/start/rbac-explained/) |
 | `cannot create resource "pods/exec"` | You can see pods but not **exec into** them — the subresource needs its own RBAC rule | [RBAC Denied](/troubleshooting/rbac-denied/#subresources-exec-denied-while-get-works), [Working Without Admin](/start/working-without-admin/) |
 | `User "system:serviceaccount:..." cannot ...` | It's your **workload's** ServiceAccount being denied, not you | [ServiceAccounts](/workloads/serviceaccounts/), [RBAC Denied](/troubleshooting/rbac-denied/#your-kubeconfig-vs-your-pods-service-account--two-different-identities) |
-| `error: You must be logged in to the server (Unauthorized)` | Your kubeconfig credentials are expired or invalid — authentication, not authorization | [How kubectl Works](/kubectl/how-kubectl-works/#auth-methods-youll-actually-meet), [RBAC Denied](/troubleshooting/rbac-denied/) |
+| `error: You must be logged in to the server (Unauthorized)` | Your kubeconfig credentials are expired or invalid — authentication, not authorization | [kubectl Can't Reach the Cluster](/troubleshooting/api-server-broken/), [How kubectl Works](/kubectl/how-kubectl-works/#auth-methods-youll-actually-meet), [RBAC Denied](/troubleshooting/rbac-denied/) |
 | `field is immutable` (e.g. Deployment `spec.selector`) | You changed a field Kubernetes forbids changing in place — delete/recreate or rename | [Deployments Deep Dive](/workloads/deployments-deep-dive/#the-selectorlabels-contract), [Live Patching](/operations/live-patching/) |
 | `the object has been modified; please apply your changes to the latest version` | Optimistic-concurrency conflict — something else updated the object between your read and write; re-get and retry | [Live Patching](/operations/live-patching/#kubectl-edit--the-full-yaml-scalpel), [Drift & CI/CD](/operations/drift-and-cicd/) |
 | `is forbidden: exceeded quota` | Namespace ResourceQuota blocks the create/update — trim requests or ask for more | [Working Without Admin](/start/working-without-admin/#know-your-budget-quotas-and-limit-ranges), [Requests & Limits Knobs](/tuning/requests-limits-knobs/) |
 | `no matches for kind ... in version ...` | That apiVersion doesn't exist on this cluster — deprecated/removed API or missing CRD | [API Deprecations](/operations/api-deprecations/), [CRDs Explained](/controllers/crds-explained/) |
+
+## Control plane / kubectl
+
+`kubectl` itself is broken — it hangs, times out, or errors before your command even reaches a resource. First decide whether it's *your* kubeconfig/auth, the network path, or the API server, then act or escalate with evidence.
+
+| Error text | What it means | Playbook |
+|---|---|---|
+| `Unable to connect to the server: dial tcp ... connection refused` | Nothing is answering at the API server address — wrong context, VPN down, or the control plane is actually down | [kubectl Can't Reach the Cluster](/troubleshooting/api-server-broken/#unable-to-connect-to-the-server--connection-refused--timeout) |
+| `Unable to connect to the server: net/http: TLS handshake timeout` / `i/o timeout` | The address is routable but the API server isn't completing the handshake — overloaded, or a firewall/proxy in the path | [kubectl Can't Reach the Cluster](/troubleshooting/api-server-broken/) |
+| `x509: certificate signed by unknown authority` (from kubectl) | Your client doesn't trust the API server's CA — stale kubeconfig CA data or a corporate MITM proxy | [kubectl Can't Reach the Cluster](/troubleshooting/api-server-broken/) |
+| `x509: certificate has expired or is not yet valid` (from kubectl) | The API server (or client) cert expired, or your clock is skewed | [kubectl Can't Reach the Cluster](/troubleshooting/api-server-broken/) |
+| `error: You must be logged in to the server (Unauthorized)` | Your kubeconfig credentials are expired/invalid — authentication, not authorization | [kubectl Can't Reach the Cluster](/troubleshooting/api-server-broken/), [RBAC Denied](/troubleshooting/rbac-denied/) |
+| `etcdserver: request timed out` | The API server reached etcd but etcd didn't answer in time — control-plane trouble, escalate | [kubectl Can't Reach the Cluster](/troubleshooting/api-server-broken/#control-plane-symptoms--bucket-c-escalate) |
+| `the server was unable to return a response in the time allotted, but may still be processing the request` | The API server is overloaded or a backing component (etcd, a webhook) is slow — control-plane trouble, escalate | [kubectl Can't Reach the Cluster](/troubleshooting/api-server-broken/#control-plane-symptoms--bucket-c-escalate) |
+
+## Autoscaling (HPA)
+
+The Deployment won't grow (or shrink) under load. Read the HPA's `TARGETS` column and the `describe hpa` Conditions to tell a missing-metrics problem from a missing-`requests` problem from a real ceiling.
+
+| Error text | What it means | Playbook |
+|---|---|---|
+| `TARGETS   <unknown>/50%` | The HPA can't read the metric at all — metrics-server missing, or the Pods have no CPU/memory `requests` to compute a percentage against | [HPA Not Scaling](/troubleshooting/hpa-not-scaling/#unknown-target--failedgetresourcemetric) |
+| `FailedGetResourceMetric` / `failed to get cpu utilization: unable to get metrics for resource cpu` | metrics-server isn't returning data (not installed/unhealthy) or the resource has no `requests` set | [HPA Not Scaling](/troubleshooting/hpa-not-scaling/#unknown-target--failedgetresourcemetric) |
+| `the HPA was unable to compute the replica count` / `unable to fetch metrics` | Same root cause, stated in the `describe hpa` Conditions — `ScalingActive` is `False` | [HPA Not Scaling](/troubleshooting/hpa-not-scaling/#scalingactive-false-but-metrics-are-present) |
+| `ScalingLimited True` ... `TooManyReplicas` / `at max replicas` | The HPA wants more but `maxReplicas` (or a quota) is the ceiling — not a bug | [HPA Not Scaling](/troubleshooting/hpa-not-scaling/#scalinglimited-true--you-hit-a-bound) |
 
 ## TLS and the edge
 

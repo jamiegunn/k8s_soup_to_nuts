@@ -57,10 +57,11 @@ Time estimates assume reading plus trying things against a real (dev) namespace.
 4. [Heap Dumps (JRE-only)](/java/heap-dumps-jre-only/) — the same, for heap dumps; pair with the previous page.
 5. [Getting Dumps Out](/java/getting-dumps-out/) — a dump inside a pod is useless; move it to your laptop.
 6. [Memory Leaks & OOM](/java/memory-leaks-and-oom/) — `OutOfMemoryError` vs. `OOMKilled`, and how to tell which one you have.
-7. [Spring Boot](/java/spring-boot/) — probes via [Actuator](/java/actuator/), graceful shutdown, lifecycle wiring.
-8. [JVM–Kubernetes Coupling](/java/jvm-kubernetes-coupling/) — the map of which JVM flag interacts with which Kubernetes knob.
-9. [JVM Memory Knobs](/tuning/jvm-memory-knobs/) — set heap, Metaspace, and the limit as one coherent budget.
-10. [Sizing Walkthrough](/tuning/sizing-walkthrough/) — do the numbers once end-to-end on a real service.
+7. [JVM Native Crashes & hs_err_pid](/java/jvm-crashes/) — the third failure mode: a native crash with no stack trace, and preserving the fatal error log before the restart eats it.
+8. [Spring Boot](/java/spring-boot/) — probes via [Actuator](/java/actuator/), graceful shutdown, lifecycle wiring.
+9. [JVM–Kubernetes Coupling](/java/jvm-kubernetes-coupling/) — the map of which JVM flag interacts with which Kubernetes knob.
+10. [JVM Memory Knobs](/tuning/jvm-memory-knobs/) — set heap, Metaspace, and the limit as one coherent budget.
+11. [Sizing Walkthrough](/tuning/sizing-walkthrough/) — do the numbers once end-to-end on a real service.
 
 **You're done when you can:** explain your pod's memory budget (heap + non-heap + headroom = limit), pull a thread and heap dump from a JRE-only production pod, and tell an `OOMKilled` from a `java.lang.OutOfMemoryError` in under a minute.
 
@@ -89,12 +90,15 @@ Time estimates assume reading plus trying things against a real (dev) namespace.
 2. [Troubleshooting Overview](/troubleshooting/overview/) — the map of symptom playbooks; skim so you know what exists.
 3. [Error Message Index](/troubleshooting/error-index/) — paste the error, get the playbook. Bookmark it.
 4. Read the big four playbooks: [Pod Pending](/troubleshooting/pod-pending/), [CrashLoopBackOff](/troubleshooting/crashloopbackoff/), [OOMKilled](/troubleshooting/oomkilled/), [Service Unreachable](/troubleshooting/service-unreachable/) — these cover most pages you'll ever get.
-5. [Debugging Toolbox](/troubleshooting/debugging-toolbox/) — ephemeral containers and `kubectl debug` for distroless pods.
-6. [Busybox](/troubleshooting/busybox/) — the minimal-tools cheatsheet for when the toolbox isn't available.
-7. [Events](/observability/events/) — the cluster's own account of what happened, and how to read it before it expires.
-8. [PromQL for Resources](/observability/promql-for-resources/) — the five queries that answer "is it CPU, memory, or restarts?"
-9. [Emergency Playbooks](/operations/emergency-playbooks/) — pre-written moves for rollback, scale-out, and stop-the-bleeding.
-10. [Working with the Platform Team](/operations/working-with-platform-team/) — know what's yours to fix and how to escalate the rest with the right evidence.
+5. [DNS Resolution Failures](/troubleshooting/dns-failures/) — the symptom-first playbook for `no such host`, intermittent 5-second stalls, and "it resolves in netshoot but not in my app"; DNS sits under half the "network is flaky" pages.
+6. [HPA Not Scaling](/troubleshooting/hpa-not-scaling/) — when the autoscaler won't add pods (or won't stop), walked from `kubectl describe hpa` outward.
+7. [kubectl Can't Reach the Cluster](/troubleshooting/api-server-broken/) — the pager skill for when your own tooling is the thing that's down: kubeconfig, context, token, and control-plane reachability.
+8. [Debugging Toolbox](/troubleshooting/debugging-toolbox/) — ephemeral containers and `kubectl debug` for distroless pods.
+9. [Busybox](/troubleshooting/busybox/) — the minimal-tools cheatsheet for when the toolbox isn't available.
+10. [Events](/observability/events/) — the cluster's own account of what happened, and how to read it before it expires.
+11. [PromQL for Resources](/observability/promql-for-resources/) — the five queries that answer "is it CPU, memory, or restarts?"
+12. [Emergency Playbooks](/operations/emergency-playbooks/) — pre-written moves for rollback, scale-out, and stop-the-bleeding.
+13. [Working with the Platform Team](/operations/working-with-platform-team/) — know what's yours to fix and how to escalate the rest with the right evidence.
 
 **You're done when you can:** go from page to identified failing layer in five minutes using triage + the error index, exec/debug into a distroless pod, and execute a rollback from the emergency playbook without looking up syntax.
 
@@ -107,11 +111,12 @@ Time estimates assume reading plus trying things against a real (dev) namespace.
 2. [ServiceAccounts](/workloads/serviceaccounts/) — a dedicated identity per workload, with token automounting off unless needed.
 3. [Secrets](/workloads/secrets/) — how to consume secrets without leaking them into logs, env dumps, or git.
 4. [Network Policies](/networking/network-policies/) — default-deny and the explicit allows your service actually needs.
-5. [High Availability](/workloads/high-availability/) — replicas, PodDisruptionBudgets, and spread so maintenance doesn't take you down.
-6. [Golden Service](/architectures/golden-service/) — the fully-assembled reference; diff your manifests against it.
-7. [Helm & Kustomize](/operations/helm-and-kustomize/) — package the result so it's reproducible across environments.
-8. [CI/CD Pipeline Design](/operations/cicd-pipeline-design/) — the pipeline that ships it, with drift kept out ([Drift & CI/CD](/operations/drift-and-cicd/)).
-9. [Supply Chain Security](/operations/supply-chain-security/) — image provenance, scanning, and pinning.
+5. [cert-manager](/controllers/cert-manager/) — automate TLS: request a serving cert into a Secret and let renewal stop being a pager event, so the green padlock survives the readiness review.
+6. [High Availability](/workloads/high-availability/) — replicas, PodDisruptionBudgets, and spread so maintenance doesn't take you down.
+7. [Golden Service](/architectures/golden-service/) — the fully-assembled reference; diff your manifests against it.
+8. [Helm & Kustomize](/operations/helm-and-kustomize/) — package the result so it's reproducible across environments.
+9. [CI/CD Pipeline Design](/operations/cicd-pipeline-design/) — the pipeline that ships it, with drift kept out ([Drift & CI/CD](/operations/drift-and-cicd/)).
+10. [Supply Chain Security](/operations/supply-chain-security/) — image provenance, scanning, and pinning.
 
 **You're done when you can:** pass a manifest diff against the golden service with no findings, explain every RBAC rule and network allow your app holds, and ship a change to prod through the pipeline with zero manual `kubectl apply`.
 
