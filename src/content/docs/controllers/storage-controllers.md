@@ -80,6 +80,8 @@ Longhorn (a CNCF project, originated at Rancher/SUSE) is the most common answer 
 
 That model is why Longhorn's failure behavior is so tenant-friendly to reason about: your volume's blast radius is your volume. It's also why the performance ceiling is what it is — every write crosses the network N times and isn't acknowledged until the slowest replica confirms it.
 
+For a full worked example under a real database — the iSCSI data path, the CSI/CRD components, the Linux and CNI dependencies, the Prometheus metrics, and the failure drills — see [Longhorn Under Valkey: Storage Internals Deep Dive](/architectures/valkey-longhorn-deep-dive/).
+
 ### Reading a Longhorn StorageClass
 
 ```yaml

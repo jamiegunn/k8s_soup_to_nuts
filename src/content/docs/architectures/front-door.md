@@ -14,7 +14,7 @@ keywords:
   - 502 503 at the edge
   - wildcard default TLS certificate
 sidebar:
-  order: 11
+  order: 12
 ---
 
 Most of this site is written for teams who own their applications but not the cluster. This article is the exception: it is the **platform-side build** — the stack your platform team runs so that your `Ingress` resource turns into a URL. We assemble the whole thing end to end for two audiences: app teams who want to debug against the edge (and propose fixes with evidence, per [Working with Your Platform Team](/operations/working-with-platform-team/)), and smaller shops wearing both hats who need to build it themselves.

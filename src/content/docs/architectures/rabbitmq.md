@@ -14,7 +14,7 @@ keywords:
   - heartbeat below idle timeout
   - perf-test verification drill
 sidebar:
-  order: 8
+  order: 9
 ---
 
 This is the build article. The broker survey — when RabbitMQ is the right answer at all — lives at [Message Queues on Kubernetes](/stateful/message-queues/). Here we deploy one production cluster, `rmq`, using the official **RabbitMQ Cluster Operator** and its `RabbitmqCluster` CR: three nodes, **quorum queues as the default queue type**, per-node PVCs, TLS to off-cluster clients over a MetalLB VIP, and the management UI kept strictly internal. Every manifest is complete and applied in order.

@@ -14,7 +14,7 @@ keywords:
   - liveness must not check dependencies
   - NetworkPolicy default-deny egress DNS
 sidebar:
-  order: 9
+  order: 10
 ---
 
 The four stateful builds in this section each fight a specific hard problem — quorum, storage, failover. This one fights the *general* problem: a stateless HTTP service that deploys without dropping requests, survives a zone loss, scales on real signals, and never surprises you at 3 a.m. The patient is **orders-api**, the Spring Boot service that the [Sizing Walkthrough](/tuning/sizing-walkthrough/) carried from "no data" to measured numbers. Every tuned value below — the 800m CPU request, the 1.5Gi memory, the 80-second startup budget, the 70% HPA target — comes from that walkthrough; this article does not re-derive them, it assembles them into the full production stack, in apply order, with nothing omitted.

@@ -33,7 +33,7 @@ Both halves are platform-installed. You interact with them through PVCs, Storage
 
 ## Discovering what storage your cluster has
 
-This article covers the CSI *machinery* — the plumbing every driver shares. The *backends* behind the drivers (Longhorn, Rook-Ceph, Harvester, OpenEBS, NFS) each behave differently under failure and load; [Storage Controllers](/controllers/storage-controllers/) profiles them one by one.
+This article covers the CSI *machinery* — the plumbing every driver shares. The *backends* behind the drivers (Longhorn, Rook-Ceph, Harvester, OpenEBS, NFS) each behave differently under failure and load; [Storage Controllers](/controllers/storage-controllers/) profiles them one by one, and [Longhorn Under Valkey](/architectures/valkey-longhorn-deep-dive/) follows one backend's CSI plugin and sidecars all the way to the block device.
 
 Three read-only commands map the territory:
 

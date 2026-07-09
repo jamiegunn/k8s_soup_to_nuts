@@ -14,7 +14,7 @@ keywords:
   - partition ceiling max replicas
   - drain-safe scale-in idempotent consumer
 sidebar:
-  order: 14
+  order: 15
 ---
 
 The [HPA baseline](/workloads/autoscaling/) scales on CPU, and for request/response services that works because CPU tracks load almost instantly. For a queue consumer it fails in the worst possible way: **CPU is a lagging proxy for backlog**. A consumer that is starved — blocked on a slow downstream, rebalancing, or simply outnumbered by producers — shows *low* CPU while the queue explodes. The HPA looks at 30% utilization, concludes everything is fine, and scales you *down* into the incident. The signal you need is the queue itself: lag, depth, oldest-message age. That is what KEDA gives you.

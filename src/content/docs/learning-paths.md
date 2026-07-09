@@ -130,7 +130,7 @@ Time estimates assume reading plus trying things against a real (dev) namespace.
 3. [Storage: PV & PVC](/stateful/storage-pv-pvc/) — the storage lifecycle your data depends on.
 4. [Operators for State](/stateful/operators-for-state/) — why real databases are run by operators, and what that means for you day-2.
 5. Pick your build and read it end to end:
-   - Cache: [Valkey & Redis](/stateful/valkey-and-redis/) → [Valkey Shared VIP](/architectures/valkey-shared-vip/)
+   - Cache: [Valkey & Redis](/stateful/valkey-and-redis/) → [Valkey Shared VIP](/architectures/valkey-shared-vip/) (going deep on storage? [Longhorn Under Valkey](/architectures/valkey-longhorn-deep-dive/))
    - Relational: [PostgreSQL](/stateful/postgresql/) → [PostgreSQL HA](/architectures/postgresql-ha/) (or [Oracle](/stateful/oracle/))
    - Messaging: [Message Queues](/stateful/message-queues/) → [RabbitMQ](/architectures/rabbitmq/), [IBM MQ](/architectures/ibm-mq/), or [Kafka with Strimzi](/architectures/kafka-strimzi/)
 6. [Long-Lived Connections](/networking/long-lived-connections/) — stateful clients hold connections; learn how the network kills them.

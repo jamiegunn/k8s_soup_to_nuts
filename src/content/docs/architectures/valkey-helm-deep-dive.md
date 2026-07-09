@@ -305,6 +305,10 @@ The daemon-config decisions are the same as the [raw build](/architectures/valke
 
 ## 4. Longhorn: distributed block storage for the AOF/RDB
 
+:::note[This section is the tenant summary]
+It covers *which* StorageClass and replica count to pick for Valkey. For what's underneath — the iSCSI data path, the CSI/CRD control plane, the Linux and CNI dependencies, every StorageClass knob, the Prometheus metrics, and the break-it-on-purpose drills — see [Longhorn Under Valkey: Storage Internals Deep Dive](/architectures/valkey-longhorn-deep-dive/).
+:::
+
 The raw build assumed `storageClassName: fast-local` — local NVMe, fastest possible fsync, but the pod is *pinned* to that node and node loss means volume loss (the promotion drill becomes your recovery). [Longhorn](/controllers/storage-controllers/#longhorn-a-distributed-block-store-one-volume-at-a-time) changes that story, and it changes the replica-count math in a way worth being honest about.
 
 **What Longhorn is:** a CNCF distributed block store. Every volume gets its own tiny storage system — an engine on the pod's node, and N replicas on *other* nodes' disks, connected over the network. Writes go to all replicas synchronously; reads come from any. You select it with a StorageClass whose parameters are its fingerprint:

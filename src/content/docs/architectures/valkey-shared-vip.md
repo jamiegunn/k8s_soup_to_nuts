@@ -560,7 +560,7 @@ kubectl -n valkey delete pod valkey-primary-0
 
 Expect: writes to `:6379` fail with connection errors for roughly 15–45s (pod reschedule + AOF load + readiness); the StatefulSet recreates `valkey-primary-0` on the **same PVC**, so no data loss for fsynced writes. Watch the replica reconnect: `master_link_status` flips `down → up` within ~10s of the primary going Ready, and `:6380` briefly leaves rotation (the role-aware probe fails — `role:slave` with the link down — then passes again) — exactly the stale-read protection from 3d. Clients need retry logic; that's the honest cost of the no-Sentinel design. While you're here, dry-run the first step of the [§6 promotion runbook](#6-operations-notes) too: confirm the deployed replica probe is the role-aware one, so the real promotion never starts from a broken contract.
 
-**5. Drain test (coordinate with the platform team):** drain the primary's node and confirm the PDB doesn't block, the pod reschedules (this requires your StorageClass to be attachable on other nodes — local PV users, this is your promotion drill instead), and the VIP keeps answering on 6380 throughout.
+**5. Drain test (coordinate with the platform team):** drain the primary's node and confirm the PDB doesn't block, the pod reschedules (this requires your StorageClass to be attachable on other nodes — local PV users, this is your promotion drill instead, and [Longhorn Under Valkey](/architectures/valkey-longhorn-deep-dive/) is how the volume-follows-pod version actually works), and the VIP keeps answering on 6380 throughout.
 
 ## 5. Failure modes
 
