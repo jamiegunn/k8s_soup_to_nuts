@@ -132,8 +132,12 @@ kubectl get hpa -w
 In terminal B:
 
 ```bash
-helm upgrade orders charts/orders-api --reuse-values --set autoscaling.enabled=true
+helm upgrade orders charts/orders-api --reset-then-reuse-values --set autoscaling.enabled=true
 ```
+
+:::note[Why not plain `--reuse-values`]
+The block you just wrote lives in the **new** chart's `values.yaml`, and `--reuse-values` ignores the new chart's defaults entirely — your HPA would render with empty `minReplicas`/`maxReplicas` and the upgrade would fail validation. `--reset-then-reuse-values` (Helm ≥ 3.14) starts from the new defaults, then re-applies the `--set` history earlier labs accumulated. After this upgrade the release's stored chart knows the `autoscaling` block, so the plain `--reuse-values` in the steps below is safe again. The full precedence story: [Values and Overrides](/helm/values-and-overrides/).
+:::
 
 Terminal A, over the next ~45 seconds:
 

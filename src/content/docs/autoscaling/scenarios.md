@@ -22,6 +22,8 @@ Find the sentence that sounds like your week; follow the path. Nothing on this p
 
 The daily-peak classic: fine at 10:00, crawling at 12:30, fine again by 14:00. You'll verify the app is scale-ready, confirm *what* saturates at lunch (it's usually threads waiting on Oracle, not CPU), then build the HPA with a ceiling Oracle agrees to.
 
+The thirty-second version, if lunch is *now*: CPU fine + latency climbing on a Spring API almost always means saturated request threads or a starved connection pool — `tomcat_threads_busy_threads` and `hikaricp_connections_pending` say which ([the thread entry](/autoscaling/signals-catalog/#thread-pool-saturation) reads both). The path below is that answer, earned properly.
+
 **Path:** [prerequisites](/autoscaling/prerequisites/) → [SLO](/autoscaling/slos-for-scaling/) → [signals catalog](/autoscaling/signals-catalog/) (run the signal audit *during* a lunch peak) → [REST API + Oracle](/autoscaling/rest-api-oracle/). **Effort:** one afternoon of reading and measurement + a load test + one PR.
 
 ### "Our overnight queue backlog isn't drained by morning"
@@ -42,7 +44,7 @@ ORA-00018, angry DBA, several *other* teams' apps erroring too. The maxReplicas 
 
 ### "HPA is at max and users are still hurting"
 
-Two different emergencies wearing one symptom. *Right now*: the [runbook](/troubleshooting/hpa-not-scaling/) — is it `ScalingLimited`, Pending pods, or scaled-but-not-helping? *Afterwards*: at-max-and-still-slow usually means the ceiling is too low (capacity conversation) or the signal is wrong (scaled on CPU while threads saturated — the app was drowning politely).
+Two different emergencies wearing one symptom. *Right now*: the [runbook](/troubleshooting/hpa-not-scaling/) — is it `ScalingLimited` (the HPA's own condition: "I'd add more, but I'm at maxReplicas"), Pending pods, or scaled-but-not-helping? *Afterwards*: at-max-and-still-slow usually means the ceiling is too low (capacity conversation) or the signal is wrong (scaled on CPU while threads saturated — the app was drowning politely).
 
 **Path:** [runbook](/troubleshooting/hpa-not-scaling/) first → then [signals catalog](/autoscaling/signals-catalog/) + [capacity](/autoscaling/capacity-and-governance/). **Effort:** incident time now; half a day of diagnosis after.
 

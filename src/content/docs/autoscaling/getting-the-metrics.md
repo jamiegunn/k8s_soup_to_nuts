@@ -118,6 +118,15 @@ spec:
       interval: 30s            # scrape cadence; your signal's freshness floor
 ```
 
+Don't guess the release label — read it off the Prometheus object itself (or hand this command to the platform team as the exact question):
+
+```bash
+kubectl get prometheus -A \
+  -o jsonpath='{range .items[*]}{.metadata.namespace}{": "}{.spec.serviceMonitorSelector}{"\n"}{end}'
+```
+
+An empty selector (`{}`) means "all ServiceMonitors are picked up"; anything else names the labels yours must carry.
+
 ### 4. Prove Prometheus sees you
 
 ```promql
@@ -192,6 +201,7 @@ The mechanics are almost disappointingly small — a Micrometer gauge (current l
 public class DispatchMetrics {
 
     private final Queue<DispatchJob> internalQueue;   // whatever you already have
+    private final Counter ordersCompleted;
 
     public DispatchMetrics(MeterRegistry registry, DispatchQueue q) {
         this.internalQueue = q.raw();
@@ -201,11 +211,11 @@ public class DispatchMetrics {
         Gauge.builder("dispatch_internal_queue_depth", internalQueue, Queue::size)
              .description("Jobs accepted but not yet dispatched")
              .register(registry);
+
+        // Counter: "orders completed" — a business number, incremented where it happens
+        this.ordersCompleted = Counter.builder("orders_completed_total").register(registry);
     }
 
-    // Counter: "orders completed" — a business number, incremented where it happens
-    private final Counter ordersCompleted;
-    { ordersCompleted = Counter.builder("orders_completed_total").register(registry); }
     public void onOrderCompleted() { ordersCompleted.increment(); }
 }
 ```

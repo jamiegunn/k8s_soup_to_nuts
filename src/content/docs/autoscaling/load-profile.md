@@ -116,7 +116,7 @@ sum(rate(http_server_requests_seconds_count{namespace="payments", service="payme
 sum(rate(http_server_requests_seconds_count{namespace="payments", service="payments-api"}[5m] offset 13w))
 ```
 
-**Decide.** A ratio of ~1.08 = +8%/quarter → use ~1.15 as a two-quarter growth margin in the maxReplicas math, and re-run this page's measurements quarterly (the [capacity true-up](/autoscaling/capacity-and-governance/) will demand it anyway).
+**Decide.** A ratio of ~1.08 = +8%/quarter. Two quarters compound to 1.08² ≈ 1.17; this section's examples round that to a **1.15 policy margin** — what matters is a *stated, dated* margin, not the second decimal. Use it in the maxReplicas math, and re-run this page's measurements quarterly (the [capacity true-up](/autoscaling/capacity-and-governance/) will demand it anyway).
 
 ## Consumers: same states, different series
 

@@ -103,7 +103,7 @@ The JVM claims heap and does not give it back to the OS when load drops. An HPA 
 
 ## RPS per pod
 
-**What it is.** Requests per second each pod is carrying. An honest, intuitive signal *if* you've done the homework: measured what one pod can handle at acceptable latency (the per-pod capacity number from [the sizing walkthrough](/tuning/sizing-walkthrough/)).
+**What it is.** Requests per second each pod is carrying. An honest, intuitive signal *if* you've done the homework: measured the **knee** — the load level where one pod's latency stops being flat and bends sharply upward; below it is capacity, above it is queueing (the per-pod capacity number from [the sizing walkthrough](/tuning/sizing-walkthrough/)).
 
 **Observe.**
 
@@ -210,14 +210,22 @@ Three mechanisms deliver a signal to the scaling loop. What each is, in one sent
 Before committing, run the eyeball test — all four candidates side by side for one deployment, one day. Which one moves *first* when traffic climbs? That's your leading signal; it's rarely the one you assumed:
 
 ```promql
-# 1 · per-pod CPU (% of request)  — the default assumption
-# 2 · per-pod RPS                 — the work arriving
-# 3 · busy-thread ratio           — the capacity being consumed
-# 4 · p95 latency                 — the user experience (the one you protect)
-# Graph all four; the leading signal is the one that moves first, ahead of #4.
+# 1 · per-pod CPU (fraction of request) — the default assumption
+sum by (pod) (rate(container_cpu_usage_seconds_total{namespace="payments", pod=~"payments-api.*"}[5m]))
+  / sum by (pod) (kube_pod_container_resource_requests{namespace="payments", pod=~"payments-api.*", resource="cpu"})
+
+# 2 · per-pod RPS — the work arriving
+sum by (pod) (rate(http_server_requests_seconds_count{namespace="payments", service="payments-api"}[5m]))
+
+# 3 · busy-thread ratio — the capacity being consumed
+tomcat_threads_busy_threads{namespace="payments", pod=~"payments-api.*"}
+  / tomcat_threads_config_max_threads{namespace="payments", pod=~"payments-api.*"}
+
+# 4 · p95 latency — the user experience (the one you protect)
+histogram_quantile(0.95, sum by (le) (rate(http_server_requests_seconds_bucket{namespace="payments", service="payments-api"}[5m])))
 ```
 
-(The four queries are this page's Observe blocks — stack them in one Grafana panel with a shared time axis.)
+Four units — fraction, rps, ratio, seconds — don't share a y-axis, so don't fight it: four stacked panels in one Grafana dashboard row, with the shared crosshair on (Dashboard settings → Graph tooltip → Shared crosshair). That gives you the aligned time axis that answers the only question here: which line bends first.
 
 And one meta-alert that catches wrong-signal choices *after* the fact — desired-replica churn:
 

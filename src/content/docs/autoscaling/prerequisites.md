@@ -36,7 +36,7 @@ kubectl get deployment payments-api -n payments \
 
 ```console
 $ kubectl get deployment payments-api -n payments -o jsonpath='{.spec.template.spec.containers[*].resources}'
-{"limits":{"memory":"768Mi"},"requests":{"cpu":"250m","memory":"512Mi"}}
+{"limits":{"memory":"1Gi"},"requests":{"cpu":"250m","memory":"512Mi"}}
 ```
 
 You want to see a `requests` block with **both** `cpu` and `memory`, on **every** container — one request-less sidecar blinds the HPA (`FailedGetResourceMetric: missing request for cpu`). If the output is `{}` or missing `cpu`, stop here: [requests and limits knobs](/tuning/requests-limits-knobs/) explains the fields, and the fix is a chart change, not a kubectl patch.
@@ -176,7 +176,7 @@ requests.cpu     2500m   8
 requests.memory  5Gi     16Gi
 ```
 
-Read it: `Hard` minus `Used` is the room your scale-up has. Divide by one pod's requests to know how many more pods fit before the quota — that number caps your effective maxReplicas no matter what the HPA says. And if you plan queue-driven scaling — is KEDA even installed?
+Read it: `Hard` minus `Used` is the room your scale-up has. Divide by one pod's requests to know how many more pods fit before the quota — that number caps your effective maxReplicas no matter what the HPA says. And if you plan queue-driven scaling — is KEDA even installed? Its CRDs are the fingerprint (a **CRD** — CustomResourceDefinition — is how an add-on like KEDA teaches the cluster a new object type; no CRD, no `ScaledObject`s):
 
 ```bash
 kubectl get crd scaledobjects.keda.sh

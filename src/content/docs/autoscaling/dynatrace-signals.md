@@ -105,6 +105,12 @@ spec:
   maxReplicaCount: 16              # changes nothing about the capacity math
   pollingInterval: 60              # slower than in-cluster polling on purpose: every poll
                                    # is a metered API call against org-wide rate limits
+  fallback:                        # when KEDA can't read the tenant (WAN down, token
+    failureThreshold: 3            # expired, rate-limited): after 3 failed polls, hold
+    replicas: 5                    # THIS count. Pick your steady-state pod count from the
+                                   # state table — without this block KEDA freezes at the
+                                   # current count, and "current" at 2 a.m. is a trough
+                                   # count that the morning ramp will then hit blind
   triggers:
     - type: dynatrace
       metadata:
@@ -160,7 +166,7 @@ Whichever path drives, *the other keeps its job*: Dynatrace stays your observabi
 | ScaledObject READY but metric always 0 / `<unknown>` | metricSelector matches nothing (name/dimension drift) | test the selector in the tenant's metric browser first; [runbook §external metrics](/troubleshooting/hpa-not-scaling/) |
 | Intermittent scaler errors at busy hours | org-wide API rate limit — someone's dashboard wall shares your bucket | raise pollingInterval; ask the admin for limits headroom |
 | Everything correct, still 401/404 | SaaS vs Managed URL shape (`…live.dynatrace.com` vs `…/e/<env-id>`) | the TriggerAuthentication comment above |
-| Scaling froze during a network incident | WAN path down — Path B's structural trade | `fallback` replicas ([KEDA page](/architectures/keda-autoscaling/)); consider Path A for that workload |
+| Scaling froze during a network incident | WAN path down — Path B's structural trade | the `fallback` block above ([full mechanics](/architectures/keda-autoscaling/)); consider Path A for that workload |
 
 ## Meta-monitoring
 

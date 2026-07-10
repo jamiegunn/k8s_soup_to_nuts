@@ -97,7 +97,11 @@ spec:
               cpu: 250m                    # MEASURED (sizing walkthrough) — the HPA's
               memory: 512Mi                # percentage math is built on this number
             limits:
-              memory: 768Mi                # heap 60% + non-heap budget (JVM page's split)
+              memory: 1Gi                  # MaxRAMPercentage 60% → heap ~614Mi, leaving
+                                           # ~410Mi for 200 thread stacks (~200Mi!) +
+                                           # metaspace + buffers — the JVM page's split
+                                           # math, applied. A 768Mi limit here would leave
+                                           # ~307Mi non-heap: an OOMKill lottery at full threads
           lifecycle:
             preStop:
               exec:
@@ -170,9 +174,14 @@ spring:
     hikari:
       maximum-pool-size: 10   # THE OTHER HALF OF maxReplicas. Raising this without
                               # re-running the ceiling math is how ORA-00018 happens.
-      minimum-idle: 10        # fixed-size pool: fail at startup, not at peak. The trade:
-                              # idle sessions held at trough vs no pool-growth latency
-                              # exactly when load arrives. For a hard-budget Oracle, fixed wins.
+      minimum-idle: 10        # fixed-size pool: all sessions open at startup, none grown
+                              # at peak. The trade: idle sessions held at trough vs no
+                              # pool-growth latency exactly when load arrives. For a
+                              # hard-budget Oracle, fixed wins.
+      initialization-fail-timeout: 1  # Hikari's default, stated so nobody "cleans it up":
+                              # pool init must prove ONE real connection or the app fails
+                              # at startup — that's what makes fail-at-startup true.
+                              # Readiness then keeps an Oracle-less pod out of the Service.
       connection-timeout: 3000  # threads queue max 3s for a connection, then error —
                                 # fail fast beats thread-pile-up when the budget is hit
 ```

@@ -22,7 +22,7 @@ The example is `payments-api` in namespace `payments` — substitute your names 
 
 Each is one command. Any failure → stop, follow the link, come back.
 
-**1. Requests exist.** The HPA's percentage math is built on your CPU request — no request, no autoscaling ([why](/autoscaling/prerequisites/#1-your-pods-declare-resource-requests)):
+**1. Requests exist.** A **request** is the slice of a node reserved for your pod, used or not; the HPA's percentage math is built on your CPU request — no request, no autoscaling ([why](/autoscaling/prerequisites/#1-your-pods-declare-resource-requests)):
 
 ```bash
 kubectl get deployment payments-api -n payments \
@@ -56,10 +56,12 @@ $ kubectl get deployment payments-api -n payments -o jsonpath='...'
 /actuator/health/readiness
 ```
 
+Empty output → no readiness probe → [#3](/autoscaling/prerequisites/#3-readiness-and-liveness-probes-exist--and-are-honest), stop.
+
 **4. The 60-second safety screen.** More copies of an unsafe app is a bug factory, not capacity. Two questions: does anything run on a schedule inside the app, and do user sessions live in the JVM?
 
 ```bash
-grep -rn "@Scheduled\|@EnableScheduling" src/main/java/ | head -3
+grep -rn "@Scheduled\|@EnableScheduling" src/ | head -3
 ```
 
 Any hit — or a "yes" on in-JVM sessions — → [the safety audit](/autoscaling/classify-your-app/#part-1--can-n-copies-safely-coexist) first, stop. (A scaled `@Scheduled` job fires once *per replica*; the nightly report goes out four times.)
@@ -99,7 +101,8 @@ spec:
         target:
           type: Utilization
           averageUtilization: {{ .Values.autoscaling.targetCPU }}
-  # No behavior block: the defaults (scale up fast, scale down after a 300s window)
+  # No behavior block (the HPA's optional rate-limiting knobs): the defaults
+  # (scale up fast, scale down after a 300s window)
   # are the conservative choice — that 300s window is most of what makes this recipe
   # safe for a slow-warming JVM. The trade: you run over-provisioned for ~5min after
   # each peak. Accept it today; tune it later with /autoscaling/spring-boot-scaling/.
@@ -109,8 +112,11 @@ spec:
 ```yaml
 # values.yaml
 autoscaling:
-  enabled: true
-  minReplicas: 3    # = today's replicaCount. NEVER lower on day one: floor-at-today
+  enabled: false    # stays false in the file — the upgrade below is the ONE deliberate
+                    # act that flips it (and later a reviewed act: the golden values in
+                    # /autoscaling/capacity-and-governance/ default off for the same reason)
+  minReplicas: 3    # = today's replicaCount — but never below 2; one pod is an outage
+                    # with extra steps. NEVER lower on day one: floor-at-today
                     # means enabling the HPA cannot reduce your capacity, so the worst
                     # case of this whole exercise is "nothing changes". The trade: no
                     # scale-in savings yet — that's deliberate; earn them later with a
@@ -127,13 +133,14 @@ autoscaling:
 ```
 
 :::tip[Good citizen]
-`maxReplicas: 6` is a claim on shared capacity and shared Oracle sessions, even as a placeholder. Today×2 is acceptable *because* it's modest; ×10 "to be safe" would be hoarding with a TODO attached. The ledger conversation comes [later](/autoscaling/capacity-and-governance/) — keep the placeholder honest so that conversation is easy.
+`maxReplicas: 6` is a claim on shared capacity and shared Oracle sessions, even as a placeholder. Sixty seconds of arithmetic before you ship it: `6 × maximum-pool-size` (your `application.yaml`) against the Oracle session budget for your service account — same shape for MQ handles or Redis clients. Under budget → proceed. Can't *name* the budget → keep today×2 and open the ask with the DBA today ([the pool math](/autoscaling/rest-api-oracle/#the-pool-math) is the full version). Today×2 is acceptable *because* it's modest; ×10 "to be safe" would be hoarding with a TODO attached. The ledger conversation comes [later](/autoscaling/capacity-and-governance/) — keep the placeholder honest so that conversation is easy.
 :::
 
-Ship it and watch it wake up:
+Ship it the way this chart always ships — same pipeline, same value files. Two Helm traps guard this exact moment: a bare `helm upgrade` with only `--set` silently resets every override your release normally carries (image tag included), and `--reuse-values` silently ignores the values block you just added to the chart ([the foot-gun](/helm/values-and-overrides/)). Upgrading by hand, `--reset-then-reuse-values` (Helm ≥ 3.14) threads the needle — new chart defaults, kept overrides:
 
 ```bash
-helm upgrade payments charts/payments-api -n payments --set autoscaling.enabled=true
+helm upgrade payments charts/payments-api -n payments \
+  --reset-then-reuse-values --set autoscaling.enabled=true
 kubectl get hpa -n payments -w
 ```
 
@@ -157,6 +164,8 @@ Two minutes that upgrade this from "a thing we enabled" to "a thing we can judge
 ```promql
 histogram_quantile(0.95, sum by (le) (rate(http_server_requests_seconds_bucket{namespace="payments", service="payments-api"}[1h])))
 ```
+
+(What each piece of that query does is [taught once, on the pipeline page](/autoscaling/getting-the-metrics/#reading-a-percentile-taught-once) — you don't need it today.)
 
 Write "PROVISIONAL: keep p95 ≤ <that number>" next to the values file. This sentence is the seed the [SLO page](/autoscaling/slos-for-scaling/) grows into a real objective — and the difference, starting today, between a target and a guess.
 

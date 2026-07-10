@@ -33,7 +33,7 @@ flowchart LR
     W --> F["Actually at capacity"]
 ```
 
-Two gaps matter. **Decision → readiness (~45 s)**: the HPA can't help faster than this, so your scaling threshold needs enough headroom that load can keep growing for 45+ seconds without breaching the SLO — that's the [knob-bridge math](/autoscaling/slos-for-scaling/#from-slo-to-knob-settings) in concrete form. **Readiness → capacity (~45 more)**: the pod is taking full traffic while the pool is empty and the JIT is interpreting — it *serves*, but slowly. Each segment has a knob: context time responds to lazy-init and [startup levers](#startup-levers-one-paragraph); pool-fill responds to pool warmup config; JIT responds only to traffic and time.
+The timestamps are one measured service, not constants — image size, CDS, lazy-init, and CPU limits (all below) move every segment, so measure yours once (pod-Ready lag via `kubectl get pods -w`, ready-to-capacity via the cold-pod alert at the bottom of this page) and re-label the diagram. The two *gaps* matter regardless. **Decision → readiness (~45 s)**: the HPA can't help faster than this, so your scaling threshold needs enough headroom that load can keep growing for 45+ seconds without breaching the SLO — that's the [knob-bridge math](/autoscaling/slos-for-scaling/#from-slo-to-knob-settings) in concrete form. **Readiness → capacity (~45 more)**: the pod is taking full traffic while the pool is empty and the JIT is interpreting — it *serves*, but slowly. Each segment has a knob: context time responds to lazy-init and [startup levers](#startup-levers-one-paragraph); pool-fill responds to pool warmup config; JIT responds only to traffic and time.
 
 ## Probes as scaling infrastructure
 

@@ -207,9 +207,26 @@ spring:
         prefetch: 10                  # the blast-radius decision, made deliberately
 ```
 
+One trap nested inside the handshake: Spring AMQP's listener container stops waiting for in-flight handlers after its **own** `shutdownTimeout` — **five seconds by default**, and it isn't an `application.yaml` property. Left alone it quietly overrides the 30 s you just configured: the container abandons a 20-second handler at ~5 s and its message requeues anyway. Set it via a container customizer so the three timeouts nest — container `shutdownTimeout` ≤ `timeout-per-shutdown-phase` ≤ `terminationGracePeriodSeconds` − preStop:
+
+```java
+@Bean
+ContainerCustomizer<SimpleMessageListenerContainer> shutdownAlignment() {
+    return container -> container.setShutdownTimeout(30_000L);  // ms — match the
+}                                                                // lifecycle phase above
+```
+
 :::danger[Requeue means at-least-once — idempotency is the precondition]
 Everything above *minimizes* redelivery; nothing eliminates it. A crashed pod acks nothing; a slow handler overruns the grace. Redelivery is a *when*, and autoscaling raises its frequency from "rare" to "routine." Handlers must be idempotent — dedup on a business key, upsert instead of insert, check-before-send on external effects — **before** the ScaledObject merges. This is [prerequisite #5](/autoscaling/prerequisites/#5-consumers-message-handling-is-idempotent) and a blocking item on [the review gate](/autoscaling/capacity-and-governance/). If ordering matters too, revisit your [classification card](/autoscaling/classify-your-app/#exclusive-consumers-and-ordering-parallelism-capped-by-design) — scale-in requeueing reorders by construction.
 :::
+
+Proving idempotency, Spring-side — the five answers a reviewer should be able to point at in the PR:
+
+1. **Ack timing.** Where does the ack happen relative to the side effect? (`AUTO` acks after the listener method returns; `MANUAL` is yours to place — either way: side effect, *then* ack, never the reverse.)
+2. **Transaction boundary.** The business write and the "processed" marker commit together — or the write itself is an upsert on a business key. A crash between "did the work" and "recorded the work" must be re-runnable.
+3. **Dedup store.** Which table or key answers "have I seen message X?" — and it's shared, not in-JVM ([the state audit](/autoscaling/classify-your-app/#in-memory-state-scale-out-fragments-it-scale-in-deletes-it) already outlawed the `ConcurrentHashMap`).
+4. **External effects.** Check-before-send — or an idempotency key the downstream honors — on anything that emails, charges, or calls out.
+5. **The drill.** Kill a pod mid-burst in pre-prod (`kubectl delete pod` during a producer run) and assert zero lost, zero double-processed — the redelivery test that makes the four answers above real. Poison messages get a broker-side max-redelivery/DLQ policy, not a hope.
 
 ## Scale-to-zero, honestly
 

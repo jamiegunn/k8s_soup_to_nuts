@@ -97,16 +97,21 @@ Full version with the reasoning: [governance](/autoscaling/capacity-and-governan
 ## Top-5 PromQL
 
 ```promql
-# 1 — p95 (the shape for any percentile)
+# 1 — p95 (the shape for any percentile). Answers: what are my unluckiest 5% seeing?
+#     Worsens exactly at scale-out moments → cold pods (/autoscaling/spring-boot-scaling/)
 histogram_quantile(0.95, sum by (le) (rate(http_server_requests_seconds_bucket{service="payments-api"}[5m])))
-# 2 — busy-thread ratio (the wait-bound scaling signal)
+# 2 — busy-thread ratio (the wait-bound scaling signal). Sustained > 0.75 → scaling
+#     should already be happening; pinned at 1.0 → already queueing, scaling is late
 avg(tomcat_threads_busy_threads / tomcat_threads_config_max_threads)
-# 3 — HPA pinned at max (the ceiling is load-bearing)
+# 3 — HPA pinned at max (returns 1 while pinned). 30+ min of 1 → capacity
+#     conversation with the ceiling's owner, NOT a bigger number in YAML
 kube_horizontalpodautoscaler_status_current_replicas >= bool on(horizontalpodautoscaler)
   kube_horizontalpodautoscaler_spec_max_replicas
-# 4 — flapping detector (wrong signal or bad windows)
+# 4 — flapping detector. > 6 desired-count changes/hour → wrong signal or bad
+#     windows: run the signal audit (/autoscaling/signals-catalog/)
 changes(kube_horizontalpodautoscaler_status_desired_replicas[1h]) > 6
-# 5 — hoarding index (reserved vs used — the citizenship number)
+# 5 — hoarding index (reserved vs used — the citizenship number). ~0.5 at steady
+#     state = healthy burst headroom; 0.85+ sustained = the true-up will ask
 1 - sum(rate(container_cpu_usage_seconds_total{namespace="payments"}[1h]))
     / sum(kube_pod_container_resource_requests{namespace="payments", resource="cpu"})
 ```

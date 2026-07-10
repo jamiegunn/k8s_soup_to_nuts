@@ -72,6 +72,32 @@ worker:
 
 Each Deployment template carries its own `{{- if not … }}` replicas guard ([audit item 1](/autoscaling/classify-your-app/#part-3--is-the-chart-ready)), and the two scaler templates render independently — you can enable web autoscaling a sprint before the worker's.
 
+And the template that consumes `targetRPSPerPod` — a [prometheus-scaler ScaledObject](/autoscaling/getting-the-metrics/#5-the-fork-adapter-or-keda), with one semantic worth reading twice: the query measures the *total* load arriving, the threshold is the *per-pod* target, and the division between them is the autoscaler's job (that's what the scaler's default `AverageValue` metric type means — desired pods = total ÷ threshold):
+
+```yaml
+# templates/web-scaledobject.yaml
+{{- if .Values.web.autoscaling.enabled }}
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: catalog-web
+spec:
+  scaleTargetRef:
+    name: catalog-web
+  minReplicaCount: {{ .Values.web.autoscaling.minReplicas }}
+  maxReplicaCount: {{ .Values.web.autoscaling.maxReplicas }}
+  triggers:
+    - type: prometheus
+      metadata:
+        serverAddress: http://prometheus-operated.monitoring.svc:9090
+        # TOTAL rps arriving at the service — all pods, all endpoints
+        query: |
+          sum(rate(http_server_requests_seconds_count{namespace="payments", service="catalog-web"}[2m]))
+        threshold: "{{ .Values.web.autoscaling.targetRPSPerPod }}"   # rps per pod:
+                                   # desired = ceil(total ÷ 45) — at 450 rps, 10 pods
+{{- end }}
+```
+
 ## Cache stampede: scale-out as a self-inflicted attack
 
 The story, in plain sequence: traffic climbs → HPA adds 4 `catalog-web` pods → each arrives with an *empty local view* of the world and a cold path to Valkey → for the same hot keys, all 4 miss simultaneously → all 4 run the same expensive Oracle query at the same moment. Multiply by the hot-key count and your scale-out just delivered a coordinated read storm to the database — the HPA responding to load by *manufacturing* load. Scale-in has a mirror image: pods that held popular cache entries vanish, and the survivors' next requests re-miss in a burst.
@@ -167,7 +193,7 @@ and on()
 
 ## Take this with you
 
-The starter kit is the values shape above plus one scaler template per personality: the web HPA is [the Oracle page's template](/autoscaling/rest-api-oracle/#the-build) with `web.autoscaling.*` values (or the [prometheus-scaler ScaledObject](/autoscaling/getting-the-metrics/#5-the-fork-adapter-or-keda) if you scale on RPS/threads); the worker ScaledObject is [the consumers page's](/autoscaling/messaging-consumers/) with `worker.scaling.*` values. Adapt the derivation comments first, the numbers second — and do the connection math across *both* tiers before either ceiling moves.
+The starter kit is the values shape above plus one scaler template per personality: the web scaler is the RPS ScaledObject above (or [the Oracle page's CPU HPA template](/autoscaling/rest-api-oracle/#the-build) if your web tier measured CPU-bound, or [the busy-threads variant](/autoscaling/getting-the-metrics/#5-the-fork-adapter-or-keda) if request cost varies too much for RPS); the worker ScaledObject is [the consumers page's](/autoscaling/messaging-consumers/) with `worker.scaling.*` values. Adapt the derivation comments first, the numbers second — and do the connection math across *both* tiers before either ceiling moves.
 
 ## Where next
 

@@ -202,11 +202,11 @@ The design intent: every `<…>` is a question the team must answer, and the com
 
 ## The review checklist
 
-The gate, as a copyable artifact — [the prerequisites checklist](/autoscaling/prerequisites/) grown teeth. Paste into the PR; every unchecked box is a conversation, not a rejection:
+The gate, as a copyable artifact — [the prerequisites checklist](/autoscaling/prerequisites/) grown teeth. Paste into the PR; every unchecked box is a conversation, not a rejection — except the four marked ⛔, which block the merge until green (a scaler multiplying a non-idempotent consumer, or an underived ceiling, isn't a follow-up ticket — it's the incident):
 
 ```text
 AUTOSCALING REVIEW — <service> <date>       reviewer: <you>
-[ ] Prerequisites all green (the 10-item checklist, run against THIS deployment)
+[ ] ⛔ Prerequisites all green (the 10-item checklist, run against THIS deployment)
 [ ] Classification card attached: safety audit PASSED, archetype named,
     chart grade Silver+  (/autoscaling/classify-your-app/)
 [ ] SLO stated, level declared [user-impact | proxy-PROVISIONAL | system-objective],
@@ -215,14 +215,16 @@ AUTOSCALING REVIEW — <service> <date>       reviewer: <you>
 [ ] Metrics pipeline for that signal exists and is alerted on
     (/autoscaling/getting-the-metrics/ meta-alerts)
 [ ] State table attached; min/max/target each carry a derivation comment
-[ ] External ceiling math shown, ceiling OWNER named (DBA / MQ admin / Redis owner)
-[ ] Consumers: idempotency confirmed in code review; grace-period arithmetic shown
+[ ] ⛔ External ceiling math shown, ceiling OWNER named (DBA / MQ admin / Redis owner)
+[ ] ⛔ Consumers: idempotency confirmed in code review; grace-period arithmetic shown
 [ ] Graceful shutdown verified UNDER LOAD (Lab-8-style drill, not asserted)
-[ ] Load test executed WITH the autoscaler enabled, pre-prod: scale-up, wall, scale-down
+[ ] ⛔ Load test executed WITH the autoscaler enabled, pre-prod: scale-up, wall, scale-down
 [ ] Scaling-health dashboard panels + alerts deployed (below)
 [ ] priorityClassName assigned and justified by SLO tier
 [ ] Ledger updated: this change's Σ(max × requests) delta fits the namespace quota
 ```
+
+(⛔ = merge-blocker. Everything else may merge with a dated follow-up and a named owner; a blocker can't.)
 
 ## Scaling-health observability
 
@@ -278,7 +280,11 @@ and on()
 
 ```promql
 # The slow-burn version: total funded claims trending toward allocatable —
-# Σ(desired × requests) per namespace vs cluster allocatable, reviewed monthly
+# Σ(desired × requests) per namespace vs cluster allocatable, reviewed monthly.
+# A SKETCH, knowingly: avg-request-per-namespace × Σdesired is only honest while a
+# namespace's pods are similarly sized. Mixed pod sizes need the per-workload join
+# (HPA → its target Deployment → that pod template's requests) — the ledger's own
+# table does that exactly; this query is the between-reviews trend line, not the ledger.
 sum by (namespace) (
   kube_horizontalpodautoscaler_status_desired_replicas
   * on(namespace) group_left() avg by (namespace) (kube_pod_container_resource_requests{resource="cpu"})

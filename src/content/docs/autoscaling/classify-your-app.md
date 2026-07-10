@@ -31,7 +31,7 @@ The HPA's one move is running more identical copies of your pod, all live at onc
 Check — from the repo root of the service:
 
 ```bash
-grep -rn "@Scheduled\|@EnableScheduling" src/main/java/
+grep -rn "@Scheduled\|@EnableScheduling" src/
 ```
 
 ```console
@@ -39,7 +39,7 @@ $ grep -rn "@Scheduled\|@EnableScheduling" src/main/java/
 src/main/java/com/corp/payments/reports/SettlementReport.java:24:    @Scheduled(cron = "0 0 2 * * *")
 ```
 
-Any hit is a blocker until handled. Three fixes, three trades:
+Any hit is a blocker until handled — and grep only sees your sources (`src/`, not `src/main/java/`, so Kotlin and config files count): scheduling can also arrive from a shared library or `spring.quartz.*` configuration, and a dependency that schedules poses the same question. Three fixes, three trades:
 
 | Fix | What you gain | What you pay |
 |---|---|---|
