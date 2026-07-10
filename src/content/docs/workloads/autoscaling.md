@@ -17,7 +17,7 @@ sidebar:
   order: 6
 ---
 
-Autoscaling is one of those features that works beautifully when the inputs are honest and becomes a chaos generator when they're not. The HPA is simple arithmetic on top of your resource requests — so most "autoscaling bugs" are actually requests bugs wearing a disguise.
+Autoscaling is one of those features that works beautifully when the inputs are honest and becomes a chaos generator when they're not. The HPA is simple arithmetic on top of your resource requests — so most "autoscaling bugs" are actually requests bugs wearing a disguise. This page is the mechanics; the decision layer built on top of it — which signal, SLO-derived thresholds, external ceilings, on-prem capacity governance — is the [Autoscaling Playbook](/autoscaling/overview/).
 
 ## HPA v2 in one example
 
@@ -157,6 +157,6 @@ An untested HPA is a guess. Before trusting it:
 3. Verify the *whole chain*: metrics appear → HPA computes sanely → new pods schedule (quota! see [ResourceQuotas](/workloads/resources-and-qos/)) → pods become Ready fast enough to matter.
 4. Then kill the load and confirm scale-down is calm, not a cliff.
 
-The failure you're hunting isn't "HPA didn't scale" — it's "HPA scaled, but new pods sat Pending on quota" or "pods took 90 seconds of [JVM warmup](/java/jvm-in-containers/) to become Ready, so scaling lagged the spike by two minutes." Both are invisible until you actually push load through the system.
+The failure you're hunting isn't "HPA didn't scale" — it's "HPA scaled, but new pods sat Pending on quota" or "pods took 90 seconds of [JVM warmup](/java/jvm-in-containers/) to become Ready, so scaling lagged the spike by two minutes." Both are invisible until you actually push load through the system. ([Lab 10](/labs/lab-10-autoscaling/) stages exactly these failures on a laptop cluster, on purpose.)
 
 Finally, size `maxReplicas` against reality, not optimism: it must fit inside your namespace quota *and* your downstream dependencies. An HPA that scales your API to 40 pods is just a machine for converting a traffic spike into a database connection-pool outage. Scale limits are a system property — set them where the weakest link is.

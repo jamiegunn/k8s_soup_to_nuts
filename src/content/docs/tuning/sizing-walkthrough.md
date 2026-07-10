@@ -219,7 +219,7 @@ livenessProbe:
 
 ## Phase 3 — HPA on top
 
-The knee was ~150 req/s per pod; we want scaling to kick in well before that. Target **70% of the 800m request = 560m**, which the Phase 1 data says corresponds to ~75 req/s per pod — half the knee. Comfortable.
+The knee was ~150 req/s per pod; we want scaling to kick in well before that. (This phase generalizes: when the ceiling is an external system rather than the knee — Oracle sessions, MQ handles — the same derivation runs against that budget; [the Oracle reference architecture](/autoscaling/rest-api-oracle/) is the worked example.) Target **70% of the 800m request = 560m**, which the Phase 1 data says corresponds to ~75 req/s per pod — half the knee. Comfortable.
 
 ```yaml
 apiVersion: autoscaling/v2

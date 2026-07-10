@@ -292,3 +292,8 @@ The recurring real-world compromise pattern is boring and effective: `exposure.i
 ## Running .NET too?
 
 Every capability on this page has a dotnet-monitor twin — live log levels, dumps over HTTP, the sidecar pattern that replaces the built-in-endpoint model. The mapping, endpoint by endpoint, is in [.NET Operational Endpoints](/dotnet/operational-endpoints/).
+
+
+## When these numbers start driving replica counts
+
+Everything Actuator exposes can become a scaling signal: busy Tomcat threads, HikariCP pressure, your own gauges. The pipeline from `/actuator/prometheus` to an HPA or KEDA decision — histograms, ServiceMonitors, custom metrics — is [How the Numbers Reach the Autoscaler](/autoscaling/getting-the-metrics/).

@@ -168,3 +168,6 @@ Your cluster almost certainly already has the standard "Kubernetes / Compute Res
 - What's the scrape interval and retention (how far back can we query)?
 - Can we get alerts routed to our channel (PrometheusRule CRs in our namespace, or a request process)?
 - Is there a per-namespace series/cardinality budget? (Metric labels with unbounded values — user IDs, URLs — will blow it.)
+
+
+One consumer of this whole stack earns its own map: **autoscaling**. The path from these scrapes to a replica-count decision — metrics-server vs Prometheus lanes, adapter vs KEDA, latency histograms, custom Micrometer metrics — is [How the Numbers Reach the Autoscaler](/autoscaling/getting-the-metrics/).

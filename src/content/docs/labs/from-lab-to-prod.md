@@ -13,7 +13,7 @@ keywords:
   - first week on the production cluster
   - which lab skills transfer to work
 sidebar:
-  order: 12
+  order: 13
 ---
 
 You finished the labs. On your laptop there is a real cluster, a chart you wrote from an empty directory, an image you built and streamed into containerd by hand, and a service answering in a real browser. Every one of those moves was correct — and on Monday, on the org's cluster, you will be allowed to make almost none of them.

@@ -171,7 +171,7 @@ If your cluster runs VPA in recommendation mode, `kubectl describe vpa <name>` h
 
 ## Cheap wins, ranked by effort-to-savings
 
-**1. HPA minReplicas honesty.** A one-line change. If desired replicas sits at the floor all week, lower the floor and let the [autoscaler](/workloads/autoscaling/) do its job. Keep `minReplicas: 2` for HA; question anything above that.
+**1. HPA minReplicas honesty.** A one-line change. If desired replicas sits at the floor all week, lower the floor and let the [autoscaler](/workloads/autoscaling/) do its job. Keep `minReplicas: 2` for HA; question anything above that. On a fixed shared pool this is a governance norm, not just thrift — [the capacity ledger and quarterly true-up](/autoscaling/capacity-and-governance/) track the floors too.
 
 **2. Dev environments sleep at night.** A CronJob pair that scales dev Deployments to zero at 20:00 and back up at 07:00 weekdays reclaims ~70% of dev request-hours. Complete, working version:
 

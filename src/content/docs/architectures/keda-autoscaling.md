@@ -19,7 +19,7 @@ sidebar:
 
 The [HPA baseline](/workloads/autoscaling/) scales on CPU, and for request/response services that works because CPU tracks load almost instantly. For a queue consumer it fails in the worst possible way: **CPU is a lagging proxy for backlog**. A consumer that is starved — blocked on a slow downstream, rebalancing, or simply outnumbered by producers — shows *low* CPU while the queue explodes. The HPA looks at 30% utilization, concludes everything is fine, and scales you *down* into the incident. The signal you need is the queue itself: lag, depth, oldest-message age. That is what KEDA gives you.
 
-This is the build article that ties the site's messaging stack ([Message Queues on Kubernetes](/stateful/message-queues/)) to its autoscaling story: one consumer Deployment, scaled on Kafka consumer-group lag as the primary path, with RabbitMQ and IBM MQ scaler variants as drop-in alternates.
+This is the build article that ties the site's messaging stack ([Message Queues on Kubernetes](/stateful/message-queues/)) to its autoscaling story: one consumer Deployment, scaled on Kafka consumer-group lag as the primary path, with RabbitMQ and IBM MQ scaler variants as drop-in alternates. The decision layer above this build — trigger numbers derived from freshness SLOs, prefetch and safe scale-in for Spring listeners, broker-side ceilings — is [Messaging Consumers](/autoscaling/messaging-consumers/); driving scaling from Dynatrace instead is [Dynatrace as a Scaling Signal](/autoscaling/dynatrace-signals/).
 
 ## How KEDA actually works (and the HPA it owns)
 
@@ -402,7 +402,7 @@ Lag 5000 / lagThreshold 100 asks for 12 (capped at max); watch it step up under 
 
 ## 9. Alerts and sizing
 
-Three alerts cover the failure surface; wiring and routing per [Alerting](/observability/alerting/). PromQL sketches (lag from your broker's exporter, KEDA health from the operator's metrics, which most platforms scrape into the shared Prometheus):
+Three alerts cover the failure surface; wiring and routing per [Alerting](/observability/alerting/), and the namespace-level scaling-health dashboard these feed into is in [Capacity and Governance](/autoscaling/capacity-and-governance/). PromQL sketches (lag from your broker's exporter, KEDA health from the operator's metrics, which most platforms scrape into the shared Prometheus):
 
 ```promql
 # Backlog absolute — the SLO breach

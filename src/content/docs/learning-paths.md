@@ -154,6 +154,23 @@ This track has its own section with a full day-by-day plan; the short version:
 
 **You're done when you can:** score ≥10/13 on the drills within par, and your second [killer.sh](https://killer.sh/) session comes back comfortably above passing.
 
+## 8. Autoscaling your service
+
+**Who it's for:** your team runs Spring Boot services on the shared cluster and wants them to scale themselves — safely, with numbers you can defend in review.
+**Time:** half a day of reading; the measurement and load test add a day spread over two weeks.
+
+1. [Autoscaling, Explained From Zero](/autoscaling/overview/) — the feedback loop, the fixed-pool reality, and the maturity ladder to locate yourself on.
+2. [The No-Assumptions Checklist](/autoscaling/prerequisites/) — ten preconditions, each with a proof command; run it against your real deployment.
+3. [Rationalize the App and the Chart](/autoscaling/classify-your-app/) — is it even safe to run twice? Which archetype is it? Is the chart ready?
+4. [The 15-Minute Conservative HPA](/autoscaling/quick-start/) — the first safe win, plus the watch-it-for-a-week queries.
+5. [Start With the User: SLOs](/autoscaling/slos-for-scaling/) — turn user behavior into the thresholds' reason for existing.
+6. [Know Your Traffic](/autoscaling/load-profile/) — measure steady state, low state, and peak; derive the floor and ceiling.
+7. Your archetype's reference architecture: [Oracle-backed API](/autoscaling/rest-api-oracle/), [MQ/RabbitMQ consumers](/autoscaling/messaging-consumers/), or [web + worker](/autoscaling/web-worker-and-caches/).
+8. [Capacity and Governance](/autoscaling/capacity-and-governance/) — the review checklist your PR will face, and the ledger your ceiling joins.
+9. [Lab 10](/labs/lab-10-autoscaling/) — feel all of it on a laptop: HPA under load, the capacity wall, KEDA to zero and back.
+
+**You're done when you can:** show a derivation comment for every number in your autoscaling values, name the external ceiling and its owner, and demo a load test where scale-up, the ceiling, and scale-down all behaved as the math predicted.
+
 ## Not on a track?
 
 - Hunting a specific error string → [Error Message Index](/troubleshooting/error-index/)

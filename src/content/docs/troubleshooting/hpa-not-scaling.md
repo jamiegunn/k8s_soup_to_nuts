@@ -138,7 +138,7 @@ With `41%/70%` and 4 replicas: `ceil(4 × 41 / 70)` = `ceil(2.34)` = 3, but `min
 
 ## `ScalingLimited True` — you hit a bound
 
-**Symptom:** `describe` shows `ScalingLimited True`, and REPLICAS in `kubectl get hpa` equals MAXPODS (or MINPODS). The HPA is working perfectly; it's clamped.
+**Symptom:** `describe` shows `ScalingLimited True`, and REPLICAS in `kubectl get hpa` equals MAXPODS (or MINPODS). The HPA is working perfectly; it's clamped. If it pins at max for half an hour on a fixed on-prem pool, that's a budget question, not a YAML question — [Capacity and Governance](/autoscaling/capacity-and-governance/) is that conversation.
 
 ```console
 Conditions:
@@ -223,7 +223,7 @@ flowchart TD
 
 ## Escalation boundary — what's yours vs the platform's
 
-The metrics pipeline is split down the middle, and knowing which side owns the symptom is half the fix:
+The metrics pipeline is split down the middle, and knowing which side owns the symptom is half the fix (and if the HPA *works* but users still hurt, you may have scaled the wrong number — [the signals catalog](/autoscaling/signals-catalog/) is that diagnosis):
 
 | PLATFORM owns (you can't fix from your namespace) | YOU own |
 |---|---|

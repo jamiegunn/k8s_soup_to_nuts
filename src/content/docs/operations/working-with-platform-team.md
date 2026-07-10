@@ -164,3 +164,5 @@ The constraint structure — quotas, RBAC scoping, GitOps enforcement — reads 
 - Ask for the debugging RBAC bundle once, in daylight, as a package.
 - During incidents: impact and ask first, elimination work shown, one thread, no workarounds.
 - The relationship is built in daylight — shared runbooks, game days, clean asks — and spent at 2 AM.
+
+One recurring conversation deserves its own protocol: autoscaling capacity on a fixed pool — who funds `maxReplicas`, what teams submit, and the quarterly true-up — is [Capacity and Governance](/autoscaling/capacity-and-governance/).

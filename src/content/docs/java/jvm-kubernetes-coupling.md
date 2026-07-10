@@ -203,7 +203,7 @@ peak" becomes an outage generator. Worse is the HPA feedback loop: warmup CPU
 burn looks like load, so the HPA sees the cold pods running hot and scales
 out *again*, adding more cold pods — the autoscaler amplifies the very signal
 warmup creates. [Autoscaling](/workloads/autoscaling/) covers stabilization
-windows and better signals than raw CPU.
+windows and better signals than raw CPU. The Spring-specific handling — probes as scaling infrastructure, behavior windows sized to warmup, and why memory can never be the signal — is [Spring Boot Under an HPA](/autoscaling/spring-boot-scaling/) and the [heap-delta catalog entry](/autoscaling/signals-catalog/).
 
 Four technologies attack the cold-start coupling, in ascending ambition:
 

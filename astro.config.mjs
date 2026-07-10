@@ -125,7 +125,8 @@ export default defineConfig({
 				},
 				// Section order follows the learning progression: workloads (what you
 				// run) → networking (how traffic reaches it) → state → the controller
-				// machinery → observing → tuning → operating → packaging (Helm) →
+				// machinery → observing → tuning → autoscaling (the feedback loop on
+				// top of tuned resources) → operating → packaging (Helm) →
 				// pipelines (CI) → runtime-specific (Java/.NET) → applied builds.
 				// Runtime sections sit after the platform core deliberately: they're
 				// specialty tracks, not prerequisites.
@@ -172,6 +173,10 @@ export default defineConfig({
 				{
 					label: 'Tuning: Knobs & Levers',
 					items: [{ autogenerate: { directory: 'tuning' } }],
+				},
+				{
+					label: 'Autoscaling Playbook',
+					items: [{ autogenerate: { directory: 'autoscaling' } }],
 				},
 				{
 					label: 'Day-2 Operations',
