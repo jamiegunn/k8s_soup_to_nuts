@@ -30,12 +30,12 @@ flowchart LR
         FORK --> KP["KEDA prometheus scaler → HPA"]
     end
     subgraph laneC["Lane C — systems outside the cluster"]
-        KEDA["KEDA operator<br/><i>in-cluster</i>"] -->|"polls over the network,<br/>with credentials"| EXT["IBM MQ REST · RabbitMQ mgmt API<br/>· Redis · Dynatrace"]
-        KEDA --> HPA3["HPA"]
+        POLL["KEDA operator<br/><i>or</i> broker exporter<br/><i>in-cluster</i>"] -->|"polls over the network,<br/>with credentials"| EXT["IBM MQ · RabbitMQ mgmt API<br/>· Redis · Dynatrace"]
+        POLL --> HPA3["HPA<br/><i>(exporter route: via<br/>Prometheus + Lane B's fork)</i>"]
     end
 ```
 
-Ownership, lane by lane: A is nobody's work. In B, the app config and the ServiceMonitor are **yours** (they ship in your chart); Prometheus itself and the adapter/KEDA installation are the **platform's**. In C, the ScaledObject and credentials Secret are yours; KEDA's existence and the firewall path to the broker are the platform's.
+Ownership, lane by lane: A is nobody's work. In B, the app config and the ServiceMonitor are **yours** (they ship in your chart); Prometheus itself and the adapter/KEDA installation are the **platform's**. In C, the ScaledObject (or the exporter deployment) and its credentials Secret are yours; the mechanism's existence and the firewall path to the broker are the platform's.
 
 ## Lane A — CPU
 
@@ -137,11 +137,90 @@ up{namespace="payments", service="payments-api"}
 
 ### 5. The fork: adapter or KEDA
 
-Prometheus now has your number. Two ways to put it in front of the HPA:
+Prometheus now has your number — and the HPA still can't see it, because the HPA speaks only the Kubernetes metrics APIs. Two bridges exist, and **assume neither is installed until you've checked**: each is a platform-owned add-on, and on this platform each is a *named ask*, not a given. Discover what your cluster already has:
 
-**prometheus-adapter** teaches the HPA's *native* custom-metrics API to answer from Prometheus. One paragraph of honesty: it's a platform-installed component with a config file mapping PromQL to metric names, that mapping is famously fiddly, and many shops skip it entirely now — if your platform runs it, [the runbook's custom-metrics section](/troubleshooting/hpa-not-scaling/) covers debugging it.
+```bash
+kubectl get apiservice v1beta1.custom.metrics.k8s.io v1beta1.external.metrics.k8s.io
+kubectl get crd scaledobjects.keda.sh
+```
 
-**KEDA's `prometheus` scaler** is the usual choice here: your ScaledObject carries the PromQL itself — no adapter config, no translation layer, and the query is reviewable in your own PR:
+```console
+$ kubectl get apiservice v1beta1.custom.metrics.k8s.io v1beta1.external.metrics.k8s.io
+Error from server (NotFound): apiservices.apiregistration.k8s.io "v1beta1.custom.metrics.k8s.io" not found
+Error from server (NotFound): apiservices.apiregistration.k8s.io "v1beta1.external.metrics.k8s.io" not found
+$ kubectl get crd scaledobjects.keda.sh
+Error from server (NotFound): customresourcedefinitions.apiextensions.k8s.io "scaledobjects.keda.sh" not found
+```
+
+Read it: whichever `SERVICE` answers `custom.metrics.k8s.io` / `external.metrics.k8s.io` is your bridge (prometheus-adapter can serve both APIs; KEDA serves `external`). All-`NotFound`, as here, means the ask hasn't been made yet — the recipes in this section show both tracks precisely so that whichever ask your platform grants, your side is ready.
+
+#### Track one — prometheus-adapter, the HPA's native path
+
+**prometheus-adapter** teaches the HPA's own custom/external-metrics APIs to answer from Prometheus. Its config is a platform-owned mapping file with a deserved reputation for fiddliness — so use the discipline that keeps both sides sane: *you* publish a **recording rule** (simple, named, shipped in your chart), and the *platform* installs one generic adapter rule per signal family, once, for every team.
+
+Your half — a PrometheusRule that travels next to your ServiceMonitor:
+
+```yaml
+# templates/prometheusrule-scaling.yaml — the signal, precomputed and named
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: payments-api-scaling
+  labels:
+    release: monitoring              # same selector story as the ServiceMonitor
+spec:
+  groups:
+    - name: payments-api.scaling
+      rules:
+        - record: payments_api:tomcat_busy_ratio
+          expr: |
+            tomcat_threads_busy_threads{namespace="payments", pod=~"payments-api.*"}
+              / tomcat_threads_config_max_threads{namespace="payments", pod=~"payments-api.*"}
+```
+
+The platform's half — the adapter rule, shown here so your ask can include it verbatim (the same shape exposes any recording rule; one entry per signal family serves every team that adopts the naming convention):
+
+```yaml
+# prometheus-adapter values (PLATFORM's install)
+rules:
+  custom:
+    - seriesQuery: '{__name__=~"^.+:tomcat_busy_ratio$", pod!=""}'
+      resources:
+        overrides:
+          namespace: {resource: "namespace"}
+          pod: {resource: "pod"}
+      name:
+        matches: "^.+:tomcat_busy_ratio$"
+        as: "tomcat_busy_ratio"
+      metricsQuery: 'avg(<<.Series>>{<<.LabelMatchers>>}) by (<<.GroupBy>>)'
+```
+
+And your HPA consumes it natively — no new object kinds in your chart:
+
+```yaml
+# in templates/hpa.yaml, replacing the CPU metric block
+metrics:
+  - type: Pods
+    pods:
+      metric:
+        name: tomcat_busy_ratio
+      target:
+        type: AverageValue
+        averageValue: "750m"   # 0.75 — the metrics API speaks Kubernetes quantities,
+                               # not floats: 750m is how you write three-quarters
+```
+
+Prove the whole path before the HPA depends on it:
+
+```bash
+kubectl get --raw "/apis/custom.metrics.k8s.io/v1beta1/namespaces/payments/pods/*/tomcat_busy_ratio"
+```
+
+**You gain:** no new controller — the HPA stays the only autoscaling artifact in your chart. **You pay:** the mapping lives in platform config (each new signal *family* is a change request), and there is no scale-to-zero.
+
+#### Track two — KEDA's `prometheus` scaler
+
+**KEDA** carries the PromQL itself in your ScaledObject — no adapter config, no translation layer, and the query is reviewable in your own PR:
 
 ```yaml
 apiVersion: keda.sh/v1alpha1
@@ -169,7 +248,20 @@ spec:
                                  # headroom for reaction + JVM warmup lag
 ```
 
-The trade between the forks: adapter keeps everything in the native HPA API (no KEDA dependency) but adds a config layer only the platform can touch; KEDA puts the query in your hands but adds an operator to the cluster. On this platform KEDA is already there for the queue consumers, so it usually wins by incumbency.
+**You gain:** the query in your own hands, and scale-to-zero exists. **You pay:** an operator and its CRDs in the cluster — one more thing for the platform to version and you to depend on.
+
+#### Choosing — and asking
+
+| | prometheus-adapter | KEDA |
+|---|---|---|
+| What it adds to the cluster | an API extension service | an operator + CRDs |
+| Where your query lives | platform's adapter config (fed by your recording rule) | your ScaledObject, your PR |
+| Scale to zero | no — the HPA's floor is 1 | yes |
+| Brokers outside the cluster | needs an exporter feeding Prometheus ([Lane C](#lane-c--systems-outside-the-cluster)) | polls the broker directly |
+| When the pipe dies | HPA reads `<unknown>`, freezes ([runbook](/troubleshooting/hpa-not-scaling/)) | freezes, or applies your `fallback` ([KEDA deep dive](/architectures/keda-autoscaling/)) |
+| The ask, verbatim | "install prometheus-adapter against the existing Prometheus, with this rule attached" | "install KEDA — this section's baseline is 2.20.1" |
+
+One constraint shapes the decision: a cluster gets **exactly one** server for `external.metrics.k8s.io`, so a platform that already runs one of these has made the choice for you — which is why the discovery commands open this section. And neither ask lands overnight: until one does, the [CPU quick start](/autoscaling/quick-start/) rides metrics-server and needs neither. That's your interim, not your destination.
 
 ### Reading a percentile, taught once
 
@@ -222,7 +314,7 @@ public class DispatchMetrics {
 
 Naming hygiene, three rules: name the *thing measured* not the class (`dispatch_internal_queue_depth`, not `dispatchServiceMetric`); suffix counters `_total`; keep label cardinality bounded (a `tenant` label with 12 values is fine; with 40,000 it's a Prometheus outage).
 
-Then — this is the point — **it rides Lane B unchanged.** Same endpoint, same ServiceMonitor, same fork. A custom metric is not a special pipeline; it's one more line in step 2's output. The `dispatch_internal_queue_depth` gauge above can be a KEDA prometheus trigger ten minutes after it first ships.
+Then — this is the point — **it rides Lane B unchanged.** Same endpoint, same ServiceMonitor, same fork. A custom metric is not a special pipeline; it's one more line in step 2's output. The `dispatch_internal_queue_depth` gauge above can be a scaling signal ten minutes after it first ships — a KEDA prometheus trigger or a recording rule behind the adapter, the same fork as everything else.
 
 :::tip[Business metrics can be scaling metrics]
 `orders_completed_total` isn't just a dashboard number. `rate(orders_completed_total[5m])` per pod is a *work-done* signal that self-adjusts for request cost — and "scale so each pod handles ≤N orders/minute" is a threshold a product owner can actually review. Some of the best scaling signals are business numbers wearing a metric name.
@@ -230,15 +322,18 @@ Then — this is the point — **it rides Lane B unchanged.** Same endpoint, sam
 
 ## Lane C — systems outside the cluster
 
-Your brokers don't run in Kubernetes, so their numbers (queue depth — [the consumer signal](/autoscaling/signals-catalog/#queue-depth--message-lag)) can't be scraped like a pod. **KEDA polls them where they live**: the operator, in-cluster, makes an outbound call every `pollingInterval` seconds — to IBM MQ's admin REST endpoint, RabbitMQ's management API, Redis itself — over the network, with credentials, exactly like any other client of those systems.
+Your brokers don't run in Kubernetes, so their numbers (queue depth — [the consumer signal](/autoscaling/signals-catalog/#queue-depth--message-lag)) can't be scraped like a pod. Both tracks can carry them; what differs is *which component reaches out*:
 
-That sentence hides three platform conversations, so name them:
+- **Adapter track: an exporter brings the number in.** Run the broker's exporter so depth lands in Prometheus like any other series, then it rides Lane B's fork unchanged. RabbitMQ ships a Prometheus plugin you scrape over the network; IBM MQ has IBM's own `mq_prometheus` exporter (from `mq-metric-samples`), deployed in-cluster as an ordinary chart, connecting to the queue manager as a monitoring client. [The consumers page builds both](/autoscaling/messaging-consumers/).
+- **KEDA track: the operator polls the broker directly** every `pollingInterval` seconds — IBM MQ's admin REST endpoint, RabbitMQ's management API, Redis itself — no Prometheus involved.
 
-- **The network path.** Firewall/egress rules must allow the KEDA operator's traffic to the broker's admin port. Where allow-listing is by source IP, that's the cluster's egress or node range — a PLATFORM ask with a precise shape: "KEDA in namespace `keda` needs TCP 9443 to `mq01.corp.internal`."
-- **TLS trust.** The broker's admin endpoint serves a corporate CA cert; KEDA must trust it (mount the CA into the TriggerAuthentication rather than reaching for `unsafeSsl: true` — the name is honest about the trade).
-- **A monitoring-only identity.** KEDA reads depth; it should hold credentials that can *only* read. Ask the broker admin for a monitoring account, not a share of the app's credentials.
+Either way, *something in-cluster makes an outbound call to the broker with credentials*, which hides three platform conversations, so name them:
 
-The credentials themselves live in a Secret, referenced by a **TriggerAuthentication** — a small KEDA object that says which Secret keys map to which connection parameters, so the ScaledObject itself stays secret-free and reviewable. One plain paragraph is all it needs here, because the [KEDA architecture page](/architectures/keda-autoscaling/) builds the full IBM MQ and RabbitMQ versions end to end, and [the consumers page](/autoscaling/messaging-consumers/) owns the Spring-specific decisions around them.
+- **The network path.** Firewall/egress rules must allow the poller's traffic — the KEDA operator's, or your exporter pod's — to the broker's admin/metrics port. Where allow-listing is by source IP, that's the cluster's egress or node range — a PLATFORM ask with a precise shape: "namespace `keda` (or the exporter's namespace) needs TCP 9443 to `mq01.corp.internal`."
+- **TLS trust.** The broker's endpoint serves a corporate CA cert; the poller must trust it (mount the CA rather than reaching for `unsafeSsl: true` or its exporter equivalents — the names are honest about the trade).
+- **A monitoring-only identity.** Depth-reading should hold credentials that can *only* read. Ask the broker admin for a monitoring account, not a share of the app's credentials.
+
+On the KEDA track, credentials live in a Secret referenced by a **TriggerAuthentication** — a small KEDA object mapping Secret keys to connection parameters, so the ScaledObject itself stays secret-free and reviewable ([the KEDA architecture page](/architectures/keda-autoscaling/) builds the full versions). On the adapter track there's nothing new to learn: the exporter mounts its Secret exactly like any other workload. [The consumers page](/autoscaling/messaging-consumers/) owns the Spring-specific decisions around both.
 
 Dynatrace is Lane C too — a SaaS metrics API polled from in-cluster, with its own token scopes and rate limits. It's different enough (and new enough to this site) to get [its own page](/autoscaling/dynatrace-signals/).
 
@@ -262,6 +357,7 @@ Dynatrace is Lane C too — a SaaS metrics API polled from in-cluster, with its 
 | HPA/`kubectl get hpa` shows `<unknown>` | scrape target down, or adapter mapping wrong | `up{service="payments-api"}` — then [the runbook](/troubleshooting/hpa-not-scaling/) |
 | Metric exists in `/actuator/prometheus` but not Prometheus | ServiceMonitor label mismatch (step 3's classic) | compare its labels to the Prometheus `serviceMonitorSelector` |
 | KEDA ScaledObject READY=False | can't reach or auth to the broker/Prometheus | `kubectl describe scaledobject` — the condition message names the failing call |
+| HPA `FailedGetPodsMetric` / `FailedGetExternalMetric` | adapter rule matches nothing, or the recording rule vanished | `kubectl get --raw /apis/custom.metrics.k8s.io/v1beta1` — is your metric listed? Then check the recording rule in Prometheus |
 | Replicas frozen during a broker outage | Lane C polling failing — by design | decide your `fallback` replicas *before* the outage ([KEDA page](/architectures/keda-autoscaling/)) |
 | p95 panels went blank after a Spring upgrade | metric renamed or histogram config lost in a merge | step 2's curl, then diff `application.yaml` against this page |
 
@@ -282,6 +378,12 @@ sum by (scaledObject) (rate(keda_scaler_errors_total[5m])) > 0
 ```promql
 # Scrape staleness: no fresh samples for 5m despite the target being "up"
 time() - max by (pod) (timestamp(tomcat_threads_busy_threads{namespace="payments"})) > 300
+```
+
+```promql
+# Mechanism-neutral "the HPA is blind" alert: ScalingActive=False means the HPA
+# could not compute a replica count — broken pipe on either track
+kube_horizontalpodautoscaler_status_condition{namespace="payments", condition="ScalingActive", status="false"} == 1
 ```
 
 ## Where next

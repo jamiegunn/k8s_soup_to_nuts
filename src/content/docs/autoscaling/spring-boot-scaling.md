@@ -134,7 +134,7 @@ avg(
 )
 ```
 
-Decide from it: sustained > 0.75 → scale (that's the [ScaledObject from the pipeline page](/autoscaling/getting-the-metrics/#5-the-fork-adapter-or-keda)). Pinned at 1.0 → you're already queueing at the acceptor; your *alert* belongs at 0.8 so scaling happens before this. Climbing while Oracle latency climbs too → more pods will help the thread math but multiply load on Oracle — check `hikaricp_connections_pending` before celebrating, because the [ceiling math](/autoscaling/rest-api-oracle/) may be the real constraint.
+Decide from it: sustained > 0.75 → scale (that's [the pipeline page's fork](/autoscaling/getting-the-metrics/#5-the-fork-adapter-or-keda) — a custom-metric HPA or a ScaledObject, whichever mechanism your platform granted). Pinned at 1.0 → you're already queueing at the acceptor; your *alert* belongs at 0.8 so scaling happens before this. Climbing while Oracle latency climbs too → more pods will help the thread math but multiply load on Oracle — check `hikaricp_connections_pending` before celebrating, because the [ceiling math](/autoscaling/rest-api-oracle/) may be the real constraint.
 
 ## The heap-vs-pod-memory delta
 

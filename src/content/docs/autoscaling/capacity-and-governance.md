@@ -228,7 +228,7 @@ AUTOSCALING REVIEW — <service> <date>       reviewer: <you>
 
 ## Scaling-health observability
 
-The panels a namespace dashboard needs — names and queries ([kube-state-metrics](/observability/metrics/) supplies the `kube_*` series; KEDA exports its own):
+The panels a namespace dashboard needs — names and queries ([kube-state-metrics](/observability/metrics/) supplies the `kube_*` series; KEDA, where installed, exports its own):
 
 | Panel | Query |
 |---|---|
@@ -237,7 +237,9 @@ The panels a namespace dashboard needs — names and queries ([kube-state-metric
 | Time at max (per HPA) | `avg_over_time((…status_current_replicas >= bool on() …spec_max_replicas)[1d:])` |
 | Quota utilization | `kube_resourcequota{type="used"} / on(resource) kube_resourcequota{type="hard"}` |
 | Hoarding index | the reserved-vs-used ratio from the citizenship section |
-| KEDA scaler health | `rate(keda_scaler_errors_total[5m])` by scaledObject |
+| Scaler health | mechanism-neutral: `kube_horizontalpodautoscaler_status_condition{condition="ScalingActive",status="false"}`; KEDA track adds `rate(keda_scaler_errors_total[5m])` by scaledObject |
+
+PromQL note: `[1d:]` is the same subquery shape used in the load-profile page — evaluate the expression across one day, using Prometheus's default query step, then feed that range into `avg_over_time`.
 
 ## Who owns what
 

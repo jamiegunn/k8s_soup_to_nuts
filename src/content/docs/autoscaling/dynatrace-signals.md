@@ -60,8 +60,10 @@ management:
 
 ## The KEDA `dynatrace` scaler
 
-:::caution[Requires KEDA 2.15 or newer]
-The `dynatrace` scaler shipped in **KEDA 2.15**; clusters on anything older simply don't have it. Check before you write YAML:
+:::caution[Requires KEDA — there is no adapter route to Dynatrace]
+Path B *is* a KEDA path, full stop: prometheus-adapter reads Prometheus, and Prometheus can't see the tenant, so there is no adapter equivalent of this scaler. If your platform's external-metrics grant is the adapter ([the fork](/autoscaling/getting-the-metrics/#5-the-fork-adapter-or-keda)), Path B is off the menu — get the signal into Prometheus instead (Micrometer happily publishes to both registries side by side), or make Path B part of the KEDA ask.
+
+Where KEDA is granted, version matters too: the `dynatrace` scaler shipped in **KEDA 2.15**; clusters on anything older simply don't have it. Check before you write YAML:
 
 ```bash
 kubectl get deployment keda-operator -n keda \
@@ -73,7 +75,7 @@ $ kubectl get deployment keda-operator -n keda -o jsonpath='...'
 ghcr.io/kedacore/keda:2.20.1
 ```
 
-2.20.1 is this section's assumed baseline ([Lab 10 pins the same one](/labs/lab-10-autoscaling/)); anything ≥ 2.15 has the scaler. Older → a named PLATFORM ask: "upgrade KEDA to the section baseline." Authority on all scaler details: [keda.sh/docs/latest/scalers/dynatrace](https://keda.sh/docs/latest/scalers/dynatrace/).
+2.20.1 is this section's baseline for KEDA asks; anything ≥ 2.15 has the scaler. Older → a named PLATFORM ask: "upgrade KEDA to the section baseline." Authority on all scaler details: [keda.sh/docs/latest/scalers/dynatrace](https://keda.sh/docs/latest/scalers/dynatrace/).
 :::
 
 The build — a metric-selector trigger on the busy-thread gauge the Micrometer registry ships:
@@ -136,6 +138,7 @@ Davis — Dynatrace's anomaly-detection AI — finds problems without thresholds
 
 | | Path A — Prometheus | Path B — Dynatrace scaler |
 |---|---|---|
+| Mechanism required | either fork: adapter or KEDA | **KEDA ≥ 2.15 only** — no adapter route exists |
 | Signal freshness | seconds (in-cluster scrape) | 1–2 min (ingest + WAN poll) |
 | Pipeline owner | you + platform ([Lane B](/autoscaling/getting-the-metrics/)) | Dynatrace admin + platform |
 | Custom app metrics | native (Micrometer → scrape) | need the Dynatrace registry too |

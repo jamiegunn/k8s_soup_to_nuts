@@ -167,7 +167,7 @@ This track has its own section with a full day-by-day plan; the short version:
 6. [Know Your Traffic](/autoscaling/load-profile/) — measure steady state, low state, and peak; derive the floor and ceiling.
 7. Your archetype's reference architecture: [Oracle-backed API](/autoscaling/rest-api-oracle/), [MQ/RabbitMQ consumers](/autoscaling/messaging-consumers/), or [web + worker](/autoscaling/web-worker-and-caches/).
 8. [Capacity and Governance](/autoscaling/capacity-and-governance/) — the review checklist your PR will face, and the ledger your ceiling joins.
-9. [Lab 10](/labs/lab-10-autoscaling/) — feel all of it on a laptop: HPA under load, the capacity wall, KEDA to zero and back.
+9. [Lab 10](/labs/lab-10-autoscaling/) — feel all of it on a laptop: HPA under load, the capacity wall, and a queue-depth HPA fed through a metrics pipeline you build by hand.
 
 **You're done when you can:** show a derivation comment for every number in your autoscaling values, name the external ceiling and its owner, and demo a load test where scale-up, the ceiling, and scale-down all behaved as the math predicted.
 

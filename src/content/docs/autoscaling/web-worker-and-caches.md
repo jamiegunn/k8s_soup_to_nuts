@@ -15,7 +15,7 @@ sidebar:
 
 You are here if: one chart deploys both a web tier and a background worker and you're not sure whether that's one autoscaler or two; or a scale-up event just hammered your database through a cold cache; or users got logged out at 2 p.m. and the timeline matches a scale-in.
 
-**What you'll have at the end:** one Helm chart, two Deployments, two *independent* scalers — an HPA for `catalog-web`'s latency SLO and a KEDA ScaledObject for `catalog-indexer`'s freshness SLO — plus the three cache-and-connection traps that only appear when replica counts start moving on their own.
+**What you'll have at the end:** one Helm chart, two Deployments, two *independent* scalers — one for `catalog-web`'s latency SLO and one for `catalog-indexer`'s freshness SLO, on whichever mechanism your platform granted ([the fork](/autoscaling/getting-the-metrics/#5-the-fork-adapter-or-keda)) — plus the three cache-and-connection traps that only appear when replica counts start moving on their own.
 
 One chart, two scaling personalities — and two caches that experience your scale-out as an attack. This page is where the previous two architectures meet, and where the [SLO thread](/autoscaling/slos-for-scaling/) pays off concretely: the *reason* this chart must split into two scalers is that it contains two different promises.
 
@@ -26,7 +26,7 @@ flowchart TD
     U["Users"] --> ING["Ingress"]
     subgraph cluster["Kubernetes cluster"]
         ING --> WEB["catalog-web<br/><i>HPA: RPS per pod</i><br/>SLO: 99% &lt; 1s"]
-        Q["index jobs queue<br/><i>(Valkey list)</i>"] --> WK["catalog-indexer<br/><i>KEDA: queue depth</i><br/>SLO: fresh &lt; 10min"]
+        Q["index jobs queue<br/><i>(Valkey list)</i>"] --> WK["catalog-indexer<br/><i>scaler: queue depth</i><br/>SLO: fresh &lt; 10min"]
         WEB --> VK[("Valkey<br/><i>in-cluster cache</i><br/>maxclients")]
         WK --> VK
         WEB --> Q
@@ -66,13 +66,14 @@ worker:
   scaling:
     enabled: true
     minReplicaCount: 0    # imports tolerate cold start against a 10-min freshness SLO
+                          # (zero is KEDA-track only — the adapter track floors at 1)
     maxReplicaCount: 6    # derivation: Oracle write budget for the indexer account
     queueLength: "50"     # derivation: drain 10 jobs/min/pod × 10min SLO ÷ 2 safety
 ```
 
 Each Deployment template carries its own `{{- if not … }}` replicas guard ([audit item 1](/autoscaling/classify-your-app/#part-3--is-the-chart-ready)), and the two scaler templates render independently — you can enable web autoscaling a sprint before the worker's.
 
-And the template that consumes `targetRPSPerPod` — a [prometheus-scaler ScaledObject](/autoscaling/getting-the-metrics/#5-the-fork-adapter-or-keda), with one semantic worth reading twice: the query measures the *total* load arriving, the threshold is the *per-pod* target, and the division between them is the autoscaler's job (that's what the scaler's default `AverageValue` metric type means — desired pods = total ÷ threshold):
+And the template that consumes `targetRPSPerPod`. On the KEDA track it's a [prometheus-scaler ScaledObject](/autoscaling/getting-the-metrics/#5-the-fork-adapter-or-keda), with one semantic worth reading twice: the query measures the *total* load arriving, the threshold is the *per-pod* target, and the division between them is the autoscaler's job (that's what the scaler's default `AverageValue` metric type means — desired pods = total ÷ threshold):
 
 ```yaml
 # templates/web-scaledobject.yaml
@@ -97,6 +98,8 @@ spec:
                                    # desired = ceil(total ÷ 45) — at 450 rps, 10 pods
 {{- end }}
 ```
+
+On the **adapter track**, the same numbers ride [the pipeline page's recording-rule pattern](/autoscaling/getting-the-metrics/#5-the-fork-adapter-or-keda): record per-pod RPS (`sum by (pod) (rate(http_server_requests_seconds_count{service="catalog-web"}[2m]))`), expose it as a Pods metric, and the HPA block is `type: Pods` with `target: {type: AverageValue, averageValue: "45"}` — same division, done by the same controller, fed through the other pipe.
 
 ## Cache stampede: scale-out as a self-inflicted attack
 
@@ -193,7 +196,7 @@ and on()
 
 ## Take this with you
 
-The starter kit is the values shape above plus one scaler template per personality: the web scaler is the RPS ScaledObject above (or [the Oracle page's CPU HPA template](/autoscaling/rest-api-oracle/#the-build) if your web tier measured CPU-bound, or [the busy-threads variant](/autoscaling/getting-the-metrics/#5-the-fork-adapter-or-keda) if request cost varies too much for RPS); the worker ScaledObject is [the consumers page's](/autoscaling/messaging-consumers/) with `worker.scaling.*` values. Adapt the derivation comments first, the numbers second — and do the connection math across *both* tiers before either ceiling moves.
+The starter kit is the values shape above plus one scaler template per personality: the web scaler is the RPS ScaledObject above (or [the Oracle page's CPU HPA template](/autoscaling/rest-api-oracle/#the-build) if your web tier measured CPU-bound, or [the busy-threads variant](/autoscaling/getting-the-metrics/#5-the-fork-adapter-or-keda) if request cost varies too much for RPS); the worker scaler is [the consumers page's](/autoscaling/messaging-consumers/) — either track — with `worker.scaling.*` values. Adapt the derivation comments first, the numbers second — and do the connection math across *both* tiers before either ceiling moves.
 
 ## Where next
 

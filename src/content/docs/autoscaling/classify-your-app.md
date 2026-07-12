@@ -97,7 +97,7 @@ grep -rn "exclusive\|singleActiveConsumer\|x-single-active-consumer" \
   src/main/java/ src/main/resources/
 ```
 
-No grep proves ordering *requirements* — that's a question to ask out loud: "does anything break if message 7 completes before message 6?" If the answer is yes, your ceiling is 1 (or one-per-group with partitioned/message-group designs), and KEDA's `maxReplicaCount` must honor that — [Messaging Consumers](/autoscaling/messaging-consumers/) covers what queue-depth scaling can still do for you within it.
+No grep proves ordering *requirements* — that's a question to ask out loud: "does anything break if message 7 completes before message 6?" If the answer is yes, your ceiling is 1 (or one-per-group with partitioned/message-group designs), and your scaler's ceiling — `maxReplicas`, or KEDA's `maxReplicaCount` — must honor that — [Messaging Consumers](/autoscaling/messaging-consumers/) covers what queue-depth scaling can still do for you within it.
 
 ### The rest of the lineup
 

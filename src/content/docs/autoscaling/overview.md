@@ -24,7 +24,7 @@ This section teaches you to autoscale your applications on *this* kind of platfo
 | Wondering if your app is even ready | [The No-Assumptions Checklist](/autoscaling/prerequisites/) |
 | Sizing up an app or an inherited Helm chart | [Rationalize the App and the Chart](/autoscaling/classify-your-app/) |
 | Reviewing another team's HPA PR | [The review checklist](/autoscaling/capacity-and-governance/) |
-| Mid-incident, HPA misbehaving right now | [HPA Not Scaling](/troubleshooting/hpa-not-scaling/) — leave this section entirely |
+| Mid-incident, HPA misbehaving right now | [HPA Not Scaling](/troubleshooting/hpa-not-scaling/) — the incident runbook |
 | Just here for the tables and formulas | [Autoscaling on One Page](/autoscaling/cheat-sheet/) |
 
 Everyone else: read on. This page explains autoscaling from zero and maps the rest.
@@ -33,7 +33,7 @@ Everyone else: read on. This page explains autoscaling from zero and maps the re
 
 Strip away the YAML and it's this: **a controller watches one number about your app, and when that number crosses a line you drew, it adds or removes identical copies of your pod** — never fewer than a floor you set, never more than a ceiling.
 
-The controller is usually the **HorizontalPodAutoscaler (HPA)** — a control loop built into Kubernetes that re-checks its number every 15 seconds or so. Sometimes it's **KEDA**, an add-on that watches numbers Kubernetes can't see natively (like the depth of an IBM MQ queue) and drives an HPA for you. Either way, you make exactly three decisions:
+The controller is usually the **HorizontalPodAutoscaler (HPA)** — a control loop built into Kubernetes that re-checks its number every 15 seconds or so. Sometimes it's **KEDA**, an add-on that watches numbers Kubernetes can't see natively (like the depth of an IBM MQ queue) and drives an HPA for you — *when the platform has installed it*, which this section never assumes: the plain HPA can reach the same numbers through a metrics adapter, and every recipe here is built both ways ([the fork](/autoscaling/getting-the-metrics/#5-the-fork-adapter-or-keda) is where you find out which ask to make). Either way, you make exactly three decisions:
 
 1. **The number** — which measurement should trigger scaling? CPU? Requests per second? Queue depth? Busy threads? This choice matters more than everything else combined, and most teams get it wrong by defaulting to CPU. [The Numbers That Matter](/autoscaling/signals-catalog/) is the full catalog.
 2. **The line** — at what value of that number should copies be added? Deriving this from what you promised your users — instead of guessing — is [Start With the User](/autoscaling/slos-for-scaling/).
@@ -81,7 +81,7 @@ You do not need all of this at once. Each level is a fine place to stop and live
 | **0 — Fixed replicas** | `replicas: 3`, sized on a guess | Every team starts here; nothing is wrong yet | — |
 | **1 — Conservative CPU HPA** | Floor at today's count, modest ceiling, CPU target | You need *something* safe this week | [Quick start](/autoscaling/quick-start/) |
 | **2 — The right signal, measured targets** | Signal chosen for how your app actually saturates; targets derived from an SLO (or a labeled proxy) and a measured load profile | Your L1 HPA "works" but scales too late or for the wrong reason | [SLOs](/autoscaling/slos-for-scaling/), [Load profile](/autoscaling/load-profile/), [Signals](/autoscaling/signals-catalog/), [Pipeline](/autoscaling/getting-the-metrics/), [Spring Boot](/autoscaling/spring-boot-scaling/) |
-| **3 — Event-driven, ceiling-aware** | KEDA on queue depth for consumers; every maxReplicas derived from an external limit with the math written down | You run consumers, or you've met ORA-00018 | [Oracle API](/autoscaling/rest-api-oracle/), [MQ consumers](/autoscaling/messaging-consumers/), [Web + worker](/autoscaling/web-worker-and-caches/) |
+| **3 — Event-driven, ceiling-aware** | Queue depth driving consumer count (KEDA or an exporter-fed HPA — whichever mechanism the platform granted); every maxReplicas derived from an external limit with the math written down | You run consumers, or you've met ORA-00018 | [Oracle API](/autoscaling/rest-api-oracle/), [MQ consumers](/autoscaling/messaging-consumers/), [Web + worker](/autoscaling/web-worker-and-caches/) |
 | **4 — Governed capacity** | Quotas, priority tiers, a capacity ledger, autoscaling changes reviewed against a checklist | You're the SRE rolling this out to five teams | [Capacity & governance](/autoscaling/capacity-and-governance/) |
 
 The next step is always one level up, never a leap to the top.
@@ -109,7 +109,7 @@ The recurring boundary table, at section level. Details vary per page, but the s
 
 | Concern | PLATFORM team | YOU (the delivery team) |
 |---|---|---|
-| metrics-server, Prometheus stack, KEDA installation | ✔ installs and operates | ask, don't install |
+| metrics-server, Prometheus stack, the external-metrics mechanism (prometheus-adapter or KEDA) | ✔ installs and operates | ask, don't install |
 | Node capacity, quotas, priority classes | ✔ sets the budget | request and justify |
 | Egress/firewall rules to Oracle/MQ/Redis | ✔ opens the path | name what you need |
 | Resource requests/limits on your pods | | ✔ measured, honest |
@@ -134,7 +134,7 @@ If you already know what kind of workload you have (if not: [classify it](/autos
 | IBM MQ or RabbitMQ listener | [Messaging Consumers](/autoscaling/messaging-consumers/) |
 | Web app + background worker sharing caches | [Web + Worker, Valkey, External Redis](/autoscaling/web-worker-and-caches/) |
 
-And when you want to *feel* all of this on a laptop instead of reading about it — an HPA scaling under real load, then KEDA draining a queue — [Lab 10](/labs/lab-10-autoscaling/) builds it on the labs cluster, every command runnable as-is.
+And when you want to *feel* all of this on a laptop instead of reading about it — an HPA scaling under real load, then a queue-depth HPA draining a backlog through a full metrics pipeline — [Lab 10](/labs/lab-10-autoscaling/) builds it on the labs cluster, every command runnable as-is.
 
 ## Where next
 

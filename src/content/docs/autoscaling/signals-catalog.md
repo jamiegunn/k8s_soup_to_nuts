@@ -45,7 +45,7 @@ Or immediately, no Prometheus needed: `kubectl top pods -n payments` and divide 
 
 **What it is.** How many messages are waiting in the queue — for a consumer, this *is* the backlog, which is why it's the correct consumer signal: it measures work-not-yet-done directly instead of inferring it.
 
-**Observe.** Broker-side, because the truth lives in the broker, not in your pods. IBM MQ: current depth via the admin REST API (`CURDEPTH` in MQSC terms). RabbitMQ: queue length via the management API or its Prometheus plugin (`rabbitmq_queue_messages`). [KEDA polls these endpoints directly](/autoscaling/getting-the-metrics/#lane-c--systems-outside-the-cluster) — from the cluster, over the network, with credentials, since your brokers live outside. Quick manual look at RabbitMQ:
+**Observe.** Broker-side, because the truth lives in the broker, not in your pods. IBM MQ: current depth via the admin REST API (`CURDEPTH` in MQSC, IBM MQ's command language). RabbitMQ: queue length via the management API or its Prometheus plugin (`rabbitmq_queue_messages`, the total ready + unacked messages). [Both tracks reach them](/autoscaling/getting-the-metrics/#lane-c--systems-outside-the-cluster) — an exporter carries the number into Prometheus, or KEDA polls the broker directly; either way it's from the cluster, over the network, with credentials, since your brokers live outside. Quick manual look at RabbitMQ:
 
 ```promql
 rabbitmq_queue_messages{queue="notify.q"}
@@ -53,7 +53,7 @@ rabbitmq_queue_messages{queue="notify.q"}
 
 **Decide.** Depth rising while consumer count is flat → add consumers (that's the scaler's job). Depth rising while consumers are *already* scaling up → your per-pod drain rate is the problem, or the downstream is — more pods won't fix a slow Oracle write. Depth flat at a high number → a poison message is pinning it.
 
-**Verdict: scale on it — via KEDA.** The trigger arithmetic (depth vs. *lag-time*, activation vs. target) is [derived from your freshness SLO on the consumers page](/autoscaling/messaging-consumers/).
+**Verdict: scale on it — as an external metric** (an exporter-fed HPA or a KEDA scaler; [the fork](/autoscaling/getting-the-metrics/#5-the-fork-adapter-or-keda)). The trigger arithmetic (depth vs. *lag-time*, activation vs. target) is [derived from your freshness SLO on the consumers page](/autoscaling/messaging-consumers/).
 
 **The trap.** Raw depth treats all messages as equal cost. If message cost varies wildly, scale on lag-time (depth ÷ drain rate) instead. SLO shape: freshness.
 
@@ -151,8 +151,8 @@ hikaricp_connections_pending{namespace="payments", pod=~"payments-api.*"}
 
 | Signal | Plain meaning | Metric | Source | Verdict | Fits |
 |---|---|---|---|---|---|
-| CPU utilization | compute burned vs request | `container_cpu_usage_seconds_total` | metrics-server / cAdvisor | **Scale** (if measured CPU-bound) | compute-heavy APIs |
-| Queue depth / lag | backlog waiting | broker-side (CURDEPTH, `rabbitmq_queue_messages`) | broker, via KEDA | **Scale** (via KEDA) | consumers |
+| CPU utilization | compute burned vs request | `container_cpu_usage_seconds_total` | metrics-server / cAdvisor (the node-side container metrics collector) | **Scale** (if measured CPU-bound) | compute-heavy APIs |
+| Queue depth / lag | backlog waiting | broker-side (CURDEPTH, `rabbitmq_queue_messages`) | broker, via exporter or KEDA | **Scale** (external metric) | consumers |
 | Thread saturation | request threads busy vs max | `tomcat_threads_busy_threads` / `…config_max_threads` | Micrometer (needs mbeanregistry) | **Scale** (custom metric) | wait-bound APIs — most of this stack |
 | Heap-vs-pod delta | native/overhead gap | `container_memory_working_set_bytes` − `jvm_memory_used_bytes` | cAdvisor + Micrometer | **Rightsize + alert. Never scale.** | every JVM |
 | RPS per pod | load carried per copy | `http_server_requests_seconds_count` | Micrometer | **Scale** (with measured knee) | uniform-cost APIs |
@@ -165,7 +165,7 @@ hikaricp_connections_pending{namespace="payments", pod=~"payments-api.*"}
 ```mermaid
 flowchart TD
     START(["New workload —<br/>pick the signal"]) --> Q1{"Is work pulled<br/>from a queue?"}
-    Q1 -->|yes| QD["Queue depth via KEDA"]
+    Q1 -->|yes| QD["Queue depth<br/>(exporter+adapter, or KEDA)"]
     Q1 -->|no| Q2{"Request/response.<br/>Measured CPU-bound?<br/><i>(load test, not vibes)</i>"}
     Q2 -->|yes| CPU["CPU-utilization HPA"]
     Q2 -->|"no — it waits<br/>on Oracle/MQ"| Q3{"Uniform request cost?"}
@@ -195,6 +195,8 @@ Three mechanisms deliver a signal to the scaling loop. What each is, in one sent
 | When the pipeline dies | keeps last CPU reading | HPA reads `<unknown>`, freezes ([runbook](/troubleshooting/hpa-not-scaling/)) | freezes at current count, or applies your `fallback` replicas ([KEDA deep dive](/architectures/keda-autoscaling/)) |
 | **You gain** | zero setup | the honest signal for your app | right semantics for consumers, scale-to-zero, 70+ scalers |
 | **You pay** | lies for wait-bound apps | you own a metrics pipeline | a new controller + CRDs in the mix, one more thing to version |
+
+The two right-hand columns are both **named asks** — neither the adapter nor KEDA ships with the cluster, and a cluster gets exactly one `external.metrics.k8s.io` server, so whichever the platform grants first effectively decides for everyone. [The fork](/autoscaling/getting-the-metrics/#5-the-fork-adapter-or-keda) is the decision aid and the ask template.
 
 ## Failure modes
 

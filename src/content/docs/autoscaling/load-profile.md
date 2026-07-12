@@ -43,6 +43,8 @@ To turn the curve into one number, take the median over business hours rather th
 ```promql
 # The 50th percentile of the traffic level itself, over 14 days:
 # "the RPS value that half of all measured moments were below" — steady state
+# [14d:5m] is a PromQL subquery: evaluate the inner expression every 5 minutes
+# across 14 days, then feed that range of values to quantile_over_time.
 quantile_over_time(0.50,
   sum(rate(http_server_requests_seconds_count{namespace="payments", service="payments-api"}[5m]))[14d:5m]
 )
@@ -122,7 +124,7 @@ sum(rate(http_server_requests_seconds_count{namespace="payments", service="payme
 
 For `dispatch-worker` and friends, profile **arrival rate** — messages enqueued per minute — not RPS. The states work identically, with one twist that surprises API-minded people: consumer peak is often *nocturnal*, because upstream batch systems dump their day's work at 1 a.m. `dispatch-worker`'s real profile: trough at 2 p.m. (~5 msg/min), peak at 01:30 (~900 msg/min for forty minutes). Its scaling day is inverted from the API's — which is exactly why each workload gets its own state table instead of inheriting the team's mental model of "busy."
 
-Arrival rate lives broker-side: IBM MQ enqueue counts via the admin REST API, RabbitMQ's `messages_published_total` via its Prometheus plugin, or — once KEDA is polling the queue — [KEDA's exposed scaler metrics](/autoscaling/getting-the-metrics/). Depth alone isn't arrival rate: depth is arrival minus drain; profile the *inflow*.
+Arrival rate lives broker-side: IBM MQ enqueue counts via the admin REST API, RabbitMQ's `messages_published_total` via its Prometheus plugin, or — once a depth watcher exists — [the exporter's series or KEDA's scaler metrics](/autoscaling/getting-the-metrics/). Depth alone isn't arrival rate: depth is arrival minus drain; profile the *inflow*.
 
 ## The state table — the artifact
 
@@ -182,6 +184,7 @@ sum(rate(http_server_requests_seconds_count{namespace="payments", service="payme
 ```promql
 # Trough creeping up: overnight load exceeding the recorded low state by 50% —
 # minReplicas is now dishonest in the other direction (too low)
+# Same subquery shape as above, shortened to 7 days for drift detection.
 quantile_over_time(0.05,
   sum(rate(http_server_requests_seconds_count{namespace="payments", service="payments-api"}[5m]))[7d:5m]
 ) > 60

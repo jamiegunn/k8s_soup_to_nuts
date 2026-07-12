@@ -28,9 +28,9 @@ The thirty-second version, if lunch is *now*: CPU fine + latency climbing on a S
 
 ### "Our overnight queue backlog isn't drained by morning"
 
-Messages pile up at 1 a.m., consumers plod through at fixed count, and the business notices at 9. You'll turn "drained by morning" into a freshness SLO, then let KEDA match consumer count to depth.
+Messages pile up at 1 a.m., consumers plod through at fixed count, and the business notices at 9. You'll turn "drained by morning" into a freshness SLO, then let queue depth drive consumer count — via KEDA or an exporter-fed HPA, whichever mechanism your platform grants.
 
-**Path:** [SLO (freshness shape)](/autoscaling/slos-for-scaling/#the-sli-shape-follows-the-archetype) → [messaging consumers](/autoscaling/messaging-consumers/) → the [KEDA build](/architectures/keda-autoscaling/) for mechanics. **Effort:** one day including the broker-admin conversation (REST endpoint, monitoring account) — start that ask first, it has the longest lead time.
+**Path:** [SLO (freshness shape)](/autoscaling/slos-for-scaling/#the-sli-shape-follows-the-archetype) → [messaging consumers](/autoscaling/messaging-consumers/) (both tracks) → mechanics: the [KEDA build](/architectures/keda-autoscaling/) or [the pipeline page](/autoscaling/getting-the-metrics/). **Effort:** one day including the broker-admin conversation (monitoring account; REST endpoint or exporter channel) — plus the mechanism ask itself if the cluster has neither KEDA nor prometheus-adapter yet. Start both asks first; they have the longest lead times.
 
 ### "We were told to enable autoscaling by Friday"
 

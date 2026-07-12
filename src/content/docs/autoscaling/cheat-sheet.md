@@ -29,7 +29,7 @@ Can't start at the top? The [fallback ladder](/autoscaling/slos-for-scaling/#the
 | Signal | Verdict | For | Trap |
 |---|---|---|---|
 | CPU utilization | **scale** — if measured CPU-bound | compute-heavy APIs | lies for apps that wait on Oracle/MQ |
-| Queue depth | **scale** — via KEDA | consumers | raw depth ignores message cost; use lag-time when cost varies |
+| Queue depth | **scale** — external metric (exporter+adapter, or KEDA) | consumers | raw depth ignores message cost; use lag-time when cost varies |
 | Busy threads | **scale** — custom metric | wait-bound Spring apps (most of this stack) | needs `mbeanregistry.enabled` + a deliberate pool max |
 | RPS per pod | **scale** — with a measured knee | uniform-cost APIs | knee moves when endpoint mix shifts |
 | Latency p95 | **alert only — it's the SLI** | everything | scaling on it oscillates (cold pods worsen it) |
@@ -43,9 +43,11 @@ Full catalog with observe/decide loops: [The Numbers That Matter](/autoscaling/s
 | | One sentence | Reach for it when |
 |---|---|---|
 | **HPA on CPU** | The built-in autoscaler on the built-in metric — zero setup | measured CPU-bound, or the [quick start](/autoscaling/quick-start/) |
-| **HPA on custom metric** | Same autoscaler fed your app's numbers through an adapter | platform already runs prometheus-adapter |
-| **KEDA** | An operator that watches things Kubernetes can't see (queues, Prometheus, Dynatrace) and drives an HPA for you | consumers, custom signals, scale-to-zero |
+| **HPA on custom metric** | Same autoscaler fed your app's numbers through prometheus-adapter | the platform's granted mechanism is the adapter |
+| **KEDA** | An operator that watches things Kubernetes can't see (queues, Prometheus, Dynatrace) and drives an HPA for you | the platform granted KEDA — or you need scale-to-zero (KEDA-only) |
 | **VPA** | Resizes *requests* instead of adding copies | recommendation mode only — a [sizing consultant](/workloads/autoscaling/#vpa-mostly-not-yours) |
+
+Neither adapter nor KEDA ships with the cluster — both are **named asks**, and a cluster runs at most one external-metrics server. Check what exists before designing: [the fork](/autoscaling/getting-the-metrics/#5-the-fork-adapter-or-keda).
 
 ## The formula box
 
@@ -122,6 +124,7 @@ changes(kube_horizontalpodautoscaler_status_desired_replicas[1h]) > 6
 |---|---|
 | HPA | The built-in controller that adds/removes copies of your pod to keep one number near a target. |
 | Request | The slice of a node reserved for your pod — reserved whether used or not; the HPA's math is a percentage *of this*. |
+| prometheus-adapter | The platform add-on that teaches the HPA's own metrics APIs to answer from Prometheus — the KEDA-less bridge to custom/external signals. |
 | ScaledObject | KEDA's object: which Deployment to scale, on which external number, between which bounds. |
 | TriggerAuthentication | KEDA's pointer at the Secret holding the credentials a scaler polls with. |
 | Scrape | Prometheus visiting your app's `/actuator/prometheus` URL on a schedule to collect its numbers. |
@@ -142,7 +145,7 @@ The JVM claims heap and doesn't give it back when load drops, so a memory-trigge
 
 ### Do I need KEDA, or is the HPA enough?
 
-Plain HPA suffices for CPU scaling today ([quick start](/autoscaling/quick-start/)). You want KEDA when the number lives outside Kubernetes — queue depth, a Prometheus query, Dynatrace — or when scale-to-zero matters. KEDA doesn't replace the HPA; it feeds one. [Mechanism table](/autoscaling/signals-catalog/#which-mechanism-carries-the-signal).
+Plain HPA on CPU needs nothing extra ([quick start](/autoscaling/quick-start/)). Any better signal needs exactly one bridge, and your cluster ships with neither: **prometheus-adapter** (HPA-native, query in platform config, no scale-to-zero) or **KEDA** (query in your PR, polls brokers/Dynatrace directly, scale-to-zero). KEDA doesn't replace the HPA; it feeds one — and so does the adapter. Check what your cluster has, then ask for what it lacks: [the fork](/autoscaling/getting-the-metrics/#5-the-fork-adapter-or-keda).
 
 ### Can I just set maxReplicas to 100?
 
@@ -162,7 +165,7 @@ HPA changes *how many* pods; VPA changes *how big* each pod's requests are; KEDA
 
 ### How do I scale on a business metric?
 
-Emit it with a Micrometer counter/gauge (~15 lines), let the existing scrape collect it, point a KEDA prometheus trigger at the query. No special machinery — [business metrics are scaling metrics](/autoscaling/getting-the-metrics/#custom-metrics--when-and-how) once they're in the pipeline.
+Emit it with a Micrometer counter/gauge (~15 lines), let the existing scrape collect it, then point your mechanism at it — a recording rule behind the adapter, or a KEDA prometheus trigger. No special machinery — [business metrics are scaling metrics](/autoscaling/getting-the-metrics/#custom-metrics--when-and-how) once they're in the pipeline.
 
 ### Will scaling my app break Oracle/MQ?
 

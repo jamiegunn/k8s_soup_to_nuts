@@ -36,7 +36,7 @@ histogram_quantile(0.95,
 )
 ```
 
-Graph that over a day, not an instant — the *shape* is the information. The same number lives in Grafana's RED-style dashboards and, if OneAgent instruments the service, in Dynatrace's response-time percentile view ([which path when](/autoscaling/dynatrace-signals/)).
+Graph that over a day, not an instant — the *shape* is the information. The same number lives in Grafana's RED-style dashboards (Rate, Errors, Duration — the standard request/response service view) and, if OneAgent instruments the service, in Dynatrace's response-time percentile view ([which path when](/autoscaling/dynatrace-signals/)).
 
 **Decide.** Reading the chart:
 
@@ -99,7 +99,7 @@ Rung 1 is itself measurable, and the SLO should come from measurement where you 
 Your [classification card](/autoscaling/classify-your-app/)'s "SLO shape" field, made concrete:
 
 - **Request/response** (APIs, web): latency percentile + availability. The checkout example above.
-- **Consumers**: **freshness**, not latency — nobody experiences your listener's method timing; they experience "the confirmation hadn't arrived yet." Shape: "99% of messages processed within N minutes." This form is special: it *directly* produces the KEDA trigger math (`tolerable backlog = drain rate × N minutes` — [derived fully on the consumers page](/autoscaling/messaging-consumers/)).
+- **Consumers**: **freshness**, not latency — nobody experiences your listener's method timing; they experience "the confirmation hadn't arrived yet." Shape: "99% of messages processed within N minutes." This form is special: it *directly* produces the queue-depth trigger math (`tolerable backlog = drain rate × N minutes` — [derived fully on the consumers page](/autoscaling/messaging-consumers/)).
 - **Batch**: throughput/deadline ("complete by 06:00") — out of this section's scaling scope, but write it down anyway.
 
 ## The cast's SLOs
@@ -109,8 +109,8 @@ The canonical table for this section's recurring workloads. Every reference-arch
 | Workload | SLO | Derived signal | Derivation lives in |
 |---|---|---|---|
 | `payments-api` | 99.9% of requests < 800 ms / 28 d | CPU target from measured knee + busy-threads guard | [REST API + Oracle](/autoscaling/rest-api-oracle/) |
-| `dispatch-worker` | 99% of dispatch messages processed < 5 min | IBM MQ queue depth via KEDA | [Messaging Consumers](/autoscaling/messaging-consumers/) |
-| `notify-worker` | 99% of notifications sent < 15 min | RabbitMQ queue length via KEDA | [Messaging Consumers](/autoscaling/messaging-consumers/) |
+| `dispatch-worker` | 99% of dispatch messages processed < 5 min | IBM MQ queue depth | [Messaging Consumers](/autoscaling/messaging-consumers/) |
+| `notify-worker` | 99% of notifications sent < 15 min | RabbitMQ queue length | [Messaging Consumers](/autoscaling/messaging-consumers/) |
 | `catalog-web` | 99% of page loads < 1 s / 28 d | RPS per pod | [Web + Worker](/autoscaling/web-worker-and-caches/) |
 | `catalog-indexer` | index entries fresh < 10 min | queue depth (freshness) | [Web + Worker](/autoscaling/web-worker-and-caches/) |
 
@@ -147,7 +147,7 @@ The bridge the rest of the section applies. Given an SLO:
 
 ## Alerts
 
-Recording-rule sketches for the two SLO shapes — these make the SLI cheap to query and alert on ([alerting mechanics](/observability/alerting/)):
+Recording-rule sketches — Prometheus rules that precompute a query into a new time series — for the two SLO shapes. These make the SLI cheap to query and alert on ([alerting mechanics](/observability/alerting/)):
 
 ```promql
 # Latency-shape SLI: fraction of checkout requests under the 2 s SLO boundary
@@ -158,7 +158,7 @@ sum(rate(http_server_requests_seconds_count{uri="/api/checkout"}[5m]))
 
 ```promql
 # Freshness-shape SLI for consumers: seconds of backlog at current drain rate
-# (queue depth and drain rate both come from the broker / KEDA metrics —
+# (queue depth and drain rate both come from the broker — exporter or KEDA metrics —
 #  the consumers page wires these up)
 ibmmq_queue_depth{queue="DISPATCH.Q"} / clamp_min(rate(messages_processed_total[5m]), 0.001)
 ```

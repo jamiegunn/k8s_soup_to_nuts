@@ -176,19 +176,22 @@ requests.cpu     2500m   8
 requests.memory  5Gi     16Gi
 ```
 
-Read it: `Hard` minus `Used` is the room your scale-up has. Divide by one pod's requests to know how many more pods fit before the quota — that number caps your effective maxReplicas no matter what the HPA says. And if you plan queue-driven scaling — is KEDA even installed? Its CRDs are the fingerprint (a **CRD** — CustomResourceDefinition — is how an add-on like KEDA teaches the cluster a new object type; no CRD, no `ScaledObject`s):
+Read it: `Hard` minus `Used` is the room your scale-up has. Divide by one pod's requests to know how many more pods fit before the quota — that number caps your effective maxReplicas no matter what the HPA says. And if you plan anything beyond CPU — custom signals, queue-driven scaling — does the cluster have an **external-metrics mechanism** at all? Neither ships with Kubernetes; check for both fingerprints (a **CRD** — CustomResourceDefinition — is how an add-on like KEDA teaches the cluster a new object type; an APIService is how prometheus-adapter plugs into the HPA's metrics APIs):
 
 ```bash
 kubectl get crd scaledobjects.keda.sh
+kubectl get apiservice v1beta1.custom.metrics.k8s.io v1beta1.external.metrics.k8s.io
 ```
 
 ```console
 $ kubectl get crd scaledobjects.keda.sh
-NAME                     CREATED AT
-scaledobjects.keda.sh    2025-11-02T09:14:33Z
+Error from server (NotFound): customresourcedefinitions.apiextensions.k8s.io "scaledobjects.keda.sh" not found
+$ kubectl get apiservice v1beta1.custom.metrics.k8s.io v1beta1.external.metrics.k8s.io
+Error from server (NotFound): apiservices.apiregistration.k8s.io "v1beta1.custom.metrics.k8s.io" not found
+Error from server (NotFound): apiservices.apiregistration.k8s.io "v1beta1.external.metrics.k8s.io" not found
 ```
 
-`NotFound` on any of these is a **named ask to the platform team**: "grant HPA create in payments," "raise the payments quota, here's the derivation," "install KEDA" — [how to ask well](/operations/working-with-platform-team/).
+All `NotFound`, as here, means CPU is the only signal this cluster can scale on *today* — and that's a **named ask to the platform team**, like the others this item surfaces: "grant HPA create in payments," "raise the payments quota, here's the derivation," "install prometheus-adapter or KEDA" ([the fork](/autoscaling/getting-the-metrics/#5-the-fork-adapter-or-keda) decides which to ask for) — [how to ask well](/operations/working-with-platform-team/).
 
 ## 8. You can generate load somewhere that isn't prod
 
@@ -228,7 +231,7 @@ The soft prerequisite, and the one this section trains you on. Before choosing t
 | 4 | Graceful shutdown | grace + preStop check, pod-kill drill | YOU |
 | 5 | Idempotent consumers | code review question | YOU |
 | 6 | Metrics published + scraped | `curl /actuator/prometheus`, `kubectl get servicemonitor` | YOU / PLATFORM |
-| 7 | RBAC, quota headroom, KEDA | `kubectl auth can-i`, `describe resourcequota`, `get crd` | PLATFORM (you ask) |
+| 7 | RBAC, quota headroom, an external-metrics mechanism | `kubectl auth can-i`, `describe resourcequota`, `get crd` / `get apiservice` | PLATFORM (you ask) |
 | 8 | Load-test capability | pre-prod + fortio/k6 | YOU |
 | 9 | Chart's `replicas:` gated | `helm template … \| grep` | YOU |
 | 10 | An objective, written down | one sentence | YOU |

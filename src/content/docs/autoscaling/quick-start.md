@@ -26,15 +26,15 @@ Each is one command. Any failure → stop, follow the link, come back.
 
 ```bash
 kubectl get deployment payments-api -n payments \
-  -o jsonpath='{.spec.template.spec.containers[*].resources.requests}'
+  -o jsonpath='{range .spec.template.spec.containers[*]}{.name}{": "}{.resources.requests}{"\n"}{end}'
 ```
 
 ```console
 $ kubectl get deployment payments-api -n payments -o jsonpath='...'
-{"cpu":"250m","memory":"512Mi"}
+payments-api: {"cpu":"250m","memory":"512Mi"}
 ```
 
-Empty, or no `cpu` key → [prerequisites #1](/autoscaling/prerequisites/), stop.
+Any empty line, or any container with no `cpu` key → [prerequisites #1](/autoscaling/prerequisites/), stop.
 
 **2. The cluster can measure.**
 

@@ -16,11 +16,11 @@ sidebar:
 
 You are here if: your overnight backlog isn't drained by morning; or you're wiring KEDA to a broker that lives outside the cluster; or messages got processed twice after a scale-down and you're here to make sure it never happens again.
 
-**What you'll have at the end:** ScaledObjects for a `@JmsListener` app on external IBM MQ and a `@RabbitListener` app on external RabbitMQ, with trigger numbers derived from a freshness SLO instead of folklore, ceilings that respect the broker, and — the part everyone skips — scale-in that provably doesn't lose or double-process a message.
+**What you'll have at the end:** queue-depth scaling for a `@JmsListener` app on external IBM MQ and a `@RabbitListener` app on external RabbitMQ — built **both ways**, because this platform assumes neither mechanism: an exporter-fed HPA for clusters whose external-metrics grant is prometheus-adapter, and ScaledObjects for clusters that got KEDA ([the fork](/autoscaling/getting-the-metrics/#5-the-fork-adapter-or-keda) is where that ask gets made). Plus trigger numbers derived from a freshness SLO instead of folklore, ceilings that respect the broker, and — the part everyone skips — scale-in that provably doesn't lose or double-process a message.
 
 Queue consumers are the easiest workloads to scale correctly and the easiest to corrupt while scaling in. Easiest correctly: the queue *is* the backlog — [queue depth measures work-not-yet-done directly](/autoscaling/signals-catalog/#queue-depth--message-lag), no proxy signals, no guessing. Easiest to corrupt: scale-in kills consumers mid-message by design, several times a day, and whatever that does to your messages is what autoscaling now does at scale.
 
-One scoping note: KEDA's mechanics — operator model, `ScaledObject` anatomy, `TriggerAuthentication`, `fallback`, `ScaledJob` — are built end to end in [Event-Driven Autoscaling with KEDA](/architectures/keda-autoscaling/), and this page doesn't repeat them. This page owns what that build glosses over for *Spring* consumers on *your* brokers: where the trigger numbers come from, what the broker's limits do to your ceiling, and the SIGTERM path.
+One scoping note: KEDA's mechanics — operator model, `ScaledObject` anatomy, `TriggerAuthentication`, `fallback`, `ScaledJob` — are built end to end in [Event-Driven Autoscaling with KEDA](/architectures/keda-autoscaling/), and the adapter pipeline's five steps live on [the pipeline page](/autoscaling/getting-the-metrics/); this page repeats neither. It owns what both builds gloss over for *Spring* consumers on *your* brokers: where the trigger numbers come from, what the broker's limits do to your ceiling, and the SIGTERM path.
 
 ## The lifecycle, with the cluster boundary drawn
 
@@ -30,8 +30,8 @@ flowchart TD
         MQ[("IBM MQ<br/>DISPATCH.Q<br/><i>depth rises</i>")]
     end
     subgraph cluster["Kubernetes cluster"]
-        KEDA["KEDA operator<br/><i>polls depth every 30s<br/>over the network</i>"]
-        HPA["the HPA KEDA manages"]
+        KEDA["depth watcher:<br/>KEDA operator, <i>or</i><br/>MQ exporter → Prometheus → adapter"]
+        HPA["the HPA it feeds"]
         W1["dispatch-worker"] 
         W2["dispatch-worker<br/><i>added</i>"]
     end
@@ -42,7 +42,7 @@ flowchart TD
     W2 -->|"depth falls → cooldown →<br/><b>SIGTERM: prefetched +<br/>in-flight messages exist</b>"| X["scale-in —<br/>where loss/duplication lives"]
 ```
 
-Two boundary consequences before any YAML. **KEDA reaches out of the cluster**: firewall path, TLS trust to the corporate CA, and a *monitoring-only* account on the broker — the three PLATFORM asks [named on the pipeline page](/autoscaling/getting-the-metrics/#lane-c--systems-outside-the-cluster). **When the broker is unreachable, KEDA freezes replicas at the current count** (or applies your `fallback` block — [decide it before the outage](/architectures/keda-autoscaling/)); your consumers keep consuming, only the *scaling* goes blind.
+Two boundary consequences before any YAML. **Something reaches out of the cluster** — the KEDA operator, or your exporter pod: firewall path, TLS trust to the corporate CA, and a *monitoring-only* account on the broker — the three PLATFORM asks [named on the pipeline page](/autoscaling/getting-the-metrics/#lane-c--systems-outside-the-cluster). **When the broker is unreachable, scaling goes blind but pods stay up**: KEDA freezes replicas at the current count (or applies your `fallback` block — [decide it before the outage](/architectures/keda-autoscaling/)); on the adapter track the depth series goes stale and the HPA freezes with `FailedGetExternalMetric`. Either way your consumers keep consuming — only the *scaling* stops.
 
 ## The trigger number, from the freshness SLO
 
@@ -58,7 +58,7 @@ The SLO tolerates a backlog that one pod clears within the promise window:
 Safety factor for reaction + startup lag (~2× is honest for a JVM consumer):
     queueDepth trigger = 200 / 2 = 100 messages per pod
 
-Meaning: KEDA targets 1 pod per 100 queued messages — depth 400 → 4 pods,
+Meaning: the scaler targets 1 pod per 100 queued messages — depth 400 → 4 pods,
 each facing ~2.5 minutes of work: inside the promise, with margin for lag.
 ```
 
@@ -67,6 +67,76 @@ When message cost varies wildly (some dispatches take 50× longer), raw depth mi
 Floor and ceiling come from the [arrival-rate state table](/autoscaling/load-profile/#consumers-same-states-different-series) — remember consumer peak is often *nocturnal* (the 01:30 batch dump), so derive from the consumer's own profile, not the API team's intuition about "busy."
 
 ## IBM MQ: `dispatch-worker`
+
+Two ways to get `DISPATCH.Q`'s depth in front of the HPA — build the track your platform granted ([the fork](/autoscaling/getting-the-metrics/#5-the-fork-adapter-or-keda)). The trigger arithmetic above is identical in both; only the plumbing differs.
+
+### Track A — exporter + adapter (no KEDA)
+
+IBM publishes its own Prometheus exporter — `mq_prometheus`, from [mq-metric-samples](https://github.com/ibm-messaging/mq-metric-samples) — which connects to the queue manager **as an ordinary MQ client** (a server-connection channel and a monitoring account; no `mqweb` required) and exposes, among much else, `ibmmq_queue_depth`. Deploy it in-cluster like any small app — Deployment + Secret + ServiceMonitor — and the depth rides [Lane B](/autoscaling/getting-the-metrics/) into Prometheus. The part of its config worth showing (the rest is an ordinary Deployment):
+
+```yaml
+# mq_prometheus config — mounted from a ConfigMap; credentials from the Secret
+connection:
+  queueManager: QM1
+  connName: "mq01.corp.internal(1414)"   # the LISTENER port — a client channel, not mqweb
+  channel: MONITORING.SVRCONN            # ask the MQ admin for a monitoring channel
+  user: mq_monitor                       # the monitoring account — NOT the app's identity
+objects:
+  queues:
+    - DISPATCH.Q                         # export only what you scale/alert on — not the
+                                         # queue manager's whole estate (cardinality is a bill)
+```
+
+Then the external-metric mapping (part of the platform's adapter install — include it verbatim in the ask) and the HPA that consumes it:
+
+```yaml
+# prometheus-adapter values (PLATFORM) — external-metric rule
+rules:
+  external:
+    - seriesQuery: 'ibmmq_queue_depth{queue!=""}'
+      resources:
+        overrides:
+          namespace: {resource: "namespace"}
+      name:
+        as: "ibmmq_queue_depth"
+      metricsQuery: 'max(<<.Series>>{<<.LabelMatchers>>}) by (<<.GroupBy>>)'
+```
+
+```yaml
+# templates/hpa.yaml — dispatch-worker on the adapter track
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: dispatch-worker
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: dispatch-worker
+  minReplicas: 1                   # this track's hard floor — scale-to-zero is KEDA-only
+                                   # (below). For an SLA'd flow like dispatch, 1 warm
+                                   # consumer is what you wanted anyway.
+  maxReplicas: 8                   # derivation: broker ceiling, next section
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300   # this track's cooldown — same role as KEDA's cooldownPeriod
+      policies: [{ type: Pods, value: 1, periodSeconds: 60 }]
+  metrics:
+    - type: External
+      external:
+        metric:
+          name: ibmmq_queue_depth
+          selector:
+            matchLabels:
+              queue: DISPATCH.Q
+        target:
+          type: AverageValue
+          averageValue: "100"      # the freshness-SLO math above: 1 pod per 100 messages.
+                                   # AverageValue = the HPA divides TOTAL depth by this —
+                                   # depth 400 → 4 pods, exactly KEDA's queueDepth semantics
+```
+
+### Track B — KEDA's `ibmmq` scaler
 
 The `ibmmq` scaler talks to the queue manager's **admin REST endpoint** — the `mqweb` server, port 9443. Whether that's already running depends on how MQ is deployed: the MQ container image ships it on by default, but on a traditional install — a queue manager on a VM or z/OS, administered through MQSC — `mqweb` is a separately started component, and long-lived queue managers often don't run it. Check before you plan around it: `curl -k https://mq01.corp.internal:9443/ibmmq/rest/v2/admin/qmgr` answering at all (even a 401) means the endpoint is up. If it isn't, that's your first named ask to the MQ admin, and it's for two things: the REST endpoint reachable from the cluster, and a monitoring account allowed to inquire queue depth (nothing more).
 
@@ -125,6 +195,40 @@ Oracle had a session budget; MQ has its own arithmetic, and it caps your `maxRep
 Ask the MQ admin for the numbers, do the division, write the derivation next to `maxReplicaCount`. The [broker deep-dive](/architectures/ibm-mq/) covers the MQ side in full.
 
 ## RabbitMQ: `notify-worker`
+
+Same fork, second broker.
+
+### Track A — exporter + adapter (no KEDA)
+
+Two routes into Prometheus, and the deciding question is *whose config can change*. If the broker admin will enable it, RabbitMQ ≥ 3.8 ships the `rabbitmq_prometheus` plugin natively (`rabbitmq-plugins enable rabbitmq_prometheus`, metrics port 15692) — but per-queue series additionally need `prometheus.return_per_object_metrics = true`, and scraping a target *outside* the cluster means an `additionalScrapeConfigs` entry on the platform's Prometheus, not a ServiceMonitor. When broker config can't change — the common case with a shared corporate broker — run a **management-API exporter in-cluster** instead (kbudde's `rabbitmq-exporter` is the standard one): it polls the same management API KEDA would (15672), with the same monitoring account, and exposes `rabbitmq_queue_messages{queue="notify.q"}` behind an ordinary ServiceMonitor. Symmetric with the MQ exporter above, and the [three platform conversations](/autoscaling/getting-the-metrics/#lane-c--systems-outside-the-cluster) attach to it identically.
+
+The HPA is the MQ one with the names swapped:
+
+```yaml
+# templates/hpa.yaml — notify-worker on the adapter track
+  minReplicas: 1                   # notify-worker WANTED zero (see scale-to-zero, below) —
+                                   # the adapter track can't give it: one idle pod is the
+                                   # standing cost of not having KEDA on tolerant flows
+  maxReplicas: 6                   # derivation: connection/channel ceiling + the mail
+                                   # gateway's ~600/min rate limit — a ceiling term that
+                                   # isn't even the broker's!
+  metrics:
+    - type: External
+      external:
+        metric:
+          name: rabbitmq_queue_messages
+          selector:
+            matchLabels:
+              queue: notify.q
+        target:
+          type: AverageValue
+          averageValue: "150"      # notify SLO is 15 min, drain ~20 msg/min/pod:
+                                   # 20×15/2 = 150 per pod — same math, same comment
+```
+
+(The adapter's external rule is the MQ one with `rabbitmq_queue_messages` substituted — one rule shape per metric family.)
+
+### Track B — KEDA's `rabbitmq` scaler
 
 The `rabbitmq` scaler's `host` is a full connection string, credentials included — which is precisely why it belongs in the TriggerAuthentication's Secret, never in the ScaledObject:
 
@@ -240,21 +344,22 @@ Proving idempotency, Spring-side — the five answers a reviewer should be able 
 
 ## Scale-to-zero, honestly
 
-`minReplicaCount: 0` is KEDA's headline feature and a per-workload judgment call:
+`minReplicaCount: 0` is KEDA's headline feature — and **KEDA's alone**: the plain HPA the adapter track drives cannot go below 1, so on that track every consumer keeps one warm pod and this section describes what you're missing, not what you can configure. Where KEDA is granted, it's a per-workload judgment call:
 
 - **`notify-worker`: yes.** Notifications tolerate the first-message latency (cold start + connect, ~60–90 s against a 15-minute SLO) and the queue is empty most of the night — zero gives real capacity back ([citizenship](/autoscaling/overview/#the-citizenship-contract)).
 - **`dispatch-worker`: no.** A 5-minute freshness SLO spends a fifth of its budget on every cold start; and on IBM MQ specifically, connection churn is a cost in its own right (channel instance setup, and on some licensing models, a line item). `minReplicaCount: 1` keeps a warm consumer for the price of one idle pod.
 
-The trade in one line: scale-to-zero trades first-message latency (and broker connection churn) for genuinely returned capacity — take it on tolerant flows, refuse it on tight SLOs.
+The trade in one line: scale-to-zero trades first-message latency (and broker connection churn) for genuinely returned capacity — take it on tolerant flows, refuse it on tight SLOs. And if you're on the adapter track wanting zero for a fleet of night-idle consumers, that's a legitimate line in the KEDA ask: "N consumers × 1 idle pod × their requests, reserved all night" is exactly the arithmetic that justifies the operator.
 
 ## Who owns what
 
 | Concern | Owner |
 |---|---|
-| MQ admin REST enabled, monitoring accounts, MAXINST/handle numbers | MQ / broker admin |
-| Firewall path from KEDA to broker admin ports, KEDA itself | PLATFORM |
+| Monitoring accounts/channels, REST or plugin enablement, MAXINST/handle numbers | MQ / broker admin |
+| Firewall path from the poller (KEDA or exporter) to broker ports; KEDA or prometheus-adapter itself | PLATFORM |
+| The exporter Deployment + ServiceMonitor (adapter track) or ScaledObject + TriggerAuthentication (KEDA track) | YOU, in your chart |
 | Trigger math, prefetch, grace-period arithmetic, idempotency | YOU |
-| The ceiling derivation written next to maxReplicaCount | YOU |
+| The ceiling derivation written next to the max, whichever object holds it | YOU |
 
 ## Failure modes
 
@@ -264,7 +369,8 @@ The trade in one line: scale-to-zero trades first-message latency (and broker co
 | Depth pinned high, replicas at max, drain rate ~0 | poison message redelivering forever | DLQ / max-redelivery policy on the broker; the depth *alert* below catches it |
 | Broker refuses connections at high replica count | MAXINST / channel ceiling hit | the MQ ceiling math |
 | Depth under-reports vs reality | high prefetch hiding backlog inside consumers | lower prefetch |
-| Replicas frozen mid-incident | broker unreachable from KEDA — polling blind | `fallback` block ([KEDA page](/architectures/keda-autoscaling/)); pipeline alert below |
+| Replicas frozen mid-incident | broker unreachable from the poller — scaling blind | KEDA track: `fallback` block ([KEDA page](/architectures/keda-autoscaling/)); adapter track: fix the exporter/path — the HPA stays frozen until the series returns. Pipeline alerts below |
+| HPA `FailedGetExternalMetric` (adapter track) | exporter down, or adapter rule matches nothing | `up{job=~".*exporter.*"}` first, then `kubectl get --raw /apis/external.metrics.k8s.io/v1beta1` |
 | Scaled to max, backlog still growing | downstream (mail gateway, Oracle write) is the real bottleneck | drain-rate alert below — more pods can't fix a downstream |
 
 ## Alerts
@@ -286,13 +392,21 @@ rate(spring_rabbitmq_listener_seconds_count{namespace="payments"}[5m])
 ```
 
 ```promql
-# KEDA can't read the broker — scaling is blind (freshness SLO at risk silently)
+# KEDA track: KEDA can't read the broker — scaling is blind (freshness SLO at risk silently)
 sum by (scaledObject) (rate(keda_scaler_errors_total{scaledObject=~"dispatch-worker|notify-worker"}[5m])) > 0
 ```
 
+```promql
+# Adapter track (and mechanism-neutral): the HPA could not compute a replica count
+kube_horizontalpodautoscaler_status_condition{condition="ScalingActive", status="false",
+  horizontalpodautoscaler=~"dispatch-worker|notify-worker|keda-hpa-.*"} == 1
+```
+
+(One naming note for every query above: KEDA names its managed HPA `keda-hpa-<scaledobject>`; on the adapter track the HPA carries your own name — adjust the `horizontalpodautoscaler` matchers to your track.)
+
 ## Take this with you
 
-Both variants above are the starter kit — TriggerAuthentication + ScaledObject per broker, plus the `application.yaml` shutdown block. Adapt in this order: your broker URLs and monitoring credentials → your measured drain rate into the trigger math → your prefetch decision → your grace arithmetic → the ceiling derivation from *your* broker admin's numbers. The comments mark every spot.
+Each broker above ships a starter kit per track — exporter + external-metric HPA, or TriggerAuthentication + ScaledObject — plus the `application.yaml` shutdown block, which is track-independent. Adapt in this order: which mechanism your platform granted ([check, don't assume](/autoscaling/getting-the-metrics/#5-the-fork-adapter-or-keda)) → your broker URLs and monitoring credentials → your measured drain rate into the trigger math → your prefetch decision → your grace arithmetic → the ceiling derivation from *your* broker admin's numbers. The comments mark every spot.
 
 ## Where next
 
