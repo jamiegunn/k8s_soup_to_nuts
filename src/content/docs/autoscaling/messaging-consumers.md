@@ -224,24 +224,7 @@ SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(
 }
 ```
 
-For JMS, the same rule lands on the `DefaultMessageListenerContainer` created by the listener factory:
-
-```java
-@Bean
-DefaultJmsListenerContainerFactory jmsListenerContainerFactory(
-    jakarta.jms.ConnectionFactory connectionFactory,
-    DefaultJmsListenerContainerFactoryConfigurer configurer) {
-  var factory = new DefaultJmsListenerContainerFactory() {
-    @Override
-    protected void initializeContainer(DefaultMessageListenerContainer container) {
-      super.initializeContainer(container);
-      container.setShutdownTimeout(30_000L);
-    }
-  };
-  configurer.configure(factory, connectionFactory);
-  return factory;
-}
-```
+For JMS (`@JmsListener` on IBM MQ), the story is different — and simpler: Spring's `DefaultMessageListenerContainer` has **no shutdown-timeout knob at all** (nothing to align, nothing to forget). On stop it lets in-flight `onMessage` calls finish, bounded in practice by the lifecycle phase timeout and, ultimately, the pod's grace period — so for JMS, the two YAML numbers above are the whole contract. The knob worth checking is `receiveTimeout` (default 1 s): it paces how quickly *idle* consumers notice the stop, so keep it short.
 
 :::danger[Requeue means at-least-once — idempotency is the precondition]
 Everything above *minimizes* redelivery; nothing eliminates it. A crashed pod acks nothing; a slow handler overruns the grace. Redelivery is a *when*, and autoscaling raises its frequency from "rare" to "routine." Handlers must be idempotent — dedup on a business key, upsert instead of insert, check-before-send on external effects — **before** the ScaledObject merges. This is [prerequisite #5](/autoscaling/prerequisites/#5-consumers-message-handling-is-idempotent) and a blocking item on [the review gate](/autoscaling/capacity-and-governance/). If ordering matters too, revisit your [classification card](/autoscaling/classify-your-app/#exclusive-consumers-and-ordering-parallelism-capped-by-design) — scale-in requeueing reorders by construction.
