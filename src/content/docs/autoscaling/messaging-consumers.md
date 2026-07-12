@@ -68,7 +68,7 @@ Floor and ceiling come from the [arrival-rate state table](/autoscaling/load-pro
 
 ## IBM MQ: `dispatch-worker`
 
-The `ibmmq` scaler talks to the queue manager's **admin REST endpoint** — which on on-prem installations is frequently *not enabled*. That's your first named ask to the MQ admin, and it's for two things: the REST endpoint reachable from the cluster, and a monitoring account allowed to inquire queue depth (nothing more).
+The `ibmmq` scaler talks to the queue manager's **admin REST endpoint** — the `mqweb` server, port 9443. Whether that's already running depends on how MQ is deployed: the MQ container image ships it on by default, but on a traditional install — a queue manager on a VM or z/OS, administered through MQSC — `mqweb` is a separately started component, and long-lived queue managers often don't run it. Check before you plan around it: `curl -k https://mq01.corp.internal:9443/ibmmq/rest/v2/admin/qmgr` answering at all (even a 401) means the endpoint is up. If it isn't, that's your first named ask to the MQ admin, and it's for two things: the REST endpoint reachable from the cluster, and a monitoring account allowed to inquire queue depth (nothing more).
 
 ```yaml
 apiVersion: keda.sh/v1alpha1
@@ -179,7 +179,7 @@ The trade table:
 | High (250) | throughput on cheap messages | requeue storms on every scale-in; slow-message head-of-line blocking |
 | Low (5–20) | tiny scale-in blast radius, honest depth signal | more broker round-trips |
 
-**Autoscaled consumers want low prefetch.** With scaling handling throughput via pod count, prefetch's job shrinks to hiding network latency — 5 to 20 does that fine. (High prefetch also *distorts your scaling signal*: prefetched messages leave the queue's visible depth, so depth under-reports the true backlog by `prefetch × pods`.)
+**Autoscaled consumers want low prefetch.** With scaling handling throughput via pod count, prefetch's job shrinks to hiding network latency — 5 to 20 does that fine. High prefetch also distorts any **ready-only** depth signal: IBM MQ `CURDEPTH` and RabbitMQ `messages_ready` exclude messages a consumer has already taken but not acked, so they can under-report the backlog by up to `prefetch × pods`. RabbitMQ's total `messages` value — exported by many Prometheus plugins as `rabbitmq_queue_messages` and used by KEDA's HTTP `QueueLength` mode — includes ready + unacked messages, so it is safer for scaling; if you write your own PromQL, choose deliberately.
 
 ## Safe scale-in — the heart of the page
 
@@ -207,13 +207,40 @@ spring:
         prefetch: 10                  # the blast-radius decision, made deliberately
 ```
 
-One trap nested inside the handshake: Spring AMQP's listener container stops waiting for in-flight handlers after its **own** `shutdownTimeout` — **five seconds by default**, and it isn't an `application.yaml` property. Left alone it quietly overrides the 30 s you just configured: the container abandons a 20-second handler at ~5 s and its message requeues anyway. Set it via a container customizer so the three timeouts nest — container `shutdownTimeout` ≤ `timeout-per-shutdown-phase` ≤ `terminationGracePeriodSeconds` − preStop:
+One trap nested inside the handshake: the listener container has its **own** shutdown timeout, and it is not controlled by `spring.lifecycle.timeout-per-shutdown-phase`. Left alone, that container timeout can quietly override the 30 s you just configured: the container abandons a 20-second handler early and its message requeues anyway. Set it where your listener factory is built so the three timeouts nest — container `shutdownTimeout` ≤ `timeout-per-shutdown-phase` ≤ `terminationGracePeriodSeconds` − preStop.
+
+For RabbitMQ's `SimpleMessageListenerContainer`, wire the factory's container customizer:
 
 ```java
 @Bean
-ContainerCustomizer<SimpleMessageListenerContainer> shutdownAlignment() {
-    return container -> container.setShutdownTimeout(30_000L);  // ms — match the
-}                                                                // lifecycle phase above
+SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(
+    ConnectionFactory connectionFactory,
+    SimpleRabbitListenerContainerFactoryConfigurer configurer) {
+  var factory = new SimpleRabbitListenerContainerFactory();
+  configurer.configure(factory, connectionFactory);
+  factory.setContainerCustomizer(container ->
+    container.setShutdownTimeout(30_000L));  // ms — match the lifecycle phase above
+  return factory;
+}
+```
+
+For JMS, the same rule lands on the `DefaultMessageListenerContainer` created by the listener factory:
+
+```java
+@Bean
+DefaultJmsListenerContainerFactory jmsListenerContainerFactory(
+    jakarta.jms.ConnectionFactory connectionFactory,
+    DefaultJmsListenerContainerFactoryConfigurer configurer) {
+  var factory = new DefaultJmsListenerContainerFactory() {
+    @Override
+    protected void initializeContainer(DefaultMessageListenerContainer container) {
+      super.initializeContainer(container);
+      container.setShutdownTimeout(30_000L);
+    }
+  };
+  configurer.configure(factory, connectionFactory);
+  return factory;
+}
 ```
 
 :::danger[Requeue means at-least-once — idempotency is the precondition]
