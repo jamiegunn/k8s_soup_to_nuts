@@ -20,7 +20,7 @@ sidebar:
 
 You're in. `kubectl exec -it` worked, you have a shell, and something is wrong. This page is about the next twenty minutes: which files to read, which commands to run, and — critically — how to *interpret* the output, because inside a container half of what Linux tells you is about the node, not about you. If you *can't* get a shell or the image has no tools at all, that's the sibling problem: [The BusyBox Toolkit](/troubleshooting/busybox/) covers getting tools in. This page assumes you're inside and covers what to do there.
 
-The organizing trick for tool-less images: almost every question below has two answers — the comfortable command, and the `/proc` file it reads under the hood. When the command is missing, the file is still there. [proc(5)](https://man7.org/linux/man-pages/man5/proc.5.html) is *the* reference for this whole page; keep it open. And if you want to understand *why* these files are the truth — why a container is really just a Linux process wearing namespaces and a cgroup — the theory annex is [Kubernetes Is Linux](/troubleshooting/kubernetes-is-linux/); this page is its 2am companion.
+The organizing trick for tool-less images: almost every question below has two answers — the comfortable command, and the `/proc` file it reads under the hood. When the command is missing, the file is still there. [proc(5)](https://man7.org/linux/man-pages/man5/proc.5.html) is *the* reference for this whole page; keep it open. And if you want to understand *why* these files are the truth — why a container is really just a Linux process wearing namespaces and a cgroup — the theory annex is [Kubernetes Is Linux](/troubleshooting/kubernetes-is-linux/); this page is its 2am companion. And behind both sits the [Foundations section](/foundations/overview/) — a full deep dive per primitive, linked from each section below where the mechanism matters.
 
 ## Where am I? (orientation in 60 seconds)
 
@@ -72,7 +72,7 @@ tmpfs /tmp tmpfs rw,nosuid,nodev,size=524288k 0 0
 tmpfs /run/secrets/kubernetes.io/serviceaccount tmpfs ro,relatime 0 0
 ```
 
-**How to read it:** `/` on `overlay` is the container image (ephemeral). The `ext4` line is your PersistentVolume — note it's `rw`; if a volume shows `ro` when it shouldn't, or is missing entirely, jump to [Volume Failures](/troubleshooting/volume-failures/). The `tmpfs /tmp` line means writes to `/tmp` are RAM, counted against your memory limit — a common invisible memory consumer.
+**How to read it:** `/` on `overlay` is the container image (ephemeral). The `ext4` line is your PersistentVolume — note it's `rw`; if a volume shows `ro` when it shouldn't, or is missing entirely, jump to [Volume Failures](/troubleshooting/volume-failures/). The `tmpfs /tmp` line means writes to `/tmp` are RAM, counted against your memory limit — a common invisible memory consumer. (What overlay, bind mounts, and tmpfs actually *are* is the [storage deep dive](/foundations/storage-and-filesystems/).)
 
 :::tip[The theme of this page]
 Every command above has a `/proc` fallback, and that's true of nearly everything below. `mount` reads `/proc/mounts`. `env` reads what `/proc/1/environ` holds. On an image with only `cat`, `grep`, and `ls` you can still answer every diagnostic question on this page. The kernel's own tour of the filesystem is at [docs.kernel.org/filesystems/proc](https://docs.kernel.org/filesystems/proc.html).
@@ -110,7 +110,7 @@ $ ls /proc/1/task | wc -l
 47
 ```
 
-**The PID 1 question.** Is your app PID 1? Usually yes, and it matters twice. First, signals: when Kubernetes stops the pod, SIGTERM goes to PID 1 — if that's a shell script wrapping your app, the app never hears it and gets SIGKILLed 30 seconds later. Second, some diagnostics target PID 1 directly, like `kill -3 1` for a JVM thread dump ([Thread Dumps, JRE Only](/java/thread-dumps-jre-only/)). The full signal semantics live in [signal(7)](https://man7.org/linux/man-pages/man7/signal.7.html).
+**The PID 1 question.** Is your app PID 1? Usually yes, and it matters twice. First, signals: when Kubernetes stops the pod, SIGTERM goes to PID 1 — if that's a shell script wrapping your app, the app never hears it and gets SIGKILLed 30 seconds later. Second, some diagnostics target PID 1 directly, like `kill -3 1` for a JVM thread dump ([Thread Dumps, JRE Only](/java/thread-dumps-jre-only/)). The full signal semantics live in [signal(7)](https://man7.org/linux/man-pages/man7/signal.7.html), and the whole PID 1 story — dispositions, reaping, zombies, D-state — in [Processes, Signals, and PID 1](/foundations/processes-and-signals/).
 
 When `ps` *does* exist, use it — but know which one you have:
 
@@ -155,7 +155,7 @@ slab 9437184
 sock 1048576
 ```
 
-**How to read it:** `anon` is heap/stack — memory that *cannot* be reclaimed; this is your app's true footprint. `file` is page cache from reading/writing files; most of it (`inactive_file`) can be dropped under pressure. The working set — what the OOM killer effectively judges you on — is approximately `memory.current − inactive_file`: here 475 − 56 = ~419 MiB. If `anon` alone is near `memory.max`, you are going to be OOM killed and no amount of cache reclaim will save you.
+**How to read it:** `anon` is heap/stack — memory that *cannot* be reclaimed; this is your app's true footprint. `file` is page cache from reading/writing files; most of it (`inactive_file`) can be dropped under pressure. The working set — what the OOM killer effectively judges you on — is approximately `memory.current − inactive_file`: here 475 − 56 = ~419 MiB. If `anon` alone is near `memory.max`, you are going to be OOM killed and no amount of cache reclaim will save you. (Anonymous vs file-backed, the page cache, and the whole metric zoo are [Virtual Memory and the Page Cache](/foundations/virtual-memory/); the accounting machinery itself is [cgroups](/foundations/cgroups/).)
 
 Has it already happened?
 
@@ -204,7 +204,7 @@ nr_throttled 9217
 throttled_usec 460850000
 ```
 
-**How to read it:** `nr_throttled 9217` out of 184,032 periods — this container hit its quota and was frozen in **5% of all scheduling periods**, for a cumulative 460 seconds. That is the smoking gun for "latency spikes but CPU graphs look fine": averaged metrics hide throttling, this counter doesn't. Read it twice, 30 seconds apart; if `nr_throttled` is climbing *now*, your current incident is CPU starvation.
+**How to read it:** `nr_throttled 9217` out of 184,032 periods — this container hit its quota and was frozen in **5% of all scheduling periods**, for a cumulative 460 seconds. That is the smoking gun for "latency spikes but CPU graphs look fine": averaged metrics hide throttling, this counter doesn't. Read it twice, 30 seconds apart; if `nr_throttled` is climbing *now*, your current incident is CPU starvation. (Why a multi-threaded app burns its quota in bursts and freezes while "idle" is [CPU Scheduling and the CFS](/foundations/cpu-scheduling-and-cfs/).)
 
 Two supporting reads. `/proc/loadavg` is node-wide, so its absolute value is nearly meaningless in a container — but the fourth field (`3/412` = runnable/total *visible* to your PID namespace) is yours. And per-process CPU without `top`:
 
@@ -251,7 +251,7 @@ $ grep 'open files' /proc/1/limits
 Max open files       4096      4096      files
 ```
 
-44 fds from the ceiling — the next accept() or open() fails. Are they sockets (connection leak) or files? `ls -l /proc/1/fd | awk -F' -> ' '{print $2}' | sort | uniq -c | sort -rn | head` groups them. The soft/hard limit semantics are [getrlimit(2)](https://man7.org/linux/man-pages/man2/getrlimit.2.html); raising them is a securityContext/runtime setting, not something you can fix in-pod.
+44 fds from the ceiling — the next accept() or open() fails. Are they sockets (connection leak) or files? `ls -l /proc/1/fd | awk -F' -> ' '{print $2}' | sort | uniq -c | sort -rn | head` groups them. The soft/hard limit semantics are [getrlimit(2)](https://man7.org/linux/man-pages/man2/getrlimit.2.html); raising them is a securityContext/runtime setting, not something you can fix in-pod. What file descriptors *are* — and why sockets, pipes, and deleted-but-open files all live in the same table — is [stdin, stdout, stderr, and File Descriptors](/foundations/stdio-and-file-descriptors/).
 
 Basic identity of a suspicious file: `stat file` (size, mtime, owner — *is this config as new as I think it is?*) and `file file` when present (is this "text" actually a binary or an empty file?).
 
@@ -277,7 +277,7 @@ $ cat /proc/net/tcp
    2: 1701F40A:1F90 050E600A:1538 01 00000000:00000000 ...
 ```
 
-Walk it: `1701F40A` is the local IP as four hex bytes, **little-endian** — read the bytes right-to-left: `0A`=10, `F4`=244, `01`=1, `17`=23 → `10.244.1.23`. Port `1F90` is *normal* hex → 8080. Remote `050E600A:1538` → `0A.60.0E.05` = 10.96.14.5, port 0x1538 = 5432. State `01` = ESTABLISHED. The states you'll actually meet: `01` ESTABLISHED, `02` SYN_SENT (connecting — stuck here means nothing is answering), `06` TIME_WAIT, `0A` LISTEN, `08` CLOSE_WAIT (peer hung up, your app hasn't closed — piles of these are an app bug). `/proc/net/udp` is the same format — a row with remote port `0035` (53) confirms a DNS query is in flight.
+Walk it: `1701F40A` is the local IP as four hex bytes, **little-endian** — read the bytes right-to-left: `0A`=10, `F4`=244, `01`=1, `17`=23 → `10.244.1.23`. Port `1F90` is *normal* hex → 8080. Remote `050E600A:1538` → `0A.60.0E.05` = 10.96.14.5, port 0x1538 = 5432. State `01` = ESTABLISHED. The states you'll actually meet: `01` ESTABLISHED, `02` SYN_SENT (connecting — stuck here means nothing is answering), `06` TIME_WAIT, `0A` LISTEN, `08` CLOSE_WAIT (peer hung up, your app hasn't closed — piles of these are an app bug; the full state machine and what each state diagnoses is [TCP: What a Connection Actually Is](/foundations/tcp-connections/)). `/proc/net/udp` is the same format — a row with remote port `0035` (53) confirms a DNS query is in flight.
 
 DNS config is always readable:
 
@@ -288,7 +288,7 @@ nameserver 10.96.0.10
 options ndots:5
 ```
 
-If lookups fail or crawl, that `ndots:5` line and the nameserver IP are your leads — the whole story is in [DNS](/networking/dns/).
+If lookups fail or crawl, that `ndots:5` line and the nameserver IP are your leads — the whole story is in [DNS](/networking/dns/), and the resolver mechanics behind it (search-path walks, glibc vs musl, the 5-second timeout) in [DNS Resolution on Linux](/foundations/dns-resolution/).
 
 Connectivity probe without curl or nc — bash only:
 
@@ -346,7 +346,7 @@ CapEff: 0000000000000000
 CapBnd: 00000000a80425fb
 ```
 
-`CapEff` is a 64-bit mask, one bit per capability — all zeros means you hold none (restricted profile, the good default; see [Pod Security](/workloads/pod-security/)). `a80425fb` is the classic default-container set (chown, net_bind_service, kill, ...); decode any value with `capsh --decode=<hex>` on a machine that has it. And the read-only-root check:
+`CapEff` is a 64-bit mask, one bit per capability — all zeros means you hold none (restricted profile, the good default; see [Pod Security](/workloads/pod-security/)). `a80425fb` is the classic default-container set (chown, net_bind_service, kill, ...); decode any value with `capsh --decode=<hex>` on a machine that has it. (What each capability grants, and how seccomp and no_new_privs stack on top, is [Capabilities, seccomp, and LSMs](/foundations/security-primitives/).) And the read-only-root check:
 
 ```console
 $ touch /probe

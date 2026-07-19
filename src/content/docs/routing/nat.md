@@ -41,7 +41,7 @@ The corporate chain, end to end. Six rewrites, each with the same four questions
 ```text
 laptop ──(a) DNAT──(b) SNAT──▶ appliance ──▶ MetalLB IP on node
         ──(c) DNAT: Service VIP → pod IP  (kube-proxy)
-        ──(d) SNAT: cross-node hop        (kube-proxy, policy Cluster)
+        ──(d) SNAT: node masquerade      (kube-proxy, policy Cluster)
         ──▶ pod ──(e) SNAT: pod → node IP on egress──▶ outside world
         (f) hairpin SNAT: pod → own Service VIP → itself
 ```
@@ -67,9 +67,9 @@ laptop ──(a) DNAT──(b) SNAT──▶ appliance ──▶ MetalLB IP on n
 - **Cost:** one conntrack entry per connection, a random-endpoint choice with no feedback loop, and a layer of address indirection in every tcpdump.
 - **Avoidable?** Only by not using the VIP: headless Services or `internalTrafficPolicy: Local` (see below). For most east-west traffic, keep it — it's cheap and it's the contract.
 
-### (d) kube-proxy SNAT — the cross-node triangle
+### (d) kube-proxy SNAT — external ingress under policy Cluster
 
-- **Where:** node A, when external traffic arrives there but the chosen endpoint lives on node B and the Service has `externalTrafficPolicy: Cluster` (the default).
+- **Where:** any node receiving external (NodePort/LoadBalancer) traffic for a Service with `externalTrafficPolicy: Cluster` (the default). kube-proxy masquerades that traffic to the node's own IP **unconditionally — whether the chosen endpoint is on this node or another.** The cross-node case below is *why* the masquerade is mandatory, but it fires even when the endpoint is local.
 - **Why:** the return-path triangle. Without it:
 
 ```text
@@ -91,9 +91,9 @@ $ iptables-save -t nat | grep KUBE-MARK-MASQ | head -2
 -A KUBE-POSTROUTING -m mark --mark 0x4000/0x4000 -j MASQUERADE --random-fully
 ```
 
-External-facing traffic gets marked for masquerade *before* the endpoint choice, precisely because the endpoint might be remote.
+External-facing traffic gets marked for masquerade *before* the endpoint is chosen — so under `Cluster` the source is rewritten to the node IP on **every** external connection, local endpoint or not. The possibility of a remote endpoint is why the mark can't be made conditional.
 
-- **Cost:** the pod sees `node A's IP` as the client — real client identity is destroyed *again*, even if the appliance didn't SNAT. Plus an extra node hop and two nodes' worth of conntrack state.
+- **Cost:** the pod sees the **ingress node's IP** as the client — real client identity is destroyed *again*, even if the appliance didn't SNAT. When the endpoint also happens to be on another node, add an extra hop and a second node's worth of conntrack state.
 - **Avoidable?** Yes, cleanly: `externalTrafficPolicy: Local`. This is the most avoidable rewrite in the census.
 
 :::note[IPVS and nftables modes don't opt out]
@@ -163,7 +163,7 @@ $ cat /proc/sys/net/ipv4/ip_local_port_range
 32768	60999
 ```
 
-≈ 28,000 ports — less in practice, because `TIME_WAIT` entries hold ports for tens of seconds after close. A connection-churning workload doing 1,000 short connections/second to one database VIP burns the entire range in under 30 seconds of `TIME_WAIT` lifetime. Exhaustion here is loud: `connect()` fails with `EADDRNOTAVAIL`, right in the application's error log.
+≈ 28,000 ports — less in practice, because `TIME_WAIT` entries hold each port for ~60s (2·MSL) after close. A connection-churning workload doing 1,000 short connections/second to one database VIP burns the entire range in under 30 seconds — faster than `TIME_WAIT` releases the ports back. Exhaustion here is loud: `connect()` fails with `EADDRNOTAVAIL`, right in the application's error log.
 
 *Forwarded, masqueraded traffic* — the common pod-egress case — is a different phenomenon. The pod already chose its own source port; it's conntrack, while applying `MASQUERADE`, that must pick a source port making the node's rewritten tuple unique per `{protocol, dst_ip, dst_port}`. When many pods on one node funnel to the same external `dst_ip:dst_port` through the node's single masquerade IP, that per-destination port pool runs dry *silently*: the NAT allocation fails, the packet is dropped at conntrack insertion, and the application never sees `EADDRNOTAVAIL` — just a SYN with no answer, then a retry. The observable lives on the node:
 

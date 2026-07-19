@@ -39,7 +39,7 @@ The controller is usually the **HorizontalPodAutoscaler (HPA)** — a control lo
 2. **The line** — at what value of that number should copies be added? Deriving this from what you promised your users — instead of guessing — is [Start With the User](/autoscaling/slos-for-scaling/).
 3. **The floor and the ceiling** — `minReplicas` and `maxReplicas`. These come from your measured traffic pattern and your dependencies' limits, not from vibes. [Know Your Traffic](/autoscaling/load-profile/) shows how to measure them.
 
-The mechanics of the HPA itself — the arithmetic, the metric types, the `behavior` block — live in [Autoscaling](/workloads/autoscaling/) and aren't repeated here. This section is about making the three decisions well, for your stack, on your cluster.
+The mechanics of the HPA itself — the arithmetic, the metric types, the `behavior` block — live in [Autoscaling](/workloads/autoscaling/) and aren't repeated here; its *dynamics* — why an undersized request makes the loop thrash, and how long scale-up actually takes (metrics lag + startup + node provisioning, rarely under a minute) — are worked out with numbers in [Scaling Dynamics](/autoscaling/scaling-dynamics/). This section is about making the three decisions well, for your stack, on your cluster.
 
 ## Why it's harder here than in the tutorial
 

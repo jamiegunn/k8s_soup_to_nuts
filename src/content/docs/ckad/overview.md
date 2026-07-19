@@ -36,7 +36,7 @@ Prices and bundles change; check the official page rather than any blog post (in
 
 ## What the exam actually tests
 
-The curriculum ([cncf/curriculum](https://github.com/cncf/curriculum)) lists five domains — Pods, Deployments, probes, ConfigMaps, NetworkPolicies and friends. The [domain map](/ckad/exam-domains/) covers those in full. But the exam *really* tests three meta-skills the curriculum never names:
+The curriculum ([cncf/curriculum](https://github.com/cncf/curriculum)) lists five domains — Application Design & Build, Application Deployment, Observability & Maintenance, Application Environment/Config/Security, and Services & Networking. The [domain map](/ckad/exam-domains/) covers those in full. But the exam *really* tests three meta-skills the curriculum never names:
 
 **1. kubectl speed.** Nearly every task starts with an object that `kubectl create` or `kubectl run` can scaffold in one line. Candidates who type YAML from scratch run out of time; candidates who generate, edit, apply finish with 20 minutes to spare. This is a trainable mechanical skill — the [speed system](/ckad/speed-system/) is the training program, and [Output and Queries](/kubectl/output-and-queries/) is the deeper background.
 

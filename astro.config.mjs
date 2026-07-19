@@ -123,6 +123,14 @@ export default defineConfig({
 					label: 'kubectl Mastery',
 					items: [{ autogenerate: { directory: 'kubectl' } }],
 				},
+				{
+					// The OS theory under everything below: processes, namespaces,
+					// cgroups/CFS, networking, TCP, netfilter, SSH, hashing, storage.
+					// Sits at the base of the learning progression, before workloads.
+					label: 'Foundations: The Linux Under K8s',
+					collapsed: true,
+					items: [{ autogenerate: { directory: 'foundations' } }],
+				},
 				// Section order follows the learning progression: workloads (what you
 				// run) → networking (how traffic reaches it) → state → the controller
 				// machinery → observing → tuning → autoscaling (the feedback loop on

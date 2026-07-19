@@ -150,7 +150,7 @@ State  Recv-Q Send-Q Local Address:Port   Peer Address:Port
 ESTAB  0      0      10.244.3.17:443      10.20.30.200:31022
 ```
 
-Note the peer: the appliance's SNAT address (or the node IP, under `Cluster`-policy cross-node forwarding). Never the laptop.
+Note the peer: the appliance's SNAT address (or the node IP, since `Cluster` policy masquerades **all** external traffic to the ingress node — cross-node or not). Never the laptop.
 
 ### Step 6 — ingress-nginx routes: host/path → a pod IP, not the Service
 
@@ -190,7 +190,7 @@ encapsulated (VXLAN):         [ IP worker-07 → worker-12 | UDP 8472 |
                                 VXLAN | IP 10.244.3.17 → 10.244.7.42 | TCP | payload ]
 ```
 
-Encap steals ~50 bytes of MTU — the classic cause of "small requests fine, large POSTs hang" when something on the path drops the resulting fragmentation signals. It also changes what a node-level `tcpdump` shows (UDP between nodes, unless you decode the VXLAN) — worth knowing before you read a platform-provided capture. None of this changes the addresses your pods see.
+The encapsulating UDP port depends on the CNI (8472 for Flannel and Cilium; the IANA-standard 4789 for Calico's VXLAN). Encap steals ~50 bytes of MTU — the classic cause of "small requests fine, large POSTs hang" when something on the path drops the resulting fragmentation signals. It also changes what a node-level `tcpdump` shows (UDP between nodes, unless you decode the VXLAN) — worth knowing before you read a platform-provided capture. None of this changes the addresses your pods see.
 
 **Evidence:** `kubectl exec` a debug pod on each node and `ping`/`curl` the pod IP directly; MTU suspicion → `tracepath <pod-ip>` from inside a pod.
 

@@ -1,6 +1,6 @@
 ---
 title: Learning Paths
-description: Curated reading tracks through the site — new-to-K8s, Java and .NET onboarding, on-call prep, shipping to prod, and running stateful services.
+description: Curated reading tracks through the site — new-to-K8s, Java and .NET onboarding, on-call prep, shipping to prod, running stateful services, and the Linux under it all.
 keywords:
   - where do i start on this site
   - how this guide is organized
@@ -14,7 +14,7 @@ keywords:
   - which pages to read in order
 ---
 
-This site has ~220 pages. Nobody should read it front to back, and nobody should land mid-topic without the prerequisites. Pick the track that matches your situation, read the steps **in order**, and use the checkpoint to know when you're done.
+This site has ~240 pages. Nobody should read it front to back, and nobody should land mid-topic without the prerequisites. Pick the track that matches your situation, read the steps **in order**, and use the checkpoint to know when you're done.
 
 Time estimates assume reading plus trying things against a real (dev) namespace. If you only read, halve them — and retain half as much.
 
@@ -32,17 +32,18 @@ Time estimates assume reading plus trying things against a real (dev) namespace.
 
 1. [Overview](/start/overview/) — what this site assumes and how a platform-managed cluster changes the game.
 2. [How Kubernetes Works](/start/how-kubernetes-works/) — the mental model (desired state, controllers) everything else builds on.
-3. [Working Without Admin](/start/working-without-admin/) — what you can and can't do as a namespace tenant, so nothing later surprises you.
-4. [YAML, Labels & Namespaces](/start/yaml-labels-and-namespaces/) — the grammar every manifest uses.
-5. [kubectl Survival Kit](/start/kubectl-survival-kit/) — the dozen commands you'll run daily.
-6. [Life of a Deployment](/start/life-of-a-deployment/) — follow one `kubectl apply` from YAML to running pods.
-7. [Deployments Deep Dive](/workloads/deployments-deep-dive/) — the workload type you'll actually use 90% of the time.
-8. [What Triggers a Rollout](/workloads/rollout-triggers/) — which changes replace your pods and which silently don't; saves you the two classic deploy surprises.
-9. [Health Checks](/workloads/health-checks/) — probes are the contract between your app and the cluster.
-10. [Resources & QoS](/workloads/resources-and-qos/) — requests and limits, before they bite you.
-11. [Configuration](/workloads/configuration/) — ConfigMaps, env vars, and where secrets fit.
-12. [Triage Methodology](/troubleshooting/triage-methodology/) — your first broken pod, diagnosed in the right order.
-13. [Error Message Index](/troubleshooting/error-index/) — bookmark it; you'll use it more than any other page.
+3. [The Three Doors](/start/three-doors/) — the model for thinking about *any* workload: cost (requests/limits), truth (health checks), and response (scaling) as one loop. The rest of this track is you walking through these three doors.
+4. [Working Without Admin](/start/working-without-admin/) — what you can and can't do as a namespace tenant, so nothing later surprises you.
+5. [YAML, Labels & Namespaces](/start/yaml-labels-and-namespaces/) — the grammar every manifest uses.
+6. [kubectl Survival Kit](/start/kubectl-survival-kit/) — the dozen commands you'll run daily.
+7. [Life of a Deployment](/start/life-of-a-deployment/) — follow one `kubectl apply` from YAML to running pods.
+8. [Deployments Deep Dive](/workloads/deployments-deep-dive/) — the workload type you'll actually use 90% of the time.
+9. [What Triggers a Rollout](/workloads/rollout-triggers/) — which changes replace your pods and which silently don't; saves you the two classic deploy surprises.
+10. [Health Checks](/workloads/health-checks/) — probes are the contract between your app and the cluster (Door 2).
+11. [Resources & QoS](/workloads/resources-and-qos/) — requests and limits, before they bite you (Door 1).
+12. [Configuration](/workloads/configuration/) — ConfigMaps, env vars, and where secrets fit.
+13. [Triage Methodology](/troubleshooting/triage-methodology/) — your first broken pod, diagnosed in the right order.
+14. [Error Message Index](/troubleshooting/error-index/) — bookmark it; you'll use it more than any other page.
 
 **You're done when you can:** deploy an app from scratch with probes and resource requests, roll it back after a bad change, and diagnose a `CrashLoopBackOff` or `Pending` pod without asking for help.
 
@@ -52,7 +53,7 @@ Time estimates assume reading plus trying things against a real (dev) namespace.
 **Time:** 2–3 days. Do track 1 first if Kubernetes itself is new.
 
 1. [Java Overview](/java/overview/) — the map of what changes for the JVM on Kubernetes.
-2. [JVM in Containers](/java/jvm-in-containers/) — container-aware ergonomics, heap sizing vs. the memory limit; the single most important page in this track.
+2. [JVM in Containers](/java/jvm-in-containers/) — container-aware ergonomics, heap sizing vs. the memory limit; the single most important page in this track. (Want the kernel's side of this story? [cgroups](/foundations/cgroups/), [Virtual Memory](/foundations/virtual-memory/), and [CPU Scheduling and the CFS](/foundations/cpu-scheduling-and-cfs/) explain what the JVM is adapting *to*.)
 3. [Thread Dumps (JRE-only)](/java/thread-dumps-jre-only/) — get a thread dump from a stripped-down image with no JDK tools.
 4. [Heap Dumps (JRE-only)](/java/heap-dumps-jre-only/) — the same, for heap dumps; pair with the previous page.
 5. [Getting Dumps Out](/java/getting-dumps-out/) — a dump inside a pod is useless; move it to your laptop.
@@ -95,6 +96,7 @@ Time estimates assume reading plus trying things against a real (dev) namespace.
 7. [kubectl Can't Reach the Cluster](/troubleshooting/api-server-broken/) — the pager skill for when your own tooling is the thing that's down: kubeconfig, context, token, and control-plane reachability.
 8. [Debugging Toolbox](/troubleshooting/debugging-toolbox/) — ephemeral containers and `kubectl debug` for distroless pods.
 9. [Busybox](/troubleshooting/busybox/) — the minimal-tools cheatsheet for when the toolbox isn't available.
+10. Optional but compounding: [Processes, Signals, and PID 1](/foundations/processes-and-signals/), [TCP: What a Connection Actually Is](/foundations/tcp-connections/), and [DNS Resolution on Linux](/foundations/dns-resolution/) — the three Foundations pages that turn the most 3 a.m. symptoms from mysteries into mechanisms.
 10. [Events](/observability/events/) — the cluster's own account of what happened, and how to read it before it expires.
 11. [PromQL for Resources](/observability/promql-for-resources/) — the five queries that answer "is it CPU, memory, or restarts?"
 12. [Emergency Playbooks](/operations/emergency-playbooks/) — pre-written moves for rollback, scale-out, and stop-the-bleeding.
@@ -107,16 +109,16 @@ Time estimates assume reading plus trying things against a real (dev) namespace.
 **Who it's for:** your service works in dev; now it has to survive a production readiness review — security posture, least privilege, and a repeatable pipeline.
 **Time:** 3–4 days, including the review against the golden service.
 
-1. [Pod Security](/workloads/pod-security/) — non-root, read-only rootfs, dropped capabilities, and the `restricted` profile your namespace probably enforces.
+1. [Pod Security](/workloads/pod-security/) — non-root, read-only rootfs, dropped capabilities, and the `restricted` profile your namespace probably enforces. (What each dropped capability and seccomp profile actually switches off in the kernel: [Capabilities, seccomp, and LSMs](/foundations/security-primitives/).)
 2. [ServiceAccounts](/workloads/serviceaccounts/) — a dedicated identity per workload, with token automounting off unless needed.
 3. [Secrets](/workloads/secrets/) — how to consume secrets without leaking them into logs, env dumps, or git.
 4. [Network Policies](/networking/network-policies/) — default-deny and the explicit allows your service actually needs.
-5. [cert-manager](/controllers/cert-manager/) — automate TLS: request a serving cert into a Secret and let renewal stop being a pager event, so the green padlock survives the readiness review.
+5. [cert-manager](/controllers/cert-manager/) — automate TLS: request a serving cert into a Secret and let renewal stop being a pager event, so the green padlock survives the readiness review. (Chains, trust stores, and the handshake itself: [TLS: Handshakes, Certificates, and mTLS](/foundations/tls/).)
 6. [High Availability](/workloads/high-availability/) — replicas, PodDisruptionBudgets, and spread so maintenance doesn't take you down.
 7. [Golden Service](/architectures/golden-service/) — the fully-assembled reference; diff your manifests against it.
 8. [Helm & Kustomize](/operations/helm-and-kustomize/) — package the result so it's reproducible across environments.
 9. [CI/CD Pipeline Design](/operations/cicd-pipeline-design/) — the pipeline that ships it, with drift kept out ([Drift & CI/CD](/operations/drift-and-cicd/)).
-10. [Supply Chain Security](/operations/supply-chain-security/) — image provenance, scanning, and pinning.
+10. [Supply Chain Security](/operations/supply-chain-security/) — image provenance, scanning, and pinning. (Why a digest is a guarantee and a tag is a hope: [Hashing](/foundations/hashing/).)
 
 **You're done when you can:** pass a manifest diff against the golden service with no findings, explain every RBAC rule and network allow your app holds, and ship a change to prod through the pipeline with zero manual `kubectl apply`.
 
@@ -133,7 +135,7 @@ Time estimates assume reading plus trying things against a real (dev) namespace.
    - Cache: [Valkey & Redis](/stateful/valkey-and-redis/) → [Valkey Shared VIP](/architectures/valkey-shared-vip/) (going deep on storage? [Longhorn Under Valkey](/architectures/valkey-longhorn-deep-dive/))
    - Relational: [PostgreSQL](/stateful/postgresql/) → [PostgreSQL HA](/architectures/postgresql-ha/) (or [Oracle](/stateful/oracle/))
    - Messaging: [Message Queues](/stateful/message-queues/) → [RabbitMQ](/architectures/rabbitmq/), [IBM MQ](/architectures/ibm-mq/), or [Kafka with Strimzi](/architectures/kafka-strimzi/)
-6. [Long-Lived Connections](/networking/long-lived-connections/) — stateful clients hold connections; learn how the network kills them.
+6. [Long-Lived Connections](/networking/long-lived-connections/) — stateful clients hold connections; learn how the network kills them. (The theory pair: [TCP](/foundations/tcp-connections/) for the connection itself, [HTTP](/networking/http/) for why gRPC and h2 pin to one backend.)
 7. [Backup & DR](/stateful/backup-and-dr/) — backups you haven't restored are hopes, not backups. Schedule the drill.
 8. [Volume Failures](/troubleshooting/volume-failures/) — the failure modes you'll actually see: Multi-Attach, FailedMount, stuck PVCs.
 
@@ -170,6 +172,21 @@ This track has its own section with a full day-by-day plan; the short version:
 9. [Lab 10](/labs/lab-10-autoscaling/) — feel all of it on a laptop: HPA under load, the capacity wall, and a queue-depth HPA fed through a metrics pipeline you build by hand.
 
 **You're done when you can:** show a derivation comment for every number in your autoscaling values, name the external ceiling and its owner, and demo a load test where scale-up, the ceiling, and scale-down all behaved as the math predicted.
+
+## 9. Understanding the machine
+
+**Who it's for:** you can deploy, debug, and ship — and now you want to know what's actually happening. The senior-engineer track: every Kubernetes abstraction traced down to the Linux primitive that implements it.
+**Time:** two to three weeks at an article a day. Nothing here is required for any other track; everything here makes every other track easier.
+
+1. [Kubernetes Is Linux](/troubleshooting/kubernetes-is-linux/) — the survey that maps every concept to its primitive. Read it first; it's the trailhead the whole Foundations section expands.
+2. [Foundations: Start Here](/foundations/overview/) — the map of the twenty deep dives and the symptom table for jumping in anywhere.
+3. The anatomy of what you ship, in course order: [Processes & Signals](/foundations/processes-and-signals/) → [stdio & File Descriptors](/foundations/stdio-and-file-descriptors/) → [Namespaces](/foundations/namespaces/) → [cgroups](/foundations/cgroups/) → [Virtual Memory](/foundations/virtual-memory/) → [CPU Scheduling & the CFS](/foundations/cpu-scheduling-and-cfs/). **A container is a process; everything else is arrangements.**
+4. The wire: [Linux Networking](/foundations/linux-networking/) → [TCP](/foundations/tcp-connections/) → [Firewalls & netfilter](/foundations/firewalls-and-netfilter/) → [DNS Resolution](/foundations/dns-resolution/) → [TLS](/foundations/tls/) → [HTTP](/networking/http/) — the last one living with its Networking siblings, and explaining along the way why gRPC load balancing breaks.
+5. The trust and the disk: [SSH](/foundations/ssh/) → [Hashing](/foundations/hashing/) → [Security Primitives](/foundations/security-primitives/) → [Storage & Filesystems](/foundations/storage-and-filesystems/) → [Linkers, libc & ELF](/foundations/linkers-libc-and-elf/).
+6. The system around it: [Time](/foundations/time/) → [eBPF](/foundations/ebpf/) → [systemd & the Node](/foundations/systemd-and-the-node/) → [API Machinery](/controllers/api-machinery/) (under Controllers — the watch/informer/leader-election machinery that makes the control plane itself tick).
+7. Re-read [Linux Inside the Pod](/troubleshooting/linux-inside-the-pod/) — it should now read not as a list of magic file paths but as the obvious places to look.
+
+**You're done when you can:** explain a pod as namespaces + cgroups + overlayfs + handcuffs without notes, trace a request from TCP handshake through netfilter to your process's fd table, and — the real test — diagnose a novel symptom by reasoning about the mechanism instead of pattern-matching an error string.
 
 ## Not on a track?
 

@@ -49,13 +49,13 @@ If an instruction requires node SSH or cluster-admin, we say so explicitly and t
 - **Dev/ops or app-ops engineers** who carry the pager for the app but not the cluster.
 - **Java teams specifically** — there's a whole section on JVM-in-container pain, because getting a heap dump out of a distroless JRE-only image at 3 a.m. is a rite of passage nobody should improvise.
 
-You should be comfortable with a terminal and have `kubectl` access to at least one namespace. You do not need prior Kubernetes-internals knowledge; the next two articles build the mental model.
+You should be comfortable with a terminal and have `kubectl` access to at least one namespace. You do not need prior Kubernetes-internals knowledge; the next two articles — how Kubernetes works, then the Three Doors — build the mental model.
 
 ## How the site is organized
 
 Each section stands alone and opens with its own overview:
 
-- **Start** (you are here) — the mental model and the daily toolkit. Begin with [How Kubernetes Works](/start/how-kubernetes-works/) for the reconciliation model that pays for everything else; then follow [Learning Paths Track 1](/learning-paths/#1-new-to-deploying-on-kubernetes) for the full reading order through the rest of the section.
+- **Start** (you are here) — the mental model and the daily toolkit. Begin with [How Kubernetes Works](/start/how-kubernetes-works/) for the reconciliation model that pays for everything else, then [The Three Doors](/start/three-doors/) for the model that fits any workload you deploy; then follow [Learning Paths Track 1](/learning-paths/#1-new-to-deploying-on-kubernetes) for the full reading order through the rest of the section.
 - **[kubectl Mastery](/kubectl/overview/)** — beyond the survival kit: how kubectl actually talks to the API, output and query wizardry, and the tricks that make you fast.
 - **[Workloads](/workloads/overview/)** — Deployments, rollouts, autoscaling, health checks, resources and QoS, Jobs. The bread and butter.
 - **[Java on Kubernetes](/java/overview/)** — JVM memory in cgroups, thread and heap dumps with a JRE-only image, remote debugging, GC tuning.
@@ -71,6 +71,7 @@ Each section stands alone and opens with its own overview:
 | You need to... | Go to |
 |---|---|
 | Learn the core mental model | [How Kubernetes Works](/start/how-kubernetes-works/) |
+| Think about *any* deployment or chart | [The Three Doors](/start/three-doors/) |
 | Find the right article for any task | [How Do I…? Solutions Index](/start/solutions-index/) |
 | Get ready to ship to a namespace someone else provisioned | [Day-1 Checklist](/start/day-1-checklist/) |
 | Follow a curated reading track | [Learning Paths](/learning-paths/) |
@@ -111,7 +112,7 @@ If `kubectl get pods` returns `Forbidden` or you're staring at someone else's na
 
 ## How to read it
 
-If you're new to Kubernetes: work through this Start section in order — it's ten articles and a day or so, and [Learning Paths Track 1](/learning-paths/#1-new-to-deploying-on-kubernetes) sequences them for you. [How Kubernetes Works](/start/how-kubernetes-works/) gives you the reconciliation mental model and [Life of a Deployment](/start/life-of-a-deployment/) makes it concrete once you've got the vocabulary; the rest equip you for daily work. After that, read the [Workloads overview](/workloads/overview/) before you write your first production Deployment.
+If you're new to Kubernetes: work through this Start section in order — it's eleven articles and a day or so, and [Learning Paths Track 1](/learning-paths/#1-new-to-deploying-on-kubernetes) sequences them for you. [How Kubernetes Works](/start/how-kubernetes-works/) gives you the reconciliation model, [The Three Doors](/start/three-doors/) gives you the model for any workload you deploy, and [Life of a Deployment](/start/life-of-a-deployment/) makes it concrete once you've got the vocabulary; the rest equip you for daily work. After that, read the [Workloads overview](/workloads/overview/) before you write your first production Deployment.
 
 If you've been running apps on Kubernetes for a while: skim [kubectl Survival Kit](/start/kubectl-survival-kit/) for tricks you may have missed, then jump straight to whatever's on fire. Every troubleshooting article is written to be entered cold, mid-incident: symptom at the top, diagnosis steps in order, escalation criteria at the bottom.
 
@@ -134,7 +135,7 @@ Ten terms carry most Kubernetes conversations. Skim now; the linked articles mak
 | **Reconciliation** | The loop at the heart of everything: controllers continuously push actual state toward desired state. |
 | **kubelet** | The per-node agent that actually starts your containers and runs your health probes. |
 
-If half of those are fuzzy, that's expected — it's what the next two articles are for.
+If half of those are fuzzy, that's expected — it's what the next few articles are for.
 
 ## Conventions used throughout
 
@@ -148,7 +149,7 @@ If half of those are fuzzy, that's expected — it's what the next two articles 
 
 If you've just been handed a namespace, this sequence turns it from foreign territory into home ground:
 
-1. **Day 1** — run the access check above; set your default namespace; read [How Kubernetes Works](/start/how-kubernetes-works/) and [Life of a Deployment](/start/life-of-a-deployment/).
+1. **Day 1** — run the access check above; set your default namespace; read [How Kubernetes Works](/start/how-kubernetes-works/), [The Three Doors](/start/three-doors/), and [Life of a Deployment](/start/life-of-a-deployment/).
 2. **Day 2** — inventory what's already running: `kubectl get all`, `kubectl get configmaps,secrets,pvc`, and `kubectl describe resourcequota`. Map every object to the manifest in git that produced it. Anything unaccounted for is a question for your team.
 3. **Day 3** — work through the [kubectl Survival Kit](/start/kubectl-survival-kit/) hands-on against a non-production namespace: describe a pod, follow logs, exec in, port-forward to a service.
 4. **Day 4** — break something on purpose in staging: scale a Deployment down, delete a pod, deploy an image tag that doesn't exist. Watch how each failure surfaces in events and statuses. Practicing diagnosis when nothing is at stake is what makes it fast when something is.
@@ -164,6 +165,6 @@ Half a day of this beats weeks of learning each piece mid-incident.
 
 ## Next
 
-Start with [How Kubernetes Works](/start/how-kubernetes-works/). It's one article, one diagram, and one mental model — reconciliation — and twenty minutes there saves you hours everywhere else on this site.
+Start with [How Kubernetes Works](/start/how-kubernetes-works/). It's one article, one diagram, and one mental model — reconciliation — and twenty minutes there saves you hours everywhere else on this site. Then read [The Three Doors](/start/three-doors/): where reconciliation explains how the machine *works*, the Three Doors explains how to *think* about any workload you put on it — cost, truth, and response as one loop. Those two models are the lens for everything that follows.
 
 If you're reading this because something is broken *right now*: skip ahead to the [Troubleshooting overview](/troubleshooting/overview/), follow the triage steps, and come back for the fundamentals when the fire's out. The guide will still be here.

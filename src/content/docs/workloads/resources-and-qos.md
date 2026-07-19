@@ -19,6 +19,10 @@ sidebar:
 
 Requests and limits are four small numbers that decide where your pods run, who gets killed under pressure, and whether your p99 latency has a mysterious sawtooth. Most teams set them once by copy-paste and never revisit. Let's do better.
 
+:::note[The bigger picture]
+This is **Door 1 — Cost** of [The Three Doors](/start/three-doors/), the model for thinking about any deployment. Requests and limits are the *currency* that prices scheduling, eviction order, and the autoscaler's arithmetic — which is why a mistake here so often surfaces as a symptom at another door.
+:::
+
 :::tip[Looking for the dials?]
 This article explains what requests and limits mean; the knob-by-knob reference — exact semantics, CFS math, archetype resource blocks, sizing workflow — lives in [Requests & Limits Knobs](/tuning/requests-limits-knobs/).
 :::

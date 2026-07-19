@@ -122,6 +122,10 @@ nr_throttled 9217
 nr_throttled 9384      ← 167 freezes in 30 seconds. Live incident.
 ```
 
+:::note[On older on-prem nodes: cgroup v1]
+The `nr_throttled` / `throttled_usec` fields above are the **cgroup v2** format. A Java-heavy fleet on older RHEL may still be on cgroup v1, where the file is `/sys/fs/cgroup/cpu/cpu.stat` and the counters are `nr_throttled` (same) plus `throttled_time` in **nanoseconds** (not `throttled_usec`). Quick check: `cat /sys/fs/cgroup/cgroup.controllers` exists only on v2.
+:::
+
 **Fix:** limits honesty. Either raise the CPU limit to what the app actually bursts to, or — the increasingly standard position — drop the CPU limit entirely and set an honest CPU *request* (requests are the scheduling contract; CPU is compressible, so no limit means "burst into idle capacity" not "starve the neighbors"). The trade-offs, your org's policy constraints, and the exact YAML are in [Requests and Limits](/tuning/requests-limits-knobs/). What you must *not* do is stare at the usage average and conclude CPU is fine.
 
 ## Cause 2: GC pauses — and the throttle wearing a GC costume

@@ -19,6 +19,10 @@ sidebar:
 
 Autoscaling is one of those features that works beautifully when the inputs are honest and becomes a chaos generator when they're not. The HPA is simple arithmetic on top of your resource requests — so most "autoscaling bugs" are actually requests bugs wearing a disguise. This page is the mechanics; the decision layer built on top of it — which signal, SLO-derived thresholds, external ceilings, on-prem capacity governance — is the [Autoscaling Playbook](/autoscaling/overview/).
 
+:::note[The bigger picture]
+This is **Door 3 — Response** of [The Three Doors](/start/three-doors/). The reason "autoscaling bugs are usually requests bugs" is baked into the model: Door 3's math is denominated in Door 1's currency, and it only produces real capacity if Door 2 is honest. Scaling is the goal; correct requests and truthful probes are its non-negotiable preconditions. For the loop's *dynamics* — why a too-small request makes it thrash, and how long scale-up actually takes (it isn't instant) — see [Scaling Dynamics](/autoscaling/scaling-dynamics/).
+:::
+
 ## HPA v2 in one example
 
 ```yaml

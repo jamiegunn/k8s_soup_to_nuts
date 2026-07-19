@@ -38,11 +38,12 @@ spec:
       targetPort: http  # the container port to send to (name or number)
 ```
 
-When a pod connects to `orders.myteam.svc.cluster.local:80` (resolving to, say, 10.96.44.7), the packet never travels *to* 10.96.44.7. On its way out of the client node, a rule rewrites the destination to a real pod IP and port — DNAT. The reply is un-rewritten on the way back. Load balancing is per-*connection*, chosen at DNAT time: random (iptables) or round-robin-ish (IPVS).
+When a pod connects to `orders.myteam.svc.cluster.local:80` (resolving to, say, 10.96.44.7), the packet never travels *to* 10.96.44.7. On its way out of the client node, a rule rewrites the destination to a real pod IP and port — DNAT. The reply is un-rewritten on the way back. Load balancing is per-*connection*, chosen at DNAT time: random (iptables) or round-robin (IPVS's default `rr` scheduler).
 
 **kube-proxy** is the agent (a DaemonSet run by the platform team) that watches Services and EndpointSlices and programs these rules on every node, in one of three modes:
 
 - **iptables** — the classic default. Rules are a big chain; per-connection random pick.
+- **nftables** — the modern successor (beta in 1.31, GA in 1.33); same model as iptables, far better scaling on large Services.
 - **IPVS** — kernel load balancer; scales better with thousands of Services.
 - **eBPF** — Cilium and modern dataplanes replace kube-proxy entirely.
 
@@ -54,7 +55,7 @@ DNAT happens once per connection. A gRPC channel or JDBC pool opened to a Cluste
 
 ## Endpoints and EndpointSlices: where readiness bites
 
-The endpoints controller continuously evaluates: *which pods match this Service's selector, and which of those are Ready?* The result is written to **EndpointSlice** objects (the legacy `Endpoints` object still mirrors them for small Services).
+The endpoints controller continuously evaluates: *which pods match this Service's selector, and which of those are Ready?* The result is written to **EndpointSlice** objects (the legacy `Endpoints` object — deprecated since 1.33 — still mirrors them for small Services).
 
 ```bash
 kubectl get endpointslices -l kubernetes.io/service-name=orders
@@ -153,7 +154,7 @@ Pins a client IP to one backend for the timeout window. It's crude — the "clie
 
 ## externalTrafficPolicy: source IPs vs balance
 
-Applies to NodePort/LoadBalancer traffic. The default, `Cluster`, lets any node accept traffic and forward to any pod — but the cross-node hop **SNATs the packet, so your app sees a node IP instead of the client IP**.
+Applies to NodePort/LoadBalancer traffic. The default, `Cluster`, lets any node accept traffic and forward to any pod — and it **masquerades that traffic to the node's IP, so your app sees a node IP instead of the client IP**. This happens for *all* external traffic under `Cluster`, whether or not the endpoint is on the node that received it — the masquerade is what lets a cross-node reply find its way back.
 
 `externalTrafficPolicy: Local` only accepts traffic on nodes that host a Ready backend pod and never forwards across nodes — **preserving the real client source IP**, at a price:
 

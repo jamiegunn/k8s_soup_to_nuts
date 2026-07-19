@@ -158,7 +158,7 @@ spec:
               memory: 1.5Gi    # working-set plateau 1.1Gi × 1.35 headroom
             limits:
               memory: 1.5Gi    # request == limit: the scheduler reserved exactly
-                               # what the OOM killer enforces
+                               # what the OOM killer enforces (no CPU limit ⇒ QoS is Burstable, not Guaranteed)
               # NO cpu limit — measured throttle ratio 0%, and the p99 SLO is
               # exactly what CFS throttling taxes
           startupProbe:
@@ -385,7 +385,7 @@ spec:
     - name: orders-api.sizing
       rules:
         - alert: OrdersApiMemoryHeadroomGone
-          expr: container_memory_working_set_bytes{namespace="orders-prod",container="orders-api"} / on(pod) kube_pod_container_resource_limits{namespace="orders-prod",resource="memory",container="orders-api"} > 0.90
+          expr: container_memory_working_set_bytes{namespace="orders-prod",container="orders-api"} / on(namespace, pod) kube_pod_container_resource_limits{namespace="orders-prod",resource="memory",container="orders-api"} > 0.90
           for: 15m
           labels: { severity: warning }
           annotations:
@@ -400,7 +400,7 @@ spec:
           expr: increase(kube_pod_container_status_restarts_total{namespace="orders-prod",container="orders-api"}[1h]) > 0
           labels: { severity: warning }
           annotations:
-            summary: "Guaranteed-memory pod with 10x probe margins restarted outside a deploy — an OOM, liveness kill, or crash means a tuned number is stale"
+            summary: "memory-pinned pod (request==limit) with 10x probe margins restarted outside a deploy — an OOM, liveness kill, or crash means a tuned number is stale"
         - alert: OrdersApiScaledToMax
           expr: kube_horizontalpodautoscaler_status_current_replicas{namespace="orders-prod",horizontalpodautoscaler="orders-api"} >= kube_horizontalpodautoscaler_spec_max_replicas{namespace="orders-prod",horizontalpodautoscaler="orders-api"}
           for: 15m
