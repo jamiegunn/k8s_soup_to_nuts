@@ -57,7 +57,7 @@ Field by field:
 - **ttlSecondsAfterFinished** — auto-delete the Job (and its pods, and their logs!) N seconds after it finishes. Without a TTL, finished Jobs accumulate until someone cleans up or an object-count [ResourceQuota](/workloads/resources-and-qos/) starts rejecting new pods. A day or two is a good balance: long enough to debug last night's failure, short enough not to hoard.
 
 :::caution[Retries mean your job WILL run more than once]
-Between `backoffLimit`, node failures, and evictions, exactly-once execution does not exist here. Any Job that isn't idempotent — that can't tolerate running twice, or dying halfway and starting over — is a data-corruption ticket in waiting. Migrations need transactional/versioned runners (Flyway, Liquibase, migrate); batch writers need upserts or dedup keys. Design for at-least-once, always.
+One retry you can stop paying for: a pod evicted by a node drain (or terminated by a node shutdown) fails with a `DisruptionTarget` condition, and a `podFailurePolicy` rule that ignores that condition keeps the eviction from counting against `backoffLimit` — the YAML and the proof are in [Jobs: stop burning retries on drains](/disruption/involuntary-disruptions/#jobs-stop-burning-retries-on-drains). Between `backoffLimit`, node failures, and evictions, exactly-once execution does not exist here. Any Job that isn't idempotent — that can't tolerate running twice, or dying halfway and starting over — is a data-corruption ticket in waiting. Migrations need transactional/versioned runners (Flyway, Liquibase, migrate); batch writers need upserts or dedup keys. Design for at-least-once, always.
 :::
 
 :::note[Migrations: Job or pipeline step?]

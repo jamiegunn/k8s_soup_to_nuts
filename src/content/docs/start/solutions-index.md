@@ -60,12 +60,17 @@ kubectl logs <pod-name> --previous
 |---|---|
 | Autoscale on CPU/memory/custom metrics without replica thrash | [Autoscaling](/workloads/autoscaling/) |
 | Work out why my HPA won't scale up (or won't stop) | [HPA Not Scaling](/troubleshooting/hpa-not-scaling/) |
-| Survive node drains and cluster upgrades without an outage | [High Availability](/workloads/high-availability/) |
+| Survive node drains and cluster upgrades without an outage | [Disruption & Drain Playbook](/disruption/overview/), [High Availability](/workloads/high-availability/) |
+| Write a PDB that still permits an eviction when the HPA has scaled me to the floor | [PDB and HPA: the 3 a.m. problem](/disruption/pod-disruption-budgets/#pdb-and-hpa-the-3-am-problem) |
+| Stop a node drain from being blocked by my namespace, right now | [Unjamming a blocked drain](/disruption/pod-disruption-budgets/#unjamming-a-blocked-drain-right-now) |
+| Find out who (or what) killed my pod | [The decoder](/disruption/anatomy-of-a-drain/#the-decoder-who-killed-my-pod) |
+| Test my PodDisruptionBudget without asking anyone to drain a node | [The self-eviction drill](/disruption/quick-start/#the-self-eviction-drill) |
+| Run a maintenance window without paging anyone | [The Maintenance Contract](/disruption/platform-contract/) |
 | Set requests and limits honestly (and understand QoS classes) | [Resources and QoS](/workloads/resources-and-qos/) |
 | Right-size a service that's already in production, with data | [Resource Tuning in Prod](/operations/resource-tuning-in-prod/) |
 | Write PromQL that answers "is this pod actually starved?" | [PromQL for Resources](/observability/promql-for-resources/) |
 | Get startup/readiness/liveness probes right (and not cause outages with them) | [Health Checks](/workloads/health-checks/) |
-| Keep replicas alive during voluntary disruptions (PDBs, graceful shutdown) | [High Availability](/workloads/high-availability/) |
+| Keep replicas alive during voluntary disruptions (PDBs, graceful shutdown) | [PDBs, All the Way Down](/disruption/pod-disruption-budgets/), [Graceful Shutdown](/workloads/graceful-shutdown/) |
 | Tune probe timings, JVM memory flags, or requests/limits with real numbers | [Knobs & Levers](/tuning/overview/) |
 | Retrofit sane requests/limits onto a fleet that grew organically | [Requests & Limits on a Running Fleet](/tuning/brownfield-resources/) |
 | Design health endpoints properly (and fix a fleet of bad probes safely) | [Health Check Design](/tuning/health-check-design/) |
@@ -166,6 +171,8 @@ kubectl logs <pod-name> --previous
 | Diagnose a JVM that crashed natively — read and preserve `hs_err_pid` | [JVM Native Crashes](/java/jvm-crashes/) |
 | Pick and tune a GC for container-sized heaps | [GC and Performance](/java/gc-and-performance/) |
 | Export JVM metrics, and see GC/heap/threads in Grafana | [Java Observability](/java/java-observability/) |
+| Work an incident with the exact commands — memory climbing, CPU idle but slow, one slow pod, pool exhaustion, GC, thread leak, no data | [Three Lenses, Tactically I](/java/lens-playbooks-diagnose/) |
+| Size heap, limit, and request from a load test, and prove an HPA signal without KEDA | [Three Lenses, Tactically II](/java/lens-playbooks-size-and-scale/) |
 | Wire Spring Boot's actuator, probes, and graceful shutdown into Kubernetes | [Spring Boot](/java/spring-boot/) |
 | Change log levels or pull a heap dump over HTTP — no redeploy, no JDK | [Actuator as an Ops Surface](/java/actuator/) |
 | See every point where the JVM and Kubernetes interlock | [The JVM–Kubernetes Coupling Map](/java/jvm-kubernetes-coupling/) |
@@ -201,6 +208,7 @@ kubectl logs <pod-name> --previous
 | Write logs Kubernetes-natively (stdout, structure, correlation) | [Logging Fundamentals](/observability/logging-fundamentals/) |
 | Understand where my logs go after stdout, and why some go missing | [Log Collection](/observability/log-collection/) |
 | Expose metrics and get them scraped by Prometheus | [Metrics](/observability/metrics/) |
+| Understand why `kubectl top`, a JVM gauge, and a thread dump disagree — and which to believe | [The Three Lenses](/start/three-lenses/) |
 | Use events as a debugging timeline (and keep them past the 1-hour TTL) | [Events](/observability/events/) |
 | Trace a request across services to find the slow hop | [Tracing](/observability/tracing/) |
 | Investigate "it's slow" — latency, throttling, saturation | [Performance Analysis](/observability/performance-analysis/) |

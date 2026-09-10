@@ -197,4 +197,7 @@ JDK.
    `settings=profile` JFR, perf_events profiling, JDWP remote debugging.
 
 Build layer 1 into your Deployment template once, and most of this section's
-other articles become things you read while the answer downloads.
+other articles become things you read while the answer downloads. The model
+behind the layering — why the cluster's view, the process's report, and the
+inside view are one zoom rather than a toolbox, and the misreadings each one
+invites — is [The Three Lenses](/start/three-lenses/).

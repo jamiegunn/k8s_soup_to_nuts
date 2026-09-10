@@ -258,6 +258,9 @@ spec:
         maxUnavailable: 1            # Strimzi's default, pinned so nobody
                                      # "simplifies" it: a drain may take ONE
                                      # broker/controller at a time, ever.
+                                     # Strimzi OWNS this PDB — don't add your
+                                     # own (two PDBs on a pod = HTTP 500 on
+                                     # every eviction): /disruption/stateful-and-quorum/
     metricsConfig:
       type: jmxPrometheusExporter
       valueFrom:

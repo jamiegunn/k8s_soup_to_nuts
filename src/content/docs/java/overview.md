@@ -168,6 +168,11 @@ storage — is yours.
 - [JVM Native Crashes and hs_err_pid](/java/jvm-crashes/) — the third way a
   Java pod dies: a fatal native crash with no stack trace, and how to keep the
   `hs_err_pid` fatal error log before the restart takes it.
+- [Three Lenses, Tactically I: Diagnose](/java/lens-playbooks-diagnose/) and
+  [II: Size and Scale](/java/lens-playbooks-size-and-scale/) — eleven production
+  situations walked lens by lens with the exact commands (kubectl, PromQL,
+  jattach/jcmd, JFR), the output to expect, and the table you end up with;
+  JRE-only images, no KEDA.
 - [Spring Boot Actuator as an Ops Surface](/java/actuator/) — runtime log-level
   changes, heap and thread dumps over HTTP, and the endpoint hygiene that keeps
   it from becoming an attack surface.

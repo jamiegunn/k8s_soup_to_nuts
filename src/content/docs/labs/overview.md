@@ -28,7 +28,7 @@ You need no prior Kubernetes experience to start Lab 0, but the labs explain *wh
 
 ## What you'll build
 
-Across eleven labs you'll stand up a real (if small) delivery pipeline on your Mac — then run it the way production gets run. The first five labs (0–4) build the system:
+Across twelve labs you'll stand up a real (if small) delivery pipeline on your Mac — then run it the way production gets run. The first five labs (0–4) build the system:
 
 - A real single-node Kubernetes cluster — k3s in a Linux VM — no Docker Desktop, no cloud account, no admin ticket.
 - `orders-api`, a Spring Boot 3.3 / Java 21 REST service, built entirely inside Docker (you don't need Java or Maven installed) and deployed with a Helm chart you author from scratch.
@@ -46,6 +46,8 @@ The second arc (Labs 5–8) operates it:
 Lab 9 revisits Valkey as the opposite of Lab 3's throwaway cache: a **datastore you keep** — StatefulSets, persistent volumes, async replication, a manual failover, and a backup/restore drill, authored as a second chart from an empty directory. It needs only Lab 0's cluster, so you can take it any time after the build arc.
 
 The closing lab (10) makes the system scale itself: an HPA wired into the `orders-api` chart and pushed past its ceiling under fortio load, one deliberately provoked `Pending` pod that teaches the fixed-capacity lesson, then KEDA scaling a queue worker on Valkey list depth — from zero and back to zero. It's the hands-on companion to the [Autoscaling Playbook](/autoscaling/overview/).
+
+Lab 11 turns to the deaths nobody schedules: you evict your own pods through the Eviction API under load, make a PodDisruptionBudget say no and then yes, reproduce the crashlooping-pod jam and unjam it with one patch, watch a real `kubectl drain` block itself from the platform's seat, and read the condition that says who killed a pod — the one-node cluster used as a feature. It's the hands-on companion to the [Disruption & Drain Playbook](/disruption/overview/).
 
 A closing bridge page, [From the Lab to the Paved Road](/labs/from-lab-to-prod/), then maps everything you built onto the infrastructure your organization actually runs.
 
@@ -84,7 +86,7 @@ Three choices deserve a sentence of defense:
 
 ## The lab sequence
 
-The labs are strictly ordered — each builds on the artifacts of the previous one, with one exception: Lab 9 is self-contained and needs only Lab 0's cluster. Budget roughly **10–13 hours** for the full sequence (**4–6 hours** if you stop after the build arc, Labs 0–4), comfortably split across sittings (there's a pause/resume recipe in every lab). Rough per-lab timings: Lab 0 ≈ 30–45 min (mostly waiting on first-time downloads), Labs 1–2 ≈ 60–75 min each, Labs 3–8 ≈ 45–60 min each, Labs 9–10 ≈ 60–75 min each.
+The labs are strictly ordered — each builds on the artifacts of the previous one, with one exception: Lab 9 is self-contained and needs only Lab 0's cluster. Budget roughly **10–13 hours** for the full sequence (**4–6 hours** if you stop after the build arc, Labs 0–4), comfortably split across sittings (there's a pause/resume recipe in every lab). Rough per-lab timings: Lab 0 ≈ 30–45 min (mostly waiting on first-time downloads), Labs 1–2 ≈ 60–75 min each, Labs 3–8 ≈ 45–60 min each, Labs 9–11 ≈ 60–75 min each.
 
 | Lab | Title | What you'll learn | Deep dives |
 |---|---|---|---|
@@ -99,6 +101,7 @@ The labs are strictly ordered — each builds on the artifacts of the previous o
 | 8 | [Deploying Under Load](/labs/lab-8-deploy-under-load/) | An in-cluster fortio load generator, a rollout caught dropping requests, then preStop + grace + surge settings proven zero-downtime by before/after measurement | [Zero-Downtime Deployments](/architectures/zero-downtime/), [Graceful Shutdown](/workloads/graceful-shutdown/), [Rollout & Shutdown Knobs](/tuning/rollout-shutdown-knobs/) |
 | 9 | [Valkey the Hard Way](/labs/lab-9-valkey/) | A second chart from an empty directory: primary + replica StatefulSets on PVCs, async replication verified both ways, a role-aware readiness probe, manual promotion, and a backup/restore drill (needs only Lab 0) | [Valkey with a Shared VIP](/architectures/valkey-shared-vip/), [Valkey and Redis](/stateful/valkey-and-redis/) |
 | 10 | [Autoscale orders-api](/labs/lab-10-autoscaling/) | A values-gated HPA added to the chart and scaled under fortio load, `ScalingLimited` and a `Pending` pod met on purpose, then a queue-depth HPA 1→4→1 on a Valkey list via redis_exporter + Prometheus + prometheus-adapter, plus a break-the-pipeline drill | [Autoscaling Playbook](/autoscaling/overview/), [Getting the Metrics](/autoscaling/getting-the-metrics/) |
+| 11 | [Survive the Drain](/labs/lab-11-survive-the-drain/) | Self-evictions through the Eviction API under load, a PodDisruptionBudget made to say 429 and then yes, the crashloop jam unjammed with `AlwaysAllow`, a real `kubectl drain` blocking itself on one node, the `DisruptionTarget` condition read off a dying pod, and a Job kept from burning retries with `podFailurePolicy` | [Disruption & Drain Playbook](/disruption/overview/), [PDBs, All the Way Down](/disruption/pod-disruption-budgets/) |
 | — | [From the Lab to the Paved Road](/labs/from-lab-to-prod/) | The bridge to real org infrastructure: registries, CD systems, locked-down namespaces — what changes at work, and what you already know | [Working Without Admin](/start/working-without-admin/), [Reference Architectures](/architectures/overview/) |
 
 You create the cluster **once** in Lab 0 and keep it for the whole sequence — k3s needs no pre-provisioning for Lab 4's ingress; NodePorts and Lima's automatic port forwarding cover it. One scheduling note: Lab 4 ends with an *optional* full teardown for people stopping there — if you're continuing to Lab 5, take the pause recipe instead and keep the stack.

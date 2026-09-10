@@ -18,7 +18,7 @@ sidebar:
   order: 8
 ---
 
-Every resource problem in Kubernetes comes down to three numbers per container: what it **consumes**, what it **requested**, and what it's **limited** to. `kubectl top` shows you one snapshot of the first number. Prometheus has all three, with history. This article is the query cookbook — the stack layers and how metrics get into Prometheus are covered in [Metrics](/observability/metrics/); requests and limits semantics live in [Resources and QoS](/workloads/resources-and-qos/).
+This is **Lens 1 — The cluster's view** of [The Three Lenses](/start/three-lenses/): the cgroup ledger, accurate about what your container *cost* and structurally blind to what it was *doing* — which is why every query below eventually sends you to a JVM gauge or a thread dump for the *why*. Every resource problem in Kubernetes comes down to three numbers per container: what it **consumes**, what it **requested**, and what it's **limited** to. `kubectl top` shows you one snapshot of the first number. Prometheus has all three, with history. This article is the query cookbook — the stack layers and how metrics get into Prometheus are covered in [Metrics](/observability/metrics/); requests and limits semantics live in [Resources and QoS](/workloads/resources-and-qos/).
 
 Run everything below in Grafana Explore or the Prometheus UI. You don't need write access to anything.
 

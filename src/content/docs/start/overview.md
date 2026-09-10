@@ -55,7 +55,7 @@ You should be comfortable with a terminal and have `kubectl` access to at least 
 
 Each section stands alone and opens with its own overview:
 
-- **Start** (you are here) — the mental model and the daily toolkit. Begin with [How Kubernetes Works](/start/how-kubernetes-works/) for the reconciliation model that pays for everything else, then [The Three Doors](/start/three-doors/) for the model that fits any workload you deploy; then follow [Learning Paths Track 1](/learning-paths/#1-new-to-deploying-on-kubernetes) for the full reading order through the rest of the section.
+- **Start** (you are here) — the mental model and the daily toolkit. Begin with [How Kubernetes Works](/start/how-kubernetes-works/) for the reconciliation model that pays for everything else, then [The Three Doors](/start/three-doors/) for the model that fits any workload you deploy, and its sibling [The Three Lenses](/start/three-lenses/) for the model that fits any number you'll read about it; then follow [Learning Paths Track 1](/learning-paths/#1-new-to-deploying-on-kubernetes) for the full reading order through the rest of the section.
 - **[kubectl Mastery](/kubectl/overview/)** — beyond the survival kit: how kubectl actually talks to the API, output and query wizardry, and the tricks that make you fast.
 - **[Workloads](/workloads/overview/)** — Deployments, rollouts, autoscaling, health checks, resources and QoS, Jobs. The bread and butter.
 - **[Java on Kubernetes](/java/overview/)** — JVM memory in cgroups, thread and heap dumps with a JRE-only image, remote debugging, GC tuning.
@@ -72,6 +72,7 @@ Each section stands alone and opens with its own overview:
 |---|---|
 | Learn the core mental model | [How Kubernetes Works](/start/how-kubernetes-works/) |
 | Think about *any* deployment or chart | [The Three Doors](/start/three-doors/) |
+| Think about *any* metric, graph, or dump — and why they disagree | [The Three Lenses](/start/three-lenses/) |
 | Find the right article for any task | [How Do I…? Solutions Index](/start/solutions-index/) |
 | Get ready to ship to a namespace someone else provisioned | [Day-1 Checklist](/start/day-1-checklist/) |
 | Follow a curated reading track | [Learning Paths](/learning-paths/) |
@@ -149,7 +150,7 @@ If half of those are fuzzy, that's expected — it's what the next few articles 
 
 If you've just been handed a namespace, this sequence turns it from foreign territory into home ground:
 
-1. **Day 1** — run the access check above; set your default namespace; read [How Kubernetes Works](/start/how-kubernetes-works/), [The Three Doors](/start/three-doors/), and [Life of a Deployment](/start/life-of-a-deployment/).
+1. **Day 1** — run the access check above; set your default namespace; read [How Kubernetes Works](/start/how-kubernetes-works/), [The Three Doors](/start/three-doors/), [The Three Lenses](/start/three-lenses/), and [Life of a Deployment](/start/life-of-a-deployment/).
 2. **Day 2** — inventory what's already running: `kubectl get all`, `kubectl get configmaps,secrets,pvc`, and `kubectl describe resourcequota`. Map every object to the manifest in git that produced it. Anything unaccounted for is a question for your team.
 3. **Day 3** — work through the [kubectl Survival Kit](/start/kubectl-survival-kit/) hands-on against a non-production namespace: describe a pod, follow logs, exec in, port-forward to a service.
 4. **Day 4** — break something on purpose in staging: scale a Deployment down, delete a pod, deploy an image tag that doesn't exist. Watch how each failure surfaces in events and statuses. Practicing diagnosis when nothing is at stake is what makes it fast when something is.

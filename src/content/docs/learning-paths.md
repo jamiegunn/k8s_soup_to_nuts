@@ -33,7 +33,8 @@ Time estimates assume reading plus trying things against a real (dev) namespace.
 1. [Overview](/start/overview/) — what this site assumes and how a platform-managed cluster changes the game.
 2. [How Kubernetes Works](/start/how-kubernetes-works/) — the mental model (desired state, controllers) everything else builds on.
 3. [The Three Doors](/start/three-doors/) — the model for thinking about *any* workload: cost (requests/limits), truth (health checks), and response (scaling) as one loop. The rest of this track is you walking through these three doors.
-4. [Working Without Admin](/start/working-without-admin/) — what you can and can't do as a namespace tenant, so nothing later surprises you.
+4. [The Three Lenses](/start/three-lenses/) — the sibling model for *measuring* any workload: the cluster's view, the process's report, and the inside view as one zoom — so the first time `kubectl top` and a JVM gauge disagree, you know why.
+5. [Working Without Admin](/start/working-without-admin/) — what you can and can't do as a namespace tenant, so nothing later surprises you.
 5. [YAML, Labels & Namespaces](/start/yaml-labels-and-namespaces/) — the grammar every manifest uses.
 6. [kubectl Survival Kit](/start/kubectl-survival-kit/) — the dozen commands you'll run daily.
 7. [Life of a Deployment](/start/life-of-a-deployment/) — follow one `kubectl apply` from YAML to running pods.
@@ -58,7 +59,8 @@ Time estimates assume reading plus trying things against a real (dev) namespace.
 4. [Heap Dumps (JRE-only)](/java/heap-dumps-jre-only/) — the same, for heap dumps; pair with the previous page.
 5. [Getting Dumps Out](/java/getting-dumps-out/) — a dump inside a pod is useless; move it to your laptop.
 6. [Memory Leaks & OOM](/java/memory-leaks-and-oom/) — `OutOfMemoryError` vs. `OOMKilled`, and how to tell which one you have.
-7. [JVM Native Crashes & hs_err_pid](/java/jvm-crashes/) — the third failure mode: a native crash with no stack trace, and preserving the fatal error log before the restart eats it.
+7. [Three Lenses, Tactically I](/java/lens-playbooks-diagnose/) and [II](/java/lens-playbooks-size-and-scale/) — the pages above as a toolkit and eleven walked situations: which command, in which order, and the table you produce. Keep them open during your first incident.
+8. [JVM Native Crashes & hs_err_pid](/java/jvm-crashes/) — the third failure mode: a native crash with no stack trace, and preserving the fatal error log before the restart eats it.
 8. [Spring Boot](/java/spring-boot/) — probes via [Actuator](/java/actuator/), graceful shutdown, lifecycle wiring.
 9. [JVM–Kubernetes Coupling](/java/jvm-kubernetes-coupling/) — the map of which JVM flag interacts with which Kubernetes knob.
 10. [JVM Memory Knobs](/tuning/jvm-memory-knobs/) — set heap, Metaspace, and the limit as one coherent budget.
@@ -94,6 +96,7 @@ Time estimates assume reading plus trying things against a real (dev) namespace.
 4. Read the big four playbooks: [Pod Pending](/troubleshooting/pod-pending/), [CrashLoopBackOff](/troubleshooting/crashloopbackoff/), [OOMKilled](/troubleshooting/oomkilled/), [Service Unreachable](/troubleshooting/service-unreachable/) — these cover most pages you'll ever get.
 5. [DNS Resolution Failures](/troubleshooting/dns-failures/) — the symptom-first playbook for `no such host`, intermittent 5-second stalls, and "it resolves in netshoot but not in my app"; DNS sits under half the "network is flaky" pages.
 6. [HPA Not Scaling](/troubleshooting/hpa-not-scaling/) — when the autoscaler won't add pods (or won't stop), walked from `kubectl describe hpa` outward.
+7. [The decoder: who killed my pod?](/disruption/anatomy-of-a-drain/#the-decoder-who-killed-my-pod) and [When Nobody Asked](/disruption/involuntary-disruptions/) — the condition that names a pod's killer, and the disruptions no budget can stop.
 7. [kubectl Can't Reach the Cluster](/troubleshooting/api-server-broken/) — the pager skill for when your own tooling is the thing that's down: kubeconfig, context, token, and control-plane reachability.
 8. [Debugging Toolbox](/troubleshooting/debugging-toolbox/) — ephemeral containers and `kubectl debug` for distroless pods.
 9. [Busybox](/troubleshooting/busybox/) — the minimal-tools cheatsheet for when the toolbox isn't available.
@@ -171,6 +174,7 @@ This track has its own section with a full day-by-day plan; the short version:
 7. Your archetype's reference architecture: [Oracle-backed API](/autoscaling/rest-api-oracle/), [MQ/RabbitMQ consumers](/autoscaling/messaging-consumers/), or [web + worker](/autoscaling/web-worker-and-caches/).
 8. [Capacity and Governance](/autoscaling/capacity-and-governance/) — the review checklist your PR will face, and the ledger your ceiling joins.
 9. [Lab 10](/labs/lab-10-autoscaling/) — feel all of it on a laptop: HPA under load, the capacity wall, and a queue-depth HPA fed through a metrics pipeline you build by hand.
+10. [PDB and HPA: the 3 a.m. problem](/disruption/pod-disruption-budgets/#pdb-and-hpa-the-3-am-problem) — the drain arrives at your new floor; make sure the disruption budget's shape survives it.
 
 **You're done when you can:** show a derivation comment for every number in your autoscaling values, name the external ceiling and its owner, and demo a load test where scale-up, the ceiling, and scale-down all behaved as the math predicted.
 
@@ -188,6 +192,23 @@ This track has its own section with a full day-by-day plan; the short version:
 7. Re-read [Linux Inside the Pod](/troubleshooting/linux-inside-the-pod/) — it should now read not as a list of magic file paths but as the obvious places to look.
 
 **You're done when you can:** explain a pod as namespaces + cgroups + overlayfs + handcuffs without notes, trace a request from TCP handshake through netfilter to your process's fd table, and — the real test — diagnose a novel symptom by reasoning about the mechanism instead of pattern-matching an error string.
+
+## 10. Surviving maintenance
+
+**Who it's for:** the platform team drains and upgrades nodes on their calendar, and you want that to be a log line instead of an incident — or they've just told you your namespace is blocking them.
+**Time:** half a day of reading; Lab 11 is an afternoon.
+
+1. [Disruption, Explained From Zero](/disruption/overview/) — the four sources of death, the one that asks first, and the maturity ladder to locate yourself on.
+2. [The 15-Minute Safe PDB](/disruption/quick-start/) — the budget that can't hurt anyone, and the sixty-second self-eviction drill that proves it.
+3. [What a Drain Actually Does](/disruption/anatomy-of-a-drain/) — cordon, the Eviction API's three answers, the retry loop, the timeout; and the decoder for "who killed my pod?"
+4. [PodDisruptionBudgets, All the Way Down](/disruption/pod-disruption-budgets/) — the two shapes, the arithmetic, `unhealthyPodEvictionPolicy`, and the 3 a.m. collision with the HPA floor.
+5. [Where Your Pods Land](/disruption/where-pods-land/) — the other half of a drain: N-1 headroom and the six traps that leave a replacement Pending.
+6. Running state? [Draining Stateful and Quorum Workloads](/disruption/stateful-and-quorum/) — one member at a time, and who already owns the PDB.
+7. [When Nobody Asked](/disruption/involuntary-disruptions/) — node shutdown, pressure, taints, preemption; and the Job rule that stops drains from burning retries.
+8. [The Maintenance Contract](/disruption/platform-contract/) — the six asks, the promises back, the window runbook, the review checklist, the alerts.
+9. [Lab 11](/labs/lab-11-survive-the-drain/) — evict your own pods, make a budget say no, unjam the crashloop trap, watch a real drain block itself.
+
+**You're done when you can:** show `ALLOWED DISRUPTIONS ≥ 1` for every budget in your namespace at the HPA floor, read the `DisruptionTarget` reason off a dying pod, name your platform's drain timeout and what happens when it expires, and run the window runbook without opening this site.
 
 ## Not on a track?
 

@@ -225,7 +225,7 @@ How to phrase that request — and what else to put in it — is in [Working wit
 
 ## topologySpreadConstraints: the modern spread tool
 
-For "distribute my replicas evenly", spread constraints beat anti-affinity: they control *skew* rather than issuing a binary keep-away, so they keep working past one-pod-per-domain.
+For "distribute my replicas evenly", spread constraints beat anti-affinity: they control *skew* rather than issuing a binary keep-away, so they keep working past one-pod-per-domain. One drain-time surprise to know before choosing `DoNotSchedule`: a cordoned node still counts as a domain by default, so a hard hostname spread can leave a replacement Pending during maintenance — [the trap and the `nodeTaintsPolicy` fix](/disruption/where-pods-land/#2-hard-topology-spread-still-counts-the-cordoned-node).
 
 ```yaml
 spec:
@@ -273,7 +273,7 @@ Spread constraints only apply **at scheduling time**. Scale-downs and evictions 
 
 ## Priority and preemption
 
-`priorityClassName` sets who wins when nodes are full: if a high-priority pod has no feasible node, the scheduler may **preempt** — evict lower-priority pods to make room. Classes are cluster-scoped and platform-defined; see what exists:
+`priorityClassName` sets who wins when nodes are full: if a high-priority pod has no feasible node, the scheduler may **preempt** — evict lower-priority pods to make room (a preempted pod carries a `DisruptionTarget` condition with `reason: PreemptionByScheduler`; PodDisruptionBudgets are honored only best-effort — [When Nobody Asked](/disruption/involuntary-disruptions/#preemption)). Classes are cluster-scoped and platform-defined; see what exists:
 
 ```bash
 kubectl get priorityclasses

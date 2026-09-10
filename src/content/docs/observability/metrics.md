@@ -18,7 +18,7 @@ sidebar:
   order: 4
 ---
 
-Metrics answer "how much, how fast, how often" — the questions logs are terrible at. In Kubernetes there are two metric systems that beginners constantly conflate: **metrics-server**, a tiny in-memory component that powers `kubectl top` and the HPA, and the **Prometheus stack**, the real time-series system where history, dashboards, and alerts live. Knowing which one you're talking to matters.
+This page is the backbone of **Lenses 1 and 2** of [The Three Lenses](/start/three-lenses/) — the cluster's view of your container and the process's report about itself — and the model explains why a number from one so often needs the other to make sense. Metrics answer "how much, how fast, how often" — the questions logs are terrible at. In Kubernetes there are two metric systems that beginners constantly conflate: **metrics-server**, a tiny in-memory component that powers `kubectl top` and the HPA, and the **Prometheus stack**, the real time-series system where history, dashboards, and alerts live. Knowing which one you're talking to matters.
 
 ## Layer 1: metrics-server and kubectl top
 

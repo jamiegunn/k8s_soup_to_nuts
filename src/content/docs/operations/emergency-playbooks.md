@@ -241,6 +241,39 @@ Runs in ~30 seconds on a typical namespace, needs nothing beyond standard tenant
 
 ---
 
+## Card G: The platform says we're blocking a drain
+
+**When:** a message like "node patching has been blocked for 40 minutes on pods in your namespace." Their drain is retrying an eviction against your pod every five seconds and will keep doing so until its timeout — then someone overrides you. Unblock them in ten minutes; fix it properly after.
+
+```bash
+# 1. Which jam is it? Budget with everything Ready = the shape permits nothing.
+#    A pod 0/1 = the unhealthy-pod jam. A replacement Pending = nowhere to land.
+kubectl get pdb -n payments
+kubectl get pods -n payments -o wide
+
+# 2a. Shape permits nothing (all pods Ready, ALLOWED 0): give the floor one more pod
+#     than the promise needs — through the HPA if it owns the count…
+kubectl patch hpa payments-api -n payments --type merge -p '{"spec":{"minReplicas":3}}'
+#     …or switch the shape to a ceiling on the missing (this is the durable fix)
+kubectl patch pdb payments-api -n payments --type json \
+  -p '[{"op":"remove","path":"/spec/minAvailable"},{"op":"add","path":"/spec/maxUnavailable","value":1}]'
+
+# 2b. A broken pod is the block (0/1 Running, ALLOWED 0): let unhealthy pods go
+kubectl patch pdb payments-api -n payments --type merge -p '{"spec":{"unhealthyPodEvictionPolicy":"AlwaysAllow"}}'
+
+# 2c. A replacement is Pending: nothing on the PDB helps — read why it can't land
+kubectl describe pod <pending-pod> -n payments | tail -5      # then /disruption/where-pods-land/
+
+# 3. Prove it, and tell them — their retry loop picks it up within 5 s
+kubectl get pdb payments-api -n payments                      # ALLOWED DISRUPTIONS ≥ 1
+```
+
+**If you genuinely can't afford the eviction today** (a batch mid-run, a singleton mid-migration): say so in writing — "you may bypass our budget for `<pod>` with `--disable-eviction`; we accept the outage" — which turns a stalled drain into a decision with a name on it.
+
+**Follow-up:** the shape belongs in the chart, not in a 3 a.m. patch — [PDBs, All the Way Down](/disruption/pod-disruption-budgets/) for the shape and the arithmetic, [the contract](/disruption/platform-contract/) for the emergency clause that makes next time fifteen minutes instead of six hours, and [the Field Note](/blog/the-pdb-that-blocked-the-drain/) before the retrospective.
+
+---
+
 ## The universal footer
 
 Whatever card you ran, the incident isn't over until:

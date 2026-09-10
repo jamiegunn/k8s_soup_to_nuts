@@ -94,6 +94,10 @@ Nobody does, until they measure. Two weeks of data you already have → four num
 
 The SRE-shaped worry, and the correct one to have on a fixed pool. **Path:** [the capacity invariant and the ledger](/autoscaling/capacity-and-governance/). **Effort:** the first ledger takes a day of collecting derivations; keeping it is the quarterly true-up.
 
+### "The drain came at 3 a.m. and the HPA had us at the floor"
+
+The platform patched a node overnight, your HPA had correctly scaled you to `minReplicas`, and a PodDisruptionBudget written as a floor (`minAvailable` equal to that count) permitted nothing — the drain retried until its timeout and paged someone about a service that was fine. The autoscaler did its job; the budget's *shape* didn't survive it. **Path:** [the 3 a.m. problem](/disruption/pod-disruption-budgets/#pdb-and-hpa-the-3-am-problem) in the Disruption & Drain Playbook — `maxUnavailable: 1` follows the HPA; a floor doesn't. **Effort:** one values change, checked at both ends of your load table.
+
 ---
 
 Situation not here? The [overview's "ways in"](/autoscaling/overview/) table routes by role rather than symptom, and [the cheat sheet](/autoscaling/cheat-sheet/) routes by artifact. If it's an incident, it's the [runbook](/troubleshooting/hpa-not-scaling/).

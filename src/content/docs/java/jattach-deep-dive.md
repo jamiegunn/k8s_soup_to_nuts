@@ -26,7 +26,7 @@ Attach** protocol directly. No JDK, no shared libraries, no runtime — you drop
 one file next to a live JVM and pull thread dumps, heap dumps, class
 histograms, run any `jcmd`, read flags, or load an agent.
 
-The other JRE-only articles reach for jattach as one option among several.
+This is **Lens 3 — The inside view** of [The Three Lenses](/start/three-lenses/): interrogation — complete, present-tense, single-process, and paid for in a safepoint — the lens the other two send you to for the *why*. The other JRE-only articles reach for jattach as one option among several.
 This one is the deep dive: how attach *actually* works, why it fails, and how
 to make it work in the two places you'll need it — inside a Kubernetes pod and
 on a bare-metal host. The failure modes are identical in both worlds because

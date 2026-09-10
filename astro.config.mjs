@@ -134,7 +134,8 @@ export default defineConfig({
 				// Section order follows the learning progression: workloads (what you
 				// run) → networking (how traffic reaches it) → state → the controller
 				// machinery → observing → tuning → autoscaling (the feedback loop on
-				// top of tuned resources) → operating → packaging (Helm) →
+				// top of tuned resources) → disruption (surviving being killed, by your
+				// autoscaler or the platform) → operating → packaging (Helm) →
 				// pipelines (CI) → runtime-specific (Java/.NET) → applied builds.
 				// Runtime sections sit after the platform core deliberately: they're
 				// specialty tracks, not prerequisites.
@@ -185,6 +186,16 @@ export default defineConfig({
 				{
 					label: 'Autoscaling Playbook',
 					items: [{ autogenerate: { directory: 'autoscaling' } }],
+				},
+				{
+					// Surviving being killed — by your autoscaler or by the platform's
+					// drains: the Eviction API, PodDisruptionBudgets, where replacements
+					// land, involuntary disruptions, and the maintenance contract with
+					// the platform team. Sits after autoscaling (scale-in is one of the
+					// disruptions it covers) and before Day-2 (the contract page is the
+					// bridge into operating).
+					label: 'Disruption & Drain Playbook',
+					items: [{ autogenerate: { directory: 'disruption' } }],
 				},
 				{
 					label: 'Day-2 Operations',

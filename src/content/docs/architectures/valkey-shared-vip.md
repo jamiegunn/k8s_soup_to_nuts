@@ -513,7 +513,7 @@ spec:
     matchLabels: { app: valkey, role: replica }
 ```
 
-**Why — and an honest note:** with `replicas: 1`, `maxUnavailable: 1` protects nothing. A node drain *will* take the primary down; these PDBs exist to **not block** platform-team drains (a `maxUnavailable: 0` PDB on a singleton stalls their node maintenance indefinitely and earns you an angry ticket) while signaling "this workload is disruption-managed." The real availability story here is fast StatefulSet recreation plus the manual promotion path — see [high availability](/workloads/high-availability/) for when to graduate past singletons.
+**Why — and an honest note:** with `replicas: 1`, `maxUnavailable: 1` protects nothing. A node drain *will* take the primary down; these PDBs exist to **not block** platform-team drains (a `maxUnavailable: 0` PDB on a singleton stalls their node maintenance indefinitely and earns you an angry ticket) while signaling "this workload is disruption-managed." The real availability story here is fast StatefulSet recreation plus the manual promotion path — see [high availability](/workloads/high-availability/) for when to graduate past singletons, and [Draining Stateful and Quorum Workloads](/disruption/stateful-and-quorum/) for what one eviction costs each role once you have more than one member.
 
 ## 4. Verification plan
 

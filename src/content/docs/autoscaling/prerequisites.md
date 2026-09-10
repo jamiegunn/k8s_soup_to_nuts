@@ -108,7 +108,7 @@ $ kubectl get deployment payments-api -n payments -o jsonpath='...'
 40 / preStop: ["sh","-c","sleep 5"]
 ```
 
-If you see `30 / preStop: ` (the default grace, no hook), read [graceful shutdown](/workloads/graceful-shutdown/) before enabling any autoscaler. **If it fails:** yours.
+If you see `30 / preStop: ` (the default grace, no hook), read [graceful shutdown](/workloads/graceful-shutdown/) before enabling any autoscaler. And scale-in isn't the only thing that will stop your pods on purpose: the platform's node drains will too, and the budget that governs *those* is the other half of surviving being stopped — [The 15-Minute Safe PDB](/disruption/quick-start/), whose shape must survive the floor you're about to set. **If it fails:** yours.
 
 ## 5. Consumers: message handling is idempotent
 

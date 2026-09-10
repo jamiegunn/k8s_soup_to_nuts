@@ -234,4 +234,6 @@ For any deployment, any [Helm chart](/architectures/golden-service/), any review
 
 When you're debugging instead of building, run it the same way — the [triage methodology](/troubleshooting/triage-methodology/) is this model in reverse: name the door the *symptom* is at, then check the other two doors for the *cause*, because the failure gallery says that's usually where it lives.
 
+And every question a door asks is answered by a *measurement* — usage against the request, a probe's verdict, a scaling signal — which means the loop is only as good as its sensors. Which sensor took the number, what it can and can't see, and why a correct number read through the wrong one is the most common misdiagnosis on the cluster is this page's sibling: [The Three Lenses](/start/three-lenses/).
+
 Costs, truth, response. Three doors, one loop, one promise. Hold that, and the rest of this site is just the doors, opened.

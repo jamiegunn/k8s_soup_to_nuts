@@ -158,7 +158,7 @@ The platform is a product and you are its customer, but escalation paths beat gu
 
 - **Ask:** the platform team's channel, and whether it's for questions, incidents, or both.
 - **Ask:** the escalation path when the channel is quiet — on-call handle, ticket queue, severity definitions.
-- **Ask:** the maintenance windows — when nodes get drained and upgraded, so a pod restart during the window doesn't send you on a phantom bug hunt. (Your workloads should survive drains anyway — that's [High Availability](/workloads/high-availability/) — but *knowing* the window turns a mystery into a calendar entry.)
+- **Ask:** the maintenance windows — when nodes get drained and upgraded, so a pod restart during the window doesn't send you on a phantom bug hunt. (Your workloads should survive drains anyway — that's [High Availability](/workloads/high-availability/) and the [Disruption & Drain Playbook](/disruption/overview/) — but *knowing* the window turns a mystery into a calendar entry; the full list of what to ask them, and the runbook for the window itself, is [The Maintenance Contract](/disruption/platform-contract/#what-to-ask).)
 - **Ask:** where the platform docs live. Every answer on this page is probably written down somewhere; find the somewhere.
 
 How to be the tenant whose tickets get answered first: [Working with the Platform Team](/operations/working-with-platform-team/).

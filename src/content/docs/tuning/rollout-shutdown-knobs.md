@@ -71,7 +71,7 @@ kubectl rollout status deploy/orders-api --timeout=5m || {
 
 ## The shutdown knobs
 
-These live on the pod template. The full sequence they parameterize — the two concurrent paths, the race, PID 1 — is in [Graceful Shutdown](/workloads/graceful-shutdown/).
+These live on the pod template. The full sequence they parameterize — the two concurrent paths, the race, PID 1 — is in [Graceful Shutdown](/workloads/graceful-shutdown/). Two dials that *cap* these from outside aren't on the pod at all: a platform drain run with `--grace-period` overrides `terminationGracePeriodSeconds` downward, and kubelet graceful node shutdown grants at most its configured window — both are numbers to ask the platform team for ([The Maintenance Contract](/disruption/platform-contract/#what-to-ask)).
 
 | Knob | Default | What it actually does | When to turn it | What to watch after |
 |---|---|---|---|---|

@@ -157,7 +157,7 @@ And review hygiene: **quarterly, list every alert that fired in the last 90 days
 
 ## Starter pack
 
-Copy, adjust namespace/job/thresholds, ship. Symptom rules at `severity: critical`, cause rules at `warning`. Annotations trimmed here for space — add `summary`, `description`, and `runbook_url` to every one.
+Copy, adjust namespace/job/thresholds, ship. Symptom rules at `severity: critical`, cause rules at `warning`. Annotations trimmed here for space — add `summary`, `description`, and `runbook_url` to every one. (One cause rule that belongs in every namespace and isn't below: a PodDisruptionBudget that has permitted zero evictions for 30 minutes — the rule, with the two companions that catch a budget guarding nothing and a pod Terminating too long, is on [The Maintenance Contract](/disruption/platform-contract/#alerts-and-dashboards).)
 
 ```yaml
 apiVersion: monitoring.coreos.com/v1

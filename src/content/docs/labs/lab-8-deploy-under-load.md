@@ -230,7 +230,7 @@ spec:
 {{- end }}
 ```
 
-Be honest about what the PDB does and doesn't do: it does **not** protect against rollouts (that's the strategy block's job) or `kubectl delete pod` (nothing protects against that). It protects against **evictions** — node drains during upgrades, autoscaler consolidation — by refusing to evict below `minAvailable`. On a one-node lab you can't stage a meaningful drain, but every production checklist wants the PDB present, so it ships with the same commit.
+Be honest about what the PDB does and doesn't do: it does **not** protect against rollouts (that's the strategy block's job) or `kubectl delete pod` (nothing protects against that). It protects against **evictions** — node drains during upgrades, autoscaler consolidation — by refusing to evict below `minAvailable`. On a one-node lab you can't drain your pods *to another node* — but the thing a drain does to each pod is an eviction, an API call you can make yourself, and [Lab 11](/labs/lab-11-survive-the-drain/) makes it in every form: yes, no, and no-because-there's-nowhere-to-land. For now the PDB ships with the same commit, because every production checklist wants it present.
 
 Render, read, ship — *without* load running, deliberately:
 
@@ -373,7 +373,7 @@ What you've built this lab is [Zero-Downtime Deployments](/architectures/zero-do
 | New pods Ready before old ones die (`maxUnavailable: 0`, surge) | Step 3, pinned instead of accidental |
 | preStop delay covering endpoint propagation | Step 3 |
 | Grace period ≥ preStop + real shutdown time | Step 3 (5 + shutdown ≤ 40) |
-| PodDisruptionBudget for evictions | Step 3, honestly untestable on one node |
+| PodDisruptionBudget for evictions | Step 3 — drilled properly in [Lab 11](/labs/lab-11-survive-the-drain/) |
 | App-level graceful shutdown (`server.shutdown: graceful`) | **The open item** — step 4's exercise |
 | Proven under load, not asserted | Steps 2 and 4 — your before/after table |
 

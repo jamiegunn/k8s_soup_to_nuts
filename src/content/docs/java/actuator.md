@@ -19,7 +19,7 @@ sidebar:
 
 On a cluster you don't administer, you can't install tools. No node access, no debug sidecars without a change request, a production image that is JRE-only and distroless-adjacent. What you *do* have is whatever your application compiled in — and Spring Boot Actuator is an entire HTTP ops API baked into the app at build time. Every endpoint you enable before the incident is a tool you'll have during it. Every endpoint you didn't is a redeploy away, which during an incident means it might as well not exist.
 
-This page is the operations catalog: what each endpoint gives you, the Kubernetes workflow it unlocks, and the sharp edge on each. Probes, health groups, and graceful shutdown are Actuator too, but they're deployment wiring, not incident tooling — they live in [Spring Boot on Kubernetes](/java/spring-boot/) and [Health Checks](/workloads/health-checks/) and won't be repeated here.
+This is **Lens 2 — The process's view** of [The Three Lenses](/start/three-lenses/): the JVM's self-report, continuous and sampled, which knows what the container was *doing* at the price of being an aggregate — and the surface that turns into lens 3 the moment you ask it for a thread or heap dump. This page is the operations catalog: what each endpoint gives you, the Kubernetes workflow it unlocks, and the sharp edge on each. Probes, health groups, and graceful shutdown are Actuator too, but they're deployment wiring, not incident tooling — they live in [Spring Boot on Kubernetes](/java/spring-boot/) and [Health Checks](/workloads/health-checks/) and won't be repeated here.
 
 The access pattern for everything below is the same, because the management port should never be reachable through your ingress:
 

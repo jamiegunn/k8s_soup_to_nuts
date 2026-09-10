@@ -204,8 +204,11 @@ spec:
                                   # pods absorb three pods' load at ~105% —
                                   # degraded-but-alive for a drain's duration.
                                   # minAvailable 3 (= replicas) would block
-                                  # every node drain forever; see
-                                  # /workloads/high-availability/
+                                  # every node drain forever. This floor is
+                                  # safe ONLY because the HPA's minReplicas is
+                                  # also 3; if the floor could drop to 2, use
+                                  # maxUnavailable: 1 instead — see
+                                  # /disruption/pod-disruption-budgets/
   selector:
     matchLabels:
       app.kubernetes.io/name: checkout-api
@@ -326,7 +329,7 @@ kubectl get endpointslices -n checkout-prod -w -o wide   # pods entering/leaving
 
 **Drill 2 — pod kill:** `kubectl delete pod -n checkout-prod $(kubectl get pod -n checkout-prod -l app.kubernetes.io/name=checkout-api -o name | head -1)`. The rawest form of the shutdown race — endpointslice removal and the preStop window racing in real time.
 
-**Drill 3 — node drain:** with your platform team (or in staging): `kubectl drain <node> --ignore-daemonsets --delete-emptydir-data`. Watch the PDB serialize the eviction; if you drain a second node hosting the other pods, watch it *block* until the replacement is Ready — that block is the PDB doing its job.
+**Drill 3 — node drain:** with your platform team (or in staging): `kubectl drain <node> --ignore-daemonsets --delete-emptydir-data`. Watch the PDB serialize the eviction; if you drain a second node hosting the other pods, watch it *block* until the replacement is Ready — that block is the PDB doing its job. No node access? The eviction itself is an API call you can make against your own pod — [the self-eviction drill](/disruption/quick-start/#the-self-eviction-drill) — and [Lab 11](/labs/lab-11-survive-the-drain/) runs the blocked drain on a laptop.
 
 **Drill 4 — scale-down:** `kubectl scale deployment/checkout-api -n checkout-prod --replicas=2` (then back to 3). This is the drill teams skip and the one that exposes a missing preStop even when deploys look clean.
 

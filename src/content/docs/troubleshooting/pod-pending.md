@@ -182,6 +182,6 @@ Deleting a Pending pod gets you an identical Pending pod. Nothing about the pod 
 ## Prevention
 
 - Set requests from measured usage, not vibes — [Resources and QoS](/workloads/resources-and-qos/).
-- Use `preferred` affinity/anti-affinity unless you truly need `required`.
+- Use `preferred` affinity/anti-affinity unless you truly need `required` — a `required` rule is the classic way a replacement pod fails to land during a node drain ([Where Your Pods Land](/disruption/where-pods-land/) lists the drain-time traps, including hard topology spread that still counts the cordoned node).
 - Alert on pods Pending > 5 minutes; a Pending pod during a rollout with `maxUnavailable: 0` silently stalls the whole deploy.
 - Know your namespace quota *before* you scale up: `kubectl describe quota`.

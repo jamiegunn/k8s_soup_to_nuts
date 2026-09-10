@@ -27,7 +27,7 @@ On EKS, `maxReplicas` is a preference — the cluster grows to meet it. On these
   ≤  cluster allocatable                  (what the nodes offer AFTER kubelet/OS reserves)
 ```
 
-In plain words: if every autoscaler hit its ceiling simultaneously, would it all fit — with a node down? That's the whole game. Each term: **maxReplicas × requests** is a team's worst-case claim (this is why [padded requests are hoarding at scale](/autoscaling/overview/#the-citizenship-contract) — the padding multiplies); **system overhead** is real and non-negotiable; the **failover reserve** exists because node failures don't schedule around your peaks; **allocatable** is `kubectl describe node` truth, not the hardware invoice.
+In plain words: if every autoscaler hit its ceiling simultaneously, would it all fit — with a node down? That's the whole game. Each term: **maxReplicas × requests** is a team's worst-case claim (this is why [padded requests are hoarding at scale](/autoscaling/overview/#the-citizenship-contract) — the padding multiplies); **system overhead** is real and non-negotiable; the **failover reserve** exists because node failures don't schedule around your peaks — and neither do the platform's drains, which take a node out on purpose and need every evicted pod to fit on the rest ([the N-1 check from the tenant's seat](/disruption/where-pods-land/#the-n-1-check)); **allocatable** is `kubectl describe node` truth, not the hardware invoice.
 
 Watch three teams quietly break it on a 12-node pool (allocatable ≈ 96 cores):
 

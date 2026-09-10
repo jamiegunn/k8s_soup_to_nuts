@@ -295,6 +295,7 @@ One more honesty note: after a force-delete of a StatefulSet pod, watch the repl
 - **Finalizer hygiene:** before uninstalling any operator, delete its CRs *first* and let it clean up — an operator removed while its objects still exist is the #1 factory for permanently-stuck resources. Audit with `kubectl get <crd> -A` before the uninstall.
 - **Don't delete PVCs while pods still mount them** — that's the pvc-protection wait, by design. Pod first, claim second.
 - **Alert on the termination [events](/observability/events/) that predict wedging:** `FailedKillPod` (runtime can't kill — node trouble brewing), `FailedPreStopHook` (your drain hook is broken and eating the grace budget), and any pod with `deletionTimestamp` older than `2 × grace` — that last one is exactly this page's confirm step, automated.
+- **Know who killed it before you force anything.** A Terminating pod carries a `DisruptionTarget` condition naming the actor — a drain, preemption, a taint, the kubelet — or nothing, meaning you or a rollout. [The decoder](/disruption/anatomy-of-a-drain/#the-decoder-who-killed-my-pod) reads it; a pod stuck Terminating *during a platform window* is usually cause 1 with a drain waiting on it, and the fix is on the budget side ([the unjam](/disruption/pod-disruption-budgets/#unjamming-a-blocked-drain-right-now)).
 - **Keep a "known finalizers" note in your runbook** — the table above plus whatever your operators add. At 2am, "I know who owns this string" is the difference between a fix and a gamble.
 
 ## Which page next

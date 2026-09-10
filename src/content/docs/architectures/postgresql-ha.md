@@ -417,7 +417,7 @@ spec:
 
 Verify the canary row exists, note how long the restore took (that's your real RTO), delete the namespace. Do this quarterly, minimum.
 
-**6. Drain test.** `kubectl drain <node-running-a-replica> --ignore-daemonsets --delete-emptydir-data` — the replica reschedules and re-attaches (or rebuilds) with the cluster staying `READY 3/3` writable throughout. Draining the primary's node should trigger the same clean switchover as drill 3, because CNPG registers a PodDisruptionBudget and handles the eviction.
+**6. Drain test.** `kubectl drain <node-running-a-replica> --ignore-daemonsets --delete-emptydir-data` — the replica reschedules and re-attaches (or rebuilds) with the cluster staying `READY 3/3` writable throughout. Draining the primary's node should trigger the same clean switchover as drill 3, because CNPG registers a PodDisruptionBudget and handles the eviction — which is also why you must *not* add a PDB of your own on top of it ([who owns the PDB](/disruption/stateful-and-quorum/#who-owns-the-pdb)).
 
 ## Failure modes
 

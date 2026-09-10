@@ -88,7 +88,7 @@ During node upgrades, platform **cordons** a node (no new pods; shows `Schedulin
 Whether users notice is decided entirely by *your* manifests, in advance:
 
 - **Replicas ≥ 2** and spread across nodes (`topologySpreadConstraints` / anti-affinity) — a one-replica Deployment takes an outage on every drain, by design.
-- **A PodDisruptionBudget** so the drain moves your pods one at a time instead of all at once:
+- **A PodDisruptionBudget** so the drain moves your pods one at a time instead of all at once — shaped as a ceiling on the *missing*, which keeps working when an HPA changes the replica count:
 
 ```yaml
 apiVersion: policy/v1
@@ -96,7 +96,8 @@ kind: PodDisruptionBudget
 metadata:
   name: api-pdb
 spec:
-  minAvailable: 1
+  maxUnavailable: 1                          # not minAvailable: a floor equal to the replica count permits nothing
+  unhealthyPodEvictionPolicy: AlwaysAllow    # let the drain remove a pod that's already broken
   selector:
     matchLabels:
       app: api
@@ -108,7 +109,7 @@ spec:
 The full pattern is in [High Availability](/workloads/high-availability/). A team with these four in place experiences node maintenance as a log line; a team without them experiences it as an incident, every patch Tuesday.
 
 :::caution[PDBs can also wedge a drain]
-`minAvailable: 2` on a 2-replica Deployment means the drain can *never* proceed — platform will either wait, ping you, or force it. Keep PDBs satisfiable: always leave at least one pod's worth of headroom between replicas and minAvailable.
+`minAvailable: 2` on a 2-replica Deployment means the drain can *never* proceed — platform will either wait, ping you, or force it. Keep PDBs satisfiable: always leave at least one legal eviction, checked with `kubectl get pdb` (`ALLOWED DISRUPTIONS ≥ 1` on a healthy day). If the platform team is waiting on you right now, [the ten-minute unjam](/disruption/pod-disruption-budgets/#unjamming-a-blocked-drain-right-now); the whole drain story from the tenant's seat — what the command does, the budget arithmetic, where evicted pods land — is the [Disruption & Drain Playbook](/disruption/overview/).
 :::
 
 ## Taints appearing on nodes

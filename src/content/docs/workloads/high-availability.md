@@ -18,8 +18,8 @@ sidebar:
 
 Your platform team drains nodes constantly: kernel patches, cluster upgrades, autoscaler consolidation, spot reclaims. Each drain evicts your pods. Whether that's a non-event or an outage is decided entirely by things *you* control in your manifests. This article is the checklist.
 
-:::note[The mechanics have a dedicated page]
-This article covers graceful shutdown as part of the HA story. The full termination lifecycle — the SIGTERM/endpoint-removal race, per-stack drain wiring, the budget inequality — now lives in [Graceful Shutdown](/workloads/graceful-shutdown/), with the dials in [Rollout & Shutdown Knobs](/tuning/rollout-shutdown-knobs/).
+:::note[The mechanics have dedicated pages]
+This article is the HA checklist. The termination lifecycle — the SIGTERM/endpoint-removal race, per-stack drain wiring, the budget inequality — lives in [Graceful Shutdown](/workloads/graceful-shutdown/), with the dials in [Rollout & Shutdown Knobs](/tuning/rollout-shutdown-knobs/). The drain itself from your seat — what `kubectl drain` does step by step, PDB arithmetic and the 3 a.m. collision with the HPA floor, where evicted pods land, and the contract with the platform team — is the [Disruption & Drain Playbook](/disruption/overview/); if the platform team is waiting on your namespace right now, start at [the ten-minute unjam](/disruption/pod-disruption-budgets/#unjamming-a-blocked-drain-right-now).
 :::
 
 :::tip[War story]
@@ -38,7 +38,7 @@ Run at least 2 replicas for anything anyone depends on, 3+ for anything with an 
 
 ## PodDisruptionBudgets
 
-A PDB tells the eviction API how much *voluntary* disruption your app tolerates. Node drains use the eviction API; the drain **blocks** until evicting a pod wouldn't violate your PDB.
+A PDB tells the eviction API how much *voluntary* disruption your app tolerates. Node drains use the eviction API; the drain **blocks** until evicting a pod wouldn't violate your PDB. The shape that's right for almost everything:
 
 ```yaml
 apiVersion: policy/v1
@@ -46,27 +46,20 @@ kind: PodDisruptionBudget
 metadata:
   name: payments
 spec:
-  maxUnavailable: 1          # or minAvailable: 2 — pick one style
+  maxUnavailable: 1                         # a ceiling on the MISSING — holds at every replica count,
+                                            # including the HPA's 3 a.m. floor (minAvailable doesn't)
+  unhealthyPodEvictionPolicy: AlwaysAllow   # a crashlooping pod can't hold the drain hostage
   selector:
     matchLabels:
       app: payments
 ```
 
-With 3 replicas and `maxUnavailable: 1`, a drain evicts one pod, waits for its replacement to become Ready elsewhere, then the next drain (or the same drain hitting your second pod) can proceed. Rolling cluster upgrades become invisible to your users.
+With 3 replicas and `maxUnavailable: 1`, a drain evicts one pod, waits for its replacement to become Ready elsewhere, then the next eviction can proceed. Rolling cluster upgrades become invisible to your users — provided each eviction is *clean*, which is graceful shutdown's job, not the budget's.
 
-PDBs guard **voluntary** disruptions only: drains, eviction API calls, descheduler. They do nothing against node crashes, OOMKills, or your own rolling updates (those are governed by `maxUnavailable` in the [Deployment strategy](/workloads/rollouts-and-rollbacks/)).
+PDBs guard **voluntary** disruptions only: drains, eviction API calls, descheduler. They do nothing against node crashes, OOMKills, HPA scale-in, or your own rolling updates (those are governed by `maxUnavailable` in the [Deployment strategy](/workloads/rollouts-and-rollbacks/)).
 
 :::danger[A bad PDB is how you end up on the platform team's blocklist]
-These configurations **block node drains indefinitely**:
-
-- `minAvailable: 1` with `replicas: 1` — zero disruptions allowed, ever.
-- `maxUnavailable: 0` — same, explicitly.
-- Any PDB whose selected pods are permanently NotReady — an unhealthy pod counts against the budget, so the drain can never make progress.
-
-The platform team's upgrade automation will stall on your namespace, and eventually a human will either page you or force-delete your pods — worst of both worlds. Rule of thumb: **never create a PDB that allows zero disruptions.** If you have 1 replica, the fix is 2 replicas, not a PDB. See [working with the platform team](/operations/working-with-platform-team/).
-:::
-
-Check your budget's arithmetic actually allows movement:
+`minAvailable` equal to the replica count (including `minAvailable: 1` on one replica), `maxUnavailable: 0`, or a percentage that rounds up to everything (`minAvailable: 80%` of 4 = 4) permit **zero** disruptions, and the platform team's upgrade automation stalls on your namespace until a human pages you or force-deletes your pods. Rule of thumb: **never ship a PDB that allows zero disruptions** — if you have 1 replica, the fix is 2 replicas. The proof:
 
 ```console
 $ kubectl get pdb payments
@@ -74,7 +67,8 @@ NAME       MIN AVAILABLE   MAX UNAVAILABLE   ALLOWED DISRUPTIONS   AGE
 payments   N/A             1                 1                     12d
 ```
 
-`ALLOWED DISRUPTIONS: 0` on a healthy day means you've built a drain-blocker.
+`ALLOWED DISRUPTIONS: 0` on a healthy day means you've built a drain-blocker. The arithmetic behind that column, the `minAvailable`-meets-HPA-floor trap, selector overlap, and the ten-minute unjam are all in [PodDisruptionBudgets, All the Way Down](/disruption/pod-disruption-budgets/).
+:::
 
 ## Spreading pods: anti-affinity and topologySpreadConstraints
 

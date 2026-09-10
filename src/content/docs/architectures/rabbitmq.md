@@ -212,7 +212,7 @@ There is deliberately **no liveness probe**: a node replaying a large Raft log o
 
 ### 4. PodDisruptionBudget
 
-The cluster operator does **not** create a PDB — apply it yourself, and make it match quorum reality:
+The cluster operator does **not** create a PDB — apply it yourself, and make it match quorum reality (the shared reasoning for every quorum set on this site — one member at a time, readiness that means "caught up", and why the drain is slow — is [Draining Stateful and Quorum Workloads](/disruption/stateful-and-quorum/)):
 
 ```yaml
 apiVersion: policy/v1

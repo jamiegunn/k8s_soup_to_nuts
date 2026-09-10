@@ -44,7 +44,9 @@ Pod sits in `Pending`. The scheduler is telling you exactly why — read the `Fa
 | `node(s) had volume node affinity conflict` | Zonal PV vs. pod placement mismatch (multi-zone clusters) | [Volume Failures](/troubleshooting/volume-failures/) |
 | `exceeded quota` (on the ReplicaSet/Deployment, not the pod) | Namespace ResourceQuota is full — pods aren't even being created | [Working Without Admin](/start/working-without-admin/#know-your-budget-quotas-and-limit-ranges), [Pod Pending](/troubleshooting/pod-pending/#2-resourcequota-exceeded) |
 | `SchedulingGated` | Pod has `schedulingGates` set — something (a controller, a webhook) must remove them first | [Pod Pending](/troubleshooting/pod-pending/), [Admission Webhooks](/controllers/admission-webhooks/) |
-| `1 node(s) were unschedulable` | Node is cordoned (maintenance, drain in progress) | [Node Problems](/troubleshooting/node-problems/#cordon-drain-and-maintenance) |
+| `1 node(s) were unschedulable` | Node is cordoned (maintenance, drain in progress); the *other* phrases in the same message say why the survivors can't take you | [What a Drain Actually Does](/disruption/anatomy-of-a-drain/#1-cordon), [Where Your Pods Land](/disruption/where-pods-land/#the-failedscheduling-decoder) |
+| `didn't match pod topology spread constraints` (during maintenance) | Hard spread still counts the cordoned node as a domain — the replacement can't land without violating `maxSkew` | [Where Your Pods Land](/disruption/where-pods-land/#2-hard-topology-spread-still-counts-the-cordoned-node) |
+| `didn't satisfy existing pods anti-affinity rules` / `didn't match pod anti-affinity rules` | `required` anti-affinity needs one more schedulable node than the drain left you | [Where Your Pods Land](/disruption/where-pods-land/#1-required-anti-affinity) |
 
 ## Won't pull the image
 
@@ -90,7 +92,7 @@ It ran — then something killed it, or Kubernetes decided it wasn't healthy.
 | Error text | What it means | Playbook |
 |---|---|---|
 | `OOMKilled` / `Reason: OOMKilled` | Container hit its memory **limit**; kernel killed it instantly, no logs | [OOMKilled](/troubleshooting/oomkilled/) |
-| exit code `137` | SIGKILL — OOM kill, eviction, or a probe/shutdown timeout escalation; check `Reason` to tell them apart | [OOMKilled](/troubleshooting/oomkilled/#confirm-it-was-actually-oom) |
+| exit code `137` | SIGKILL — OOM kill, eviction, or a probe/shutdown timeout escalation; check `Reason` to tell them apart. On an evicted or node-shutdown pod it means the drain took longer than the grace it was given — which may be *shorter* than yours (`--grace-period`, the kubelet's shutdown window) | [OOMKilled](/troubleshooting/oomkilled/#confirm-it-was-actually-oom), [When Nobody Asked](/disruption/involuntary-disruptions/#kubelet-graceful-node-shutdown) |
 | exit code `143` | SIGTERM — graceful shutdown request (rollout, scale-down, drain); usually normal | [Rollouts & Rollbacks](/workloads/rollouts-and-rollbacks/), [Life of a Deployment](/start/life-of-a-deployment/) |
 | `Evicted` | Kubelet kicked the pod off a node under pressure | [Node Problems](/troubleshooting/node-problems/#node-conditions-and-eviction--why-your-pod-got-killed) |
 | `Evicted` ... `low on resource: ephemeral-storage` | Your container filled node-local disk — logs, temp files, cache | [Node Problems](/troubleshooting/node-problems/#ephemeral-storage-the-usual-suspect--and-its-usually-you), [Resources & QoS](/workloads/resources-and-qos/) |
@@ -170,6 +172,26 @@ Pod stuck at `ContainerCreating`, or data isn't where it should be.
 | `error: You must be logged in to the server (Unauthorized)` | Your kubeconfig credentials are expired/invalid — authentication, not authorization | [kubectl Can't Reach the Cluster](/troubleshooting/api-server-broken/), [RBAC Denied](/troubleshooting/rbac-denied/) |
 | `etcdserver: request timed out` | The API server reached etcd but etcd didn't answer in time — control-plane trouble, escalate | [kubectl Can't Reach the Cluster](/troubleshooting/api-server-broken/#control-plane-symptoms--bucket-c-escalate) |
 | `the server was unable to return a response in the time allotted, but may still be processing the request` | The API server is overloaded or a backing component (etcd, a webhook) is slow — control-plane trouble, escalate | [kubectl Can't Reach the Cluster](/troubleshooting/api-server-broken/#control-plane-symptoms--bucket-c-escalate) |
+
+## Disruptions: drains, budgets, evictions
+
+Something other than your deploy pipeline is killing pods — or trying to and being refused. Most of these strings are what the *platform team* sees and pastes to you; the fix is on your side.
+
+| Error text | What it means | Playbook |
+|---|---|---|
+| `Cannot evict pod as it would violate the pod's disruption budget` | Your PDB currently permits zero disruptions; the drain retries every 5 s until its timeout | [Unjamming, right now](/disruption/pod-disruption-budgets/#unjamming-a-blocked-drain-right-now) |
+| `The disruption budget X needs N healthy pods and has M currently` | The 429's cause line: `desiredHealthy` vs `currentHealthy` — their difference is `ALLOWED DISRUPTIONS` | [The status block](/disruption/pod-disruption-budgets/#the-status-block-field-by-field) |
+| `evicting pod … (will retry after 5s)` | The drain's retry loop against a blocked pod — the line in the platform team's message | [What a Drain Actually Does](/disruption/anatomy-of-a-drain/#3-the-three-answers) |
+| `global timeout reached` / `There are pending nodes to be drained` | The platform's drain gave up; what happens next is their policy (skip and page, or bypass you) | [The Maintenance Contract](/disruption/platform-contract/#what-to-ask) |
+| `This pod has more than one PodDisruptionBudget, which the eviction subresource does not support` | Two PDBs select the same pod — overlapping selectors, or yours plus an operator's; never retried into success | [Selectors](/disruption/pod-disruption-budgets/#selectors-guard-exactly-one-thing) |
+| `ALLOWED DISRUPTIONS 0` (in `kubectl get pdb`) on a healthy day | The budget's shape permits nothing at this replica count — a floor equal to the HPA floor, `maxUnavailable: 0`, or a percentage that rounded up | [The arithmetic](/disruption/pod-disruption-budgets/#the-arithmetic), [PDB and HPA](/disruption/pod-disruption-budgets/#pdb-and-hpa-the-3-am-problem) |
+| `expectedPods: 0` / `NoPods — No matching pods found` | The PDB's selector matches nothing (label drift after a rename) — it guards nothing | [Selectors](/disruption/pod-disruption-budgets/#selectors-guard-exactly-one-thing) |
+| `DisruptionTarget` condition, `reason: EvictionByEvictionAPI` | The pod was evicted — a drain, a descheduler, the VPA updater, or a human calling the API | [The decoder](/disruption/anatomy-of-a-drain/#the-decoder-who-killed-my-pod) |
+| `DisruptionTarget`, `reason: TerminationByKubelet` | Node shutdown, node-pressure eviction, or critical-pod preemption — no PDB was consulted | [When Nobody Asked](/disruption/involuntary-disruptions/) |
+| `DisruptionTarget`, `reason: PreemptionByScheduler` / `DeletionByTaintManager` / `DeletionByPodGC` | A higher-priority pod took the room / the node went NotReady past `tolerationSeconds` / the node is gone | [The decoder](/disruption/anatomy-of-a-drain/#the-decoder-who-killed-my-pod) |
+| `Pod was terminated in response to imminent node shutdown.` (`reason: Terminated`) | The node was rebooted through the OS; the kubelet terminated your pod inside *its* window, not your `terminationGracePeriodSeconds` | [Kubelet graceful node shutdown](/disruption/involuntary-disruptions/#kubelet-graceful-node-shutdown) |
+| `Ready,SchedulingDisabled` (node STATUS) | Cordoned — a drain has started or is about to; rollouts started now leave surge pods Pending | [What a Drain Actually Does](/disruption/anatomy-of-a-drain/#1-cordon) |
+| Job `Failed`, `BackoffLimitExceeded`, on a patch night | Evicted Job pods count against `backoffLimit` unless a `podFailurePolicy` ignores `DisruptionTarget` | [Jobs: stop burning retries](/disruption/involuntary-disruptions/#jobs-stop-burning-retries-on-drains) |
 
 ## Autoscaling (HPA)
 
