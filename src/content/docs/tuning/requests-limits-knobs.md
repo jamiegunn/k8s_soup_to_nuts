@@ -14,6 +14,7 @@ keywords:
   - hpa utilization target percentage of request
   - pod pending insufficient cpu
   - cpu request no limit
+  - base chart default resources block
 sidebar:
   order: 4
 ---
@@ -157,6 +158,16 @@ spec:
 ```
 
 With this in place, "I omitted the CPU limit" actually means "I chose `500m`" — the exact throttle trap the next section quantifies. If the default hurts your service class, that's an exemption request, not a workaround: [Working with the platform team](/operations/working-with-platform-team/).
+
+### The base-chart default: the other number you didn't choose
+
+A LimitRange is at least visible: one `kubectl describe` shows it, and it is the same for every pod in the namespace. The quieter source of numbers you never wrote is the shared chart your pipeline renders — the platform's base chart or golden chart — when its `values.yaml` ships a `resources` block with values in it. Those values land on every service that never set its own; they don't appear in your values file or in `helm get values` (only in `helm get values -a`, the computed set); and they change when the chart version bumps, not when you deploy. The full ladder of where a number on your pod can come from — your file, the chart's defaults, the merged release, the LimitRange, API defaulting, the pod itself, what the JVM concluded — with the command that exposes each layer, is in [One Default, Many Heaps](/tuning/one-default-many-heaps/).
+
+For a JVM the chart default is more dangerous than the LimitRange, because it is a *limit* as often as a request, and the memory limit and `-Xmx` are a pair that must be sized together ([JVM Memory Knobs](/tuning/jvm-memory-knobs/)). A fleet-wide `limits.memory: 1Gi` under a service whose `JAVA_OPTS` says `-Xmx2g` is not a default, it is a kill order — exit 137 at startup if the heap is pre-touched, at 3 a.m. if it grows lazily — and the same block under `-Xmx512m` is a hoard. No single number is right for a fleet with a spread of heaps, which is why the memory limit belongs next to the `-Xmx`, in the team's file, and the base chart's job is to *require* the block, not fill it. Whether the shared chart should ship resource defaults at all is argued both ways, with a verdict, in [The Blank Resources Block](/helm/resource-defaults-in-the-base-chart/); the short version is that presence belongs to enforcement (schema, CI, admission policy), floors belong to the LimitRange, and numbers belong to the people who own the p99.
+
+:::note[While you're reading the LimitRange: `max` implies `default`]
+The API server fills `default` from `max`, and `defaultRequest` from `default`, for any resource where they're missing — so a LimitRange somebody wrote as "just `max.cpu: 4`" is stored, and enforced, as "stamp `limits.cpu: 4` *and* `requests.cpu: 4` on anything that omits them." `kubectl get limitrange -o yaml` shows the filled-in fields. Most stamped CPU limits in the wild began as a `max` written for node protection, not as a throttling policy — worth knowing before the exemption conversation.
+:::
 
 ## CFS mechanics: why `500m` destroys your p99
 
@@ -365,5 +376,6 @@ resources:
 | Copying blocks between services | The gRPC gateway inherits the batch worker's `cpu: "4"` request; nobody remembers why; nobody dares change it | Every value traces to a measurement with a date on it |
 | 1000x unit typos (`cpu: 100`, `memory: 512m`) | Pending forever, or OOM at byte one | CI lint on resource quantities; reject lowercase `m` on memory |
 | Tuning live without git | `kubectl edit` in an incident, never backported; next deploy silently reverts the fix, incident #2 | In-place resize for the experiment, PR for the result — process in [Resource tuning in prod](/operations/resource-tuning-in-prod/) |
+| Fleet-wide `resources` default in the shared chart | Every service that never set the block inherits a number nobody measured for it: JVMs with `-Xmx` above the default limit OOMKill, those below hoard, every HPA scales against the same guessed request — and changing it later is a fleet-wide resize | Blank block plus schema-required presence in the chart, a floor in the LimitRange, per-service numbers derived next to the `-Xmx` — [The Blank Resources Block](/helm/resource-defaults-in-the-base-chart/) |
 
 The knobs are few; the interactions are the job. When a pod won't schedule, start at [Pod Pending](/troubleshooting/pod-pending/); when it schedules and dies, start at [OOMKilled](/troubleshooting/oomkilled/); when it runs and it's slow, start with the throttle ratio above.

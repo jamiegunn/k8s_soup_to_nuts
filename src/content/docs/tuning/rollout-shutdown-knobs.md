@@ -15,7 +15,7 @@ keywords:
   - distroless no sleep binary
   - failedprestophook event
 sidebar:
-  order: 8
+  order: 9
 ---
 
 This is the dial-by-dial reference for how pods are *replaced*: the Deployment strategy fields that pace a rollout and the termination fields that decide whether each replaced pod dies cleanly. The mechanics — what actually happens between deletionTimestamp and SIGKILL, and why traffic keeps arriving after SIGTERM — live in [Graceful Shutdown](/workloads/graceful-shutdown/); the rollout state machine lives in [Rollouts and Rollbacks](/workloads/rollouts-and-rollbacks/). This page assumes you know both and need the numbers: defaults, what turning each dial changes, and how they multiply into deploy duration and dropped-request counts.

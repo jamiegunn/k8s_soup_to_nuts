@@ -15,7 +15,7 @@ keywords:
   - request timeout shrink inward
   - probe timeoutseconds budget
 sidebar:
-  order: 9
+  order: 10
 ---
 
 Every page in this guide that touches the wire mentions a timeout. [ingress-nginx](/networking/ingress-nginx/) has its 60-second read timeout, [Long-Lived Connections](/networking/long-lived-connections/) has the idle-timeout-kills-quiet-sockets pattern, [PostgreSQL](/stateful/postgresql/) has `statement_timeout`, [Graceful Shutdown](/workloads/graceful-shutdown/) has the grace period. Each is correct in isolation. Nobody owns the *sum* — and the sum is where the outages live. A request crossing your corporate chain (client → F5/NetScaler VIP → MetalLB → ingress-nginx → Service → pod → Postgres) passes through **six independently-configured timers owned by four different teams**, and most "mysterious 504" and "random disconnect" tickets are two adjacent timers disagreeing by a few seconds.

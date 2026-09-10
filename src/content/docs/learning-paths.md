@@ -62,7 +62,8 @@ Time estimates assume reading plus trying things against a real (dev) namespace.
 8. [Spring Boot](/java/spring-boot/) — probes via [Actuator](/java/actuator/), graceful shutdown, lifecycle wiring.
 9. [JVM–Kubernetes Coupling](/java/jvm-kubernetes-coupling/) — the map of which JVM flag interacts with which Kubernetes knob.
 10. [JVM Memory Knobs](/tuning/jvm-memory-knobs/) — set heap, Metaspace, and the limit as one coherent budget.
-11. [Sizing Walkthrough](/tuning/sizing-walkthrough/) — do the numbers once end-to-end on a real service.
+11. [One Default, Many Heaps](/tuning/one-default-many-heaps/) — what a fleet-wide resources default does to a JVM whose `-Xmx` it doesn't fit, and how to derive the number that's yours.
+12. [Sizing Walkthrough](/tuning/sizing-walkthrough/) — do the numbers once end-to-end on a real service.
 
 **You're done when you can:** explain your pod's memory budget (heap + non-heap + headroom = limit), pull a thread and heap dump from a JRE-only production pod, and tell an `OOMKilled` from a `java.lang.OutOfMemoryError` in under a minute.
 

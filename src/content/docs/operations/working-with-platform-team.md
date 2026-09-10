@@ -35,7 +35,7 @@ The exact split varies, but this is the common shape:
 | ResourceQuotas, LimitRanges on your namespaces | Living within them; asking with evidence when you can't |
 | Argo CD / Flux installation and policy | Your app-of-apps, your manifests, your sync hygiene |
 
-Two implications worth internalizing. First: many things that *look* like your bug are their layer (node pressure evicting your pods, CNI drops, an ingress controller reload bug) — the skill of telling the layers apart is most of [Triage methodology](/troubleshooting/triage-methodology/). Second: many things that look like their job are actually yours — nobody but you can set a correct PDB, a graceful shutdown handler, or a memory limit.
+Two implications worth internalizing. First: many things that *look* like your bug are their layer (node pressure evicting your pods, CNI drops, an ingress controller reload bug) — the skill of telling the layers apart is most of [Triage methodology](/troubleshooting/triage-methodology/). Second: many things that look like their job are actually yours — nobody but you can set a correct PDB, a graceful shutdown handler, or a memory limit — and if the platform team offers to set the memory limit for you, fleet-wide, as a default in the base chart, [The Blank Resources Block](/helm/resource-defaults-in-the-base-chart/) is the argument for why that's the wrong seat, and what they should own instead (the floor, the fences, the quota).
 
 ## Writing requests that get fast yeses
 

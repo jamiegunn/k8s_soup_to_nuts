@@ -487,7 +487,7 @@ The template mechanics are in [Chart Anatomy](/helm/chart-anatomy/); publishing 
 
 **Pipeline gates**, per [CI/CD Pipeline Design](/operations/cicd-pipeline-design/): schema-validate every manifest (kubeconform), policy-check the invariants this article established (digest-pinned image, no CPU limit *added*, automount still false, PDB present), inject the config checksum and the image digest as the only CI-written fields, then gate promotion on `kubectl rollout status` and a post-deploy smoke hit through the Ingress. The rollout-status gate is what turns the quota-blocked-surge row above from a mystery into a red pipeline.
 
-**Clone this as your template.** The *structure* transfers to any stateless HTTP service; the *numbers* do not. When you copy it, parameterize exactly these — each traceable to a measurement you must make yourself via the [Sizing Walkthrough](/tuning/sizing-walkthrough/) method:
+**Clone this as your template.** The *structure* transfers to any stateless HTTP service; the *numbers* do not — which is also why the org's base chart should ship the structure and *require* the numbers rather than default them ([The Blank Resources Block](/helm/resource-defaults-in-the-base-chart/) argues that out for a mixed-heap Java fleet). When you copy it, parameterize exactly these — each traceable to a measurement you must make yourself via the [Sizing Walkthrough](/tuning/sizing-walkthrough/) method:
 
 - CPU request and memory request=limit (your Phase 1 table, not orders-api's)
 - `MaxRAMPercentage` — JVM services only; delete `JAVA_TOOL_OPTIONS` otherwise

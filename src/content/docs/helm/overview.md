@@ -80,7 +80,7 @@ You meet Helm from two seats, and the skills barely overlap — [Helm and Kustom
 
 **The consumer seat.** You install and upgrade charts other people wrote: the platform team's golden chart, ingress-nginx, a database. Your job is discovering the values API (`helm show values`), overriding it correctly, rendering before applying, and surviving chart version bumps. You never edit a template. Your articles: [Values and Overrides](/helm/values-and-overrides/) and [Lifecycle and Operations](/helm/lifecycle-and-operations/), with [Chart Anatomy](/helm/chart-anatomy/) as the map for reading charts you didn't write — which you *will* do, because `helm show values` answers "what knobs exist" but only the templates answer "what does this knob actually do."
 
-**The author seat.** You maintain an internal chart — usually a small one deploying your team's services, sometimes the shared chart every team consumes (see the [golden service architecture](/architectures/golden-service/) for where that pattern ends up). Now you're designing an API: your values schema is the contract, your templates are the implementation, and your consumers are your colleagues at 2 AM. Your articles: [Chart Anatomy](/helm/chart-anatomy/), [The Template Language](/helm/template-language/), and [Authoring Best Practices](/helm/authoring-best-practices/).
+**The author seat.** You maintain an internal chart — usually a small one deploying your team's services, sometimes the shared chart every team consumes (see the [golden service architecture](/architectures/golden-service/) for where that pattern ends up). Now you're designing an API: your values schema is the contract, your templates are the implementation, and your consumers are your colleagues at 2 AM. Your articles: [Chart Anatomy](/helm/chart-anatomy/), [The Template Language](/helm/template-language/), and [Authoring Best Practices](/helm/authoring-best-practices/) — plus, for the argument every paved-road chart eventually has, [The Blank Resources Block](/helm/resource-defaults-in-the-base-chart/).
 
 Most readers sit in both seats in the same week. The section is ordered so the author-seat material comes first, because reading charts fluently makes you a dramatically better consumer even if you never write one.
 
@@ -92,6 +92,7 @@ Most readers sit in both seats in the same week. The section is ordered so the a
 | [The Template Language](/helm/template-language/) | Author | Go templates + Sprig as actually used: the dot, whitespace control, the function toolkit, `_helpers.tpl` done right, debugging renders. |
 | [Values and Overrides](/helm/values-and-overrides/) | Both | The values merge order, `--set` pitfalls, per-environment files, `values.schema.json`, designing a values API. |
 | [Authoring Best Practices](/helm/authoring-best-practices/) | Author | Chart design patterns and anti-patterns: logic budgets, extension points, when *not* to add a knob. |
+| [The Blank Resources Block](/helm/resource-defaults-in-the-base-chart/) | Both | Should the shared chart ship default requests and limits? Argued both ways for a Java fleet with mixed `-Xmx` values, then a verdict — and the schema, guard, and LimitRange build that follows from it. |
 | [Lifecycle and Operations](/helm/lifecycle-and-operations/) | Both | Install/upgrade/rollback internals, release storage, hooks, tests, stuck states, Helm under GitOps. |
 
 Related territory that stays where it is: pipeline integration in [CI/CD Pipeline Design](/operations/cicd-pipeline-design/), what happens when Argo CD or Flux drives Helm in [GitOps for Tenants](/operations/gitops-for-tenants/), and why your live edits fight rendered manifests in [Drift and CI/CD](/operations/drift-and-cicd/).
@@ -109,7 +110,8 @@ Related territory that stays where it is: pipeline integration in [CI/CD Pipelin
 
 1. [Chart Anatomy](/helm/chart-anatomy/) → [The Template Language](/helm/template-language/) → [Values and Overrides](/helm/values-and-overrides/), in order — each builds on the last
 2. [Authoring Best Practices](/helm/authoring-best-practices/) — once the mechanics are boring
-3. [Lifecycle and Operations](/helm/lifecycle-and-operations/) — because your consumers' upgrade pain is your design problem
+3. [The Blank Resources Block](/helm/resource-defaults-in-the-base-chart/) — before you put a number in the shared chart's `resources` block
+4. [Lifecycle and Operations](/helm/lifecycle-and-operations/) — because your consumers' upgrade pain is your design problem
 
 ### What this section deliberately skips
 

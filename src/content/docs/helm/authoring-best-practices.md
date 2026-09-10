@@ -14,6 +14,7 @@ keywords:
   - toyaml tolerations verbatim
   - capability gate api version
   - golden file diff testing
+  - base chart resource defaults
 sidebar:
   order: 5
 ---
@@ -288,7 +289,56 @@ When five internal charts copy-paste the same `_helpers.tpl`, a **library chart*
 
 When it beats copy-paste: three-plus consuming charts, a platform team that owns the library, and helpers that genuinely must stay in lockstep (the label contract, org security defaults). The honest cost: **versioning**. Every library change ships to consumers only when each chart bumps its dependency, so you now maintain semver discipline on templates, and a breaking helper change fans out as coordinated PRs across every consumer. For two charts, copy-paste is cheaper and everyone knows it. If your org has a paved-road chart, this is how it's built — see the [golden service](/architectures/golden-service/) for what such a chart typically encodes.
 
-## The ten rules
+## Rule 12: Don't default what you didn't measure
+
+**Wrong** — the paved-road chart that sizes the fleet:
+
+```yaml
+# base-chart/values.yaml — "sane defaults, so nothing ships unsized"
+resources:
+  requests: { cpu: 250m, memory: 1Gi }
+  limits:   { cpu: "1",  memory: 1Gi }
+```
+
+Every consumer that never sets `resources` now runs on this block, and the block is wrong for most of them in one of two directions. The fleet is Java and each service carries its own `-Xmx` in `JAVA_OPTS`: the `-Xmx2g` service OOMKills inside a 1Gi cgroup (exit 137, no heap dump — at startup if the heap is pre-touched, at 3 a.m. if it grows lazily), the `-Xmx512m` service hoards, and both get one CPU of quota, which makes the JVM choose Serial GC and a single JIT thread for every service that didn't name a collector. Make the default bigger and the deaths become hoards, but the `-Xmx4g` service still dies. A number that has to be a function of a value in the *consumer's* file cannot be a constant in *yours*. And the constant is load-bearing the day it ships: changing it is a fleet-wide resize through a chart bump, and removing it is a fleet-wide BestEffort event.
+
+**Right** — blank, required, and guarded. The block stays the Rule 4 passthrough; what changes is that rendering fails until it's filled:
+
+```yaml
+# base-chart/values.yaml
+# BLANK ON PURPOSE and REQUIRED: rendering fails until requests.cpu, requests.memory and
+# limits.memory are set. Derive them — /tuning/sizing-walkthrough/ (any service),
+# /tuning/jvm-memory-knobs/ (JVM: limit = heap + non-heap budget).
+resources: {}
+```
+
+```json
+{
+  "required": ["resources"],
+  "properties": {
+    "resources": {
+      "type": "object",
+      "required": ["requests", "limits"],
+      "properties": {
+        "requests": { "type": "object", "required": ["cpu", "memory"] },
+        "limits":   { "type": "object", "required": ["memory"] }
+      }
+    }
+  }
+}
+```
+
+```yaml
+{{- /* templates/_guards.tpl — the JVM invariant, guarded rather than chosen */ -}}
+{{- $xmx := regexFind "-Xmx[0-9]+[kKmMgG]?" (.Values.javaOpts | default "") -}}
+{{- if and $xmx (not (dig "limits" "memory" "" (.Values.resources | default dict))) -}}
+{{- fail (printf "javaOpts sets %s but resources.limits.memory is empty — the heap ceiling and the container limit are a pair; set both, or drop -Xmx for -XX:MaxRAMPercentage." $xmx) -}}
+{{- end -}}
+```
+
+The schema makes a missing request a render error in the consumer's pipeline on day one — Rule 6 applied to the one field where silent success costs the most — and, with no `additionalProperties: false` anywhere near it, the block stays a passthrough. The guard refuses the one combination that is always wrong for a JVM. Neither contains a number. The fleet-wide floor that keeps a forgotten block from reaching the cluster as BestEffort belongs to the platform's LimitRange (`defaultRequest`, a memory-only `max`, no stamped CPU limits), and the starter numbers belong in the chart's README as recipes the consumer copies into *their* values file with a revisit date. The exception is honest: a chart that deploys one thing its owner has measured — the org's standard log-forwarder sidecar, say — is shipping a value, not a default. The full argument, both sides and the verdict, is [The Blank Resources Block](/helm/resource-defaults-in-the-base-chart/); the arithmetic of one default applied to five heaps is [One Default, Many Heaps](/tuning/one-default-many-heaps/).
+
+## The twelve rules
 
 :::tip[The summary box]
 1. **Render deterministically** — no `randAlphaNum`, no timestamps; `lookup`-or-`required` for secrets.
@@ -301,6 +351,8 @@ When it beats copy-paste: three-plus consuming charts, a platform team that owns
 8. **Test the pyramid** — lint, unittest, golden diffs, kind install.
 9. **Generate the docs, keep the changelog** — values are an API; version them like one.
 10. **Secure by default, visibly overridable** — digests, existingSecret, imagePullSecrets, restrictive contexts in values.
+11. **Library charts when three-plus consumers need lockstep helpers** — and pay the versioning cost knowingly.
+12. **Don't default what you didn't measure** — `resources: {}` stays blank, schema-required and JVM-guarded; floors live in the LimitRange, numbers in the consumer's file.
 :::
 
 With the chart authored, the remaining question is what Helm actually *does* with it at install, upgrade, and rollback time — [Release Lifecycle and Operations](/helm/lifecycle-and-operations/) is that story.

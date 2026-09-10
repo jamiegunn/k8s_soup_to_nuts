@@ -119,6 +119,14 @@ two that must be changed in lockstep (the manifest side of this trade is
 `-Xmx` only when the heap genuinely shouldn't scale with the limit (e.g. a
 fixed-size cache plus growing native usage).
 
+Whichever you pick, the pair lives in *your* values file. A fleet-wide
+default limit in the platform's base chart cannot be right for more than
+one `-Xmx` — under `-Xmx2g` a `1Gi` default is a kill order, under
+`-Xmx512m` it's a hoard — which is the arithmetic in
+[One Default, Many Heaps](/tuning/one-default-many-heaps/) and the reason
+the base chart should require the block rather than fill it
+([The Blank Resources Block](/helm/resource-defaults-in-the-base-chart/)).
+
 :::danger
 Setting **both** `-Xmx` and `-XX:MaxRAMPercentage` is a classic confusion
 generator: `-Xmx` wins and the percentage is silently ignored. Whoever

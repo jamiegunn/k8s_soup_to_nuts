@@ -44,6 +44,7 @@ So the reading order for any tuning question is: symptom → knob reference (the
 |---|---|
 | [Health Check Knobs](/tuning/health-check-knobs/) | Every probe field with the restart/traffic math, interaction effects (rolling updates, graceful shutdown, GC pauses, throttling), and per-archetype probe recipes |
 | [JVM Memory Knobs](/tuning/jvm-memory-knobs/) | Heap and the non-heap budget everyone forgets — `MaxRAMPercentage`, Metaspace, code cache, direct memory, thread stacks — plus the RSS budget formula and ready-made flag strings |
+| [One Default, Many Heaps](/tuning/one-default-many-heaps/) | One fleet-wide resources default walked through five JVMs with different `-Xmx` values — which die at startup, which at 3 a.m., which hoard, which switch to Serial GC — plus the layer-by-layer check for what's stamping your pod and the two ways to derive your own number |
 | [Requests & Limits Knobs](/tuning/requests-limits-knobs/) | The four primary knobs with exact semantics (CFS quota math included), QoS, LimitRange/quota interplay, and archetype resource blocks |
 | [Rollout & Shutdown Knobs](/tuning/rollout-shutdown-knobs/) | The rollout pacing dials (surge, maxUnavailable, minReadySeconds) and the termination budget (preStop, grace period, drain) — with the combined deploy-under-load math |
 | [Sizing Walkthrough](/tuning/sizing-walkthrough/) | The capstone: one service taken from a cold start to production-tuned, every number derived from a measurement, ending in a 12-step ritual you can reuse |
