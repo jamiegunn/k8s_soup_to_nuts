@@ -1,5 +1,5 @@
 ---
-title: "Three Lenses, Tactically II: Size and Scale"
+title: "Three Lenses, Tactically III: Size and Scale"
 description: The zoom run outward, with the exact commands — size a JVM service's heap, limit, and request from lens-3 data (GC log, NMT, thread dump) instead of a rule of thumb; pick and prove an HPA signal through prometheus-adapter with no KEDA; and build the evidence pack that gets a platform ticket actioned. Plus the before/after ritual that closes every change.
 keywords:
   - size jvm heap and container limit from data
@@ -12,14 +12,14 @@ keywords:
   - before after load test table
   - cpu request from p95 usage jvm
 sidebar:
-  order: 10.2
+  order: 10.3
 ---
 
-You are here if: you've read [the diagnose page](/java/lens-playbooks-diagnose/) and want the other direction — turning what the inside lens showed you into a request, a limit, a heap, and a scaling signal you can defend in review; or the platform team asked "how much do you actually need?" and you'd like to answer with a table.
+You are here if: [a use case](/java/lens-playbooks-use-cases/) sent you to a procedure by number; or you've read [the symptom page](/java/lens-playbooks-diagnose/) and want the other direction — turning what the inside lens showed you into a request, a limit, a heap, and a scaling signal you can defend in review; or the platform team asked "how much do you actually need?" and you'd like to answer with a table.
 
-This page runs [the zoom](/start/three-lenses/#why-three-and-why-a-zoom) outward. Diagnosis walked in — cluster → process → inside — to find a cause. Sizing walks out: lens 3 says what the JVM *needs* (the live set, the non-heap tenants, the thread count under load), lens 2 says what it *steadily uses*, and lens 1 is where the numbers land — as a request, a limit, and an HPA target, which is the currency [Door 1](/start/three-doors/) prices the whole loop in. Same cast, same assumptions as the diagnose page: `payments-api` in namespace `payments`, a JRE-only image with [jattach](/java/jattach-deep-dive/), and **no KEDA** — a custom signal reaches the HPA through the platform's prometheus-adapter. The [toolkit](/java/lens-playbooks-diagnose/#the-toolkit-set-up-once) — `$NS`, `$POD`, `$JPID`, `$JATTACH`, `pq`, `pqr`, the JVM flags, the histograms — is assumed set up.
+This page runs [the zoom](/start/three-lenses/#why-three-and-why-a-zoom) outward. Diagnosis walked in — cluster → process → inside — to find a cause. Sizing walks out: lens 3 says what the JVM *needs* (the live set, the non-heap tenants, the thread count under load), lens 2 says what it *steadily uses*, and lens 1 is where the numbers land — as a request, a limit, and an HPA target, which is the currency [Door 1](/start/three-doors/) prices the whole loop in. Same cast, same assumptions as the symptom page: `payments-api` in namespace `payments`, a JRE-only image with [jattach](/java/jattach-deep-dive/), and **no KEDA** — a custom signal reaches the HPA through the platform's prometheus-adapter. The [toolkit](/java/lens-playbooks-diagnose/#the-toolkit-set-up-once) — `$NS`, `$POD`, `$JPID`, `$JATTACH`, `pq`, `pqr`, the JVM flags, the histograms — is assumed set up.
 
-| # | Situation | The walk | The artifact |
+| # | Procedure | The walk | The artifact |
 |---|---|---|---|
 | 1 | [Size the heap, the limit, and the request from data](#1-size-the-heap-the-limit-and-the-request-from-data) | L3 live set + NMT + threads → L2 steady gauges → L1 request/limit | the sizing table + `values.yaml` with derivations |
 | 2 | [Pick and prove an HPA signal without KEDA](#2-pick-and-prove-an-hpa-signal-without-keda) | L2 candidates vs p95 under a ramp → the adapter → L1 the HPA | the signal table + the HPA with its derivation |
@@ -28,7 +28,7 @@ This page runs [the zoom](/start/three-lenses/#why-three-and-why-a-zoom) outward
 
 ## 1. Size the heap, the limit, and the request from data
 
-**Situation.** [The cast's chart](/autoscaling/rest-api-oracle/#the-build) says `MEASURED` beside `cpu: 250m` and `memory: 1Gi`. This use case is the measurement — the procedure that produced those numbers, and the one you re-run after any release that changes what the JVM keeps (a new cache), how many threads it runs, or what a request does. The [sizing walkthrough](/tuning/sizing-walkthrough/) gives the load-test method and the CPU-request rule; this adds what only the inside lens can supply — the *live set*, the *non-heap tenants* itemized, and the *thread count* at load — so the memory numbers are measured instead of rule-of-thumbed, and so you know which rule of thumb you're allowed to break.
+**Situation.** [The cast's chart](/autoscaling/rest-api-oracle/#the-build) says `MEASURED` beside `cpu: 250m` and `memory: 1Gi`. This procedure is the measurement — the one that produced those numbers, and the one you re-run after any release that changes what the JVM keeps (a new cache), how many threads it runs, or what a request does. The [sizing walkthrough](/tuning/sizing-walkthrough/) gives the load-test method and the CPU-request rule; this adds what only the inside lens can supply — the *live set*, the *non-heap tenants* itemized, and the *thread count* at load — so the memory numbers are measured instead of rule-of-thumbed, and so you know which rule of thumb you're allowed to break.
 
 **The walk.** Run the walkthrough's [Phase 1 load test](/tuning/sizing-walkthrough/#phase-1--load-test-in-a-dev-namespace) — a ramp to 60 rps/pod, a 20-minute hold, an overshoot — in a dev namespace (point `$NS` at it; every command follows). During the *hold*, take lens 3; across the hold, take lens 2; then write lens 1.
 
@@ -70,7 +70,7 @@ Total: reserved=2330309KB, committed=862309KB
       3 "kafka-producer-network-thread"
 ```
 
-Four numbers you couldn't have read from any dashboard. The **live set** is ~238 MiB: the floor of post-GC occupancy over the hold (an upper bound after a *young* collection, exact after a mixed or full one) agrees with the gauge, and it's flat — were it climbing, that's [use case 1](/java/lens-playbooks-diagnose/#1-memory-keeps-climbing-and-the-pod-gets-oomkilled) before any sizing. The **non-heap committed** is `862 − 614 ≈ 242 MiB`, itemized: Metaspace 68, code 44, GC 32, thread stacks 30, `Other` 30 (direct buffers, mostly), the class space 10, and ~28 of small categories the grep skips. **`Thread` reserves 241 MiB and commits 30**: 241 threads × the 1 MiB `-Xss` reservation, of which the touched stack pages are 30 — the number [the RSS budget](/tuning/jvm-memory-knobs/#the-non-heap-knobs--the-rss-budget-everyone-forgets) has to decide what to do with. And Tomcat is at its **200-thread** maximum — with **13 `GC Thread#`s and 12 compiler threads**, which is a JVM that sized its parallelism from the node's 16 cores, because there is no CPU limit and no `ActiveProcessorCount` ([the CPU section](/java/jvm-in-containers/#cpu-quota-shares-and-surprising-thread-counts)) — a finding in its own right.
+Four numbers you couldn't have read from any dashboard. The **live set** is ~238 MiB: the floor of post-GC occupancy over the hold (an upper bound after a *young* collection, exact after a mixed or full one) agrees with the gauge, and it's flat — were it climbing, that's [symptom 1](/java/lens-playbooks-diagnose/#1-memory-keeps-climbing-and-the-pod-gets-oomkilled) before any sizing. The **non-heap committed** is `862 − 614 ≈ 242 MiB`, itemized: Metaspace 68, code 44, GC 32, thread stacks 30, `Other` 30 (direct buffers, mostly), the class space 10, and ~28 of small categories the grep skips. **`Thread` reserves 241 MiB and commits 30**: 241 threads × the 1 MiB `-Xss` reservation, of which the touched stack pages are 30 — the number [the RSS budget](/tuning/jvm-memory-knobs/#the-non-heap-knobs--the-rss-budget-everyone-forgets) has to decide what to do with. And Tomcat is at its **200-thread** maximum — with **13 `GC Thread#`s and 12 compiler threads**, which is a JVM that sized its parallelism from the node's 16 cores, because there is no CPU limit and no `ActiveProcessorCount` ([the CPU section](/java/jvm-in-containers/#cpu-quota-shares-and-surprising-thread-counts)) — a finding in its own right.
 
 **Lens 2, across the hold — what it steadily uses.**
 
@@ -103,7 +103,7 @@ payments-api-7c9d4f6b8-k2xvn	0.21       ← CPU p95 at 60 rps: 210m — the knee
 - **Non-heap.** NMT's committed minus the heap (`242 MiB`), plus a stack-growth allowance, plus glibc's arenas which NMT can't see (a modest allowance, honest only with `MALLOC_ARENA_MAX=2` set): `242 + 30 + 50 ≈ 320 MiB`. The stack line is the judgment call. [The knobs page](/tuning/jvm-memory-knobs/#the-non-heap-knobs--the-rss-budget-everyone-forgets) budgets the full reservation (241 MiB), because a limit kills; NMT says 30 are committed, because idle Tomcat threads touch a few pages each. This page budgets the committed number *twice* — today's stacks plus as much again for deeper ones — and makes NMT's `Thread committed` a **watched number**: the day it doubles, so does the allowance.
 - **Limit.** `heap + non-heap` → `614 + 320 = 934 MiB`, 0.91 of **1 Gi**, against a measured peak of 0.82. The walkthrough's rule — [working-set p99 × 1.3–1.5](/tuning/sizing-walkthrough/#phase-2--derive-the-numbers) — says `838 × 1.3 ≈ 1,090 → 1.25 Gi` instead. The two disagree because the factor is a stand-in for the itemized budget you didn't have; now you have it, and the itemized number wins **on two conditions**: the hold's peak stays under 85% at every re-run, and `Thread committed` stays flat. The first release that breaks either, the walkthrough's 1.25 Gi wins, with `MaxRAMPercentage` re-derived (`614 ÷ 1,280 = 48`) so the heap doesn't silently grow with the limit.
 - **Memory request = limit.** Incompressible → pin it ([Door 1](/start/three-doors/#the-asymmetry-that-governs-everything-cpu-is-compressible-memory-is-not)). This is the one number the re-measure *changes*: the chart's `512Mi` request under a 1 Gi limit is a scheduling promise the node can't keep for a pod that holds 840 MiB all afternoon.
-- **CPU request.** p95 usage at target load, rounded up: `210m → 250m` — the cast's number, re-confirmed. It's a *request*, not a ceiling: with no limit the pod bursts into idle cores under load, which is why a sub-core request serves a latency SLO here where a sub-core *limit* would not ([the JVM page's](/java/jvm-in-containers/#sizing-requests-and-limits-for-a-jvm) "≥ 1 CPU" is about what the JVM is allowed to use, and `ActiveProcessorCount` below is how it's told). **No CPU limit** — throttle ratio `NaN`, latency is the SLO, and a limit taxes exactly the tail you're measured on ([the walkthrough's argument](/tuning/sizing-walkthrough/#phase-2--derive-the-numbers)); if policy forces one, ≥ 2× the request and watch the throttle ratio — and check for a LimitRange that forces one silently ([diagnose, use case 2](/java/lens-playbooks-diagnose/#2-cpu-looks-idle-but-p99-is-on-fire)).
+- **CPU request.** p95 usage at target load, rounded up: `210m → 250m` — the cast's number, re-confirmed. It's a *request*, not a ceiling: with no limit the pod bursts into idle cores under load, which is why a sub-core request serves a latency SLO here where a sub-core *limit* would not ([the JVM page's](/java/jvm-in-containers/#sizing-requests-and-limits-for-a-jvm) "≥ 1 CPU" is about what the JVM is allowed to use, and `ActiveProcessorCount` below is how it's told). **No CPU limit** — throttle ratio `NaN`, latency is the SLO, and a limit taxes exactly the tail you're measured on ([the walkthrough's argument](/tuning/sizing-walkthrough/#phase-2--derive-the-numbers)); if policy forces one, ≥ 2× the request and watch the throttle ratio — and check for a LimitRange that forces one silently ([symptom 2](/java/lens-playbooks-diagnose/#2-cpu-looks-idle-but-p99-is-on-fire)).
 
 ```yaml
 # charts/payments-api/values.yaml — every number carries its measurement (hold: 60 rps/pod × 20 min, dev, 2026-09-09)
@@ -114,18 +114,19 @@ resources:
   limits:
     memory: 1Gi        # heap 614 + NMT non-heap 242 + stack growth 30 + arenas 50 = 934Mi (0.91); hold peak 838Mi (0.82)
                        # conditions: peak < 85% at every re-run, NMT Thread committed flat — else 1.25Gi and MaxRAMPercentage=48
-    # cpu: none        # throttle ratio NaN (no quota) in the hold; latency is the SLO. A LimitRange default puts one back — diagnose, use case 2
+    # cpu: none        # throttle ratio NaN (no quota) in the hold; latency is the SLO. A LimitRange default puts one back — symptom 2
 env:
   MALLOC_ARENA_MAX: "2"                  # glibc arenas follow the NODE's cores; the 50Mi allowance above assumes this
 jvmFlags:                                # joined with spaces into JAVA_TOOL_OPTIONS by the chart — a list, because '#' inside a folded scalar isn't a comment
   - -XX:MaxRAMPercentage=60              # 614Mi: live set 238Mi × 2.5; hold pause p99 142 ms, 0 full GCs
   - -XX:ActiveProcessorCount=2           # no CPU limit: without this the JVM sizes GC/JIT threads from the node's 16 cores (13 "GC Thread#" in the dump)
   - -XX:MaxMetaspaceSize=128m            # NMT Metaspace 68Mi + Class 10Mi, with headroom: a classloader leak dies as OutOfMemoryError: Metaspace, not OOMKilled
-  - -XX:MaxDirectMemorySize=64m          # direct-buffer peak in the hold 24Mi, ×2 and rounded; the default is ≈ the heap, which is how diagnose's use case 1 got to 254Mi
+  - -XX:MaxDirectMemorySize=64m          # direct-buffer peak in the hold 24Mi, ×2 and rounded; the default is ≈ the heap, which is how symptom 1 got to 254Mi
   - -XX:+HeapDumpOnOutOfMemoryError      # the toolkit's safety nets stay
   - -XX:HeapDumpPath=/dumps
   - -XX:+ExitOnOutOfMemoryError
   - -XX:StartFlightRecording=maxsize=100m,maxage=1h,filename=/dumps/payments-api.jfr,dumponexit=true,settings=default
+  - -XX:FlightRecorderOptions=repository=/dumps/jfr
   - -Xlog:gc*:stdout:time,uptime,level,tags
 tomcat:
   threadsMax: 200                        # p95 busy 171 at 60 rps; each thread reserves 1Mi of stack — the budget's watched line
@@ -149,11 +150,11 @@ tomcat:
 
 ## 2. Pick and prove an HPA signal without KEDA
 
-**Situation.** [The Oracle page's](/autoscaling/rest-api-oracle/#signal-and-target-derived) June load test found CPU tracked the knee, so `payments-api` scales on CPU at 65% with a busy-thread guard. Release 2.15 added a partner-rate call to every checkout — the stall in [diagnose, use case 2](/java/lens-playbooks-diagnose/#2-cpu-looks-idle-but-p99-is-on-fire) — and a request that now spends part of its life waiting on a socket spends less of it on the CPU. The signal audit is due: does CPU still move before the SLO breaks? If the answer is "threads", the signal has to reach the HPA, and there is no KEDA — the route is [prometheus-adapter](/autoscaling/getting-the-metrics/#5-the-fork-adapter-or-keda), which the platform runs.
+**Situation.** [The Oracle page's](/autoscaling/rest-api-oracle/#signal-and-target-derived) June load test found CPU tracked the knee, so `payments-api` scales on CPU at 65% with a busy-thread guard. Release 2.15 added a partner-rate call to every checkout — the stall in [symptom 2](/java/lens-playbooks-diagnose/#2-cpu-looks-idle-but-p99-is-on-fire) — and a request that now spends part of its life waiting on a socket spends less of it on the CPU. The signal audit is due: does CPU still move before the SLO breaks? If the answer is "threads", the signal has to reach the HPA, and there is no KEDA — the route is [prometheus-adapter](/autoscaling/getting-the-metrics/#5-the-fork-adapter-or-keda), which the platform runs.
 
 **The walk.** L2 the candidate signals side by side with p95 at three held load levels → the recording rule and the adapter mapping (the one platform ask) → L1 the HPA object reading it → verify under the same ramp.
 
-**Lens 2 — the candidates against the SLO, under a ramp.** Run the ramp from use case 1 (or [the messaging page's](/autoscaling/messaging-consumers/) equivalent for a consumer) at three held levels — 40, 55, and 65 rps per pod, bracketing the knee the June test put at 60 — and read the same five numbers at each:
+**Lens 2 — the candidates against the SLO, under a ramp.** Run the ramp from procedure 1 (or [the messaging page's](/autoscaling/messaging-consumers/) equivalent for a consumer) at three held levels — 40, 55, and 65 rps per pod, bracketing the knee the June test put at 60 — and read the same five numbers at each:
 
 ```bash
 # seat: tenant — run once per held level, with [10m] matching the hold
@@ -285,7 +286,7 @@ Two targets, both live: the adapter path (`410m/750m`) and CPU. `<unknown>` in t
 **Verify — the ramp again, watching replicas lead the SLO.**
 
 ```bash
-# seat: tenant — terminal A: the ramp (use case 1); terminal B:
+# seat: tenant — terminal A: the ramp (procedure 1); terminal B:
 kubectl get hpa payments-api -n $NS -w
 ```
 
@@ -305,7 +306,7 @@ At 11 minutes the thread ratio crossed 0.75 — by more than the controller's 10
 
 ## 3. The evidence pack for the platform team
 
-**Situation.** [Use case 4 on the diagnose page](/java/lens-playbooks-diagnose/#4-one-pod-is-slower-than-its-siblings) ended with a hot node and an innocent pod. Now you need the platform team to act — and they act on evidence that lets them grep their own logs at your timestamp, not on "our pod is slow" ([writing requests that get fast yeses](/operations/working-with-platform-team/#writing-requests-that-get-fast-yeses)).
+**Situation.** [Symptom 4](/java/lens-playbooks-diagnose/#4-one-pod-is-slower-than-its-siblings) ended with a hot node and an innocent pod — or [symptom 4](/java/lens-playbooks-use-cases/#4-is-it-us-or-the-platform) sent you here with its blame table. Now you need the platform team to act — and they act on evidence that lets them grep their own logs at your timestamp, not on "our pod is slow" ([writing requests that get fast yeses](/operations/working-with-platform-team/#writing-requests-that-get-fast-yeses)).
 
 **The walk.** Lens 2 proves *your* service is fine everywhere except one place; lens 1 proves the place is the problem; everything carries a UTC timestamp and a pod name.
 
@@ -370,25 +371,25 @@ ROLLBACK:  n/a (read-only investigation; any move is yours to schedule).
 
 **The artifact** is the file. What makes it actionable is the shape: *ours is fine everywhere but here* (lens 2, per pod), *our own walls are not the wall* (lens 1, our throttle and working set), *the place is the problem* (lens 1, the node — as far as you can see it, with an honest "not visible from this seat" where you can't), all at one UTC timestamp. What you did meanwhile: `kubectl delete pod payments-api-7c9d4f6b8-r8pqz -n payments` so the replacement landed elsewhere — a delete isn't gated by the [budget](/disruption/pod-disruption-budgets/), so you were the budget check: two Ready siblings first — and a PR adding [soft spread](/workloads/high-availability/#spreading-pods-anti-affinity-and-topologyspreadconstraints), because nothing stops the scheduler putting the replacement straight back on w07, and nothing stops the next scale-up stacking there either.
 
-**Decide.** If the pack's lens-1 rows show *your* throttle ratio or working set at the wall, it isn't a platform ticket — it's [the diagnose page](/java/lens-playbooks-diagnose/), and sending it anyway is how a team earns slow answers. If they show your pod innocent and the node hot, send it, and send it the same way every time; a platform engineer who recognizes the format reads it in a minute.
+**Decide.** If the pack's lens-1 rows show *your* throttle ratio or working set at the wall, it isn't a platform ticket — it's [the symptom page](/java/lens-playbooks-diagnose/), and sending it anyway is how a team earns slow answers. If they show your pod innocent and the node hot, send it, and send it the same way every time; a platform engineer who recognizes the format reads it in a minute.
 
 ## The before/after ritual
 
-Every change on these two pages — a limit, a heap flag, a pool size, an HPA target, a rolled-back deploy — closes the same way, and it's worth naming once so it's never skipped: **the same load, the same queries, one table.** Run the hold from use case 1 (or, in production, wait for the same hour of the same weekday and read the [load profile's](/autoscaling/load-profile/) window), and fill in. The table below is an illustrative composite — each row is one of the diagnose page's incidents, before and after its fix; yours will have one change and every row:
+Every change on these two pages — a limit, a heap flag, a pool size, an HPA target, a rolled-back deploy — closes the same way, and it's worth naming once so it's never skipped: **the same load, the same queries, one table.** Run the hold from procedure 1 (or, in production, wait for the same hour of the same weekday and read the [load profile's](/autoscaling/load-profile/) window), and fill in. The table below is an illustrative composite — each row is one of the symptom page's incidents, before and after its fix; yours will have one change and every row:
 
 | Number | Before | After | Source · the incident |
 |---|---|---|---|
-| p95, the SLO route | 1.64 s | 0.69 s | L2 histogram · use case 3, after the rollback |
-| Error rate | 0.4% | 0.0% | L2 counter · use case 3 |
-| Busy threads / max | 0.98 | 0.41 | L2 gauge · use case 2, after the partner read timeout |
-| GC pause p99 | 1.84 s | 0.14 s | L2 histogram · use case 5, after the live set was brought back down |
-| Working-set peak / limit | 0.91 | 0.82 | L1 · use case 1, after `MaxDirectMemorySize` and the allocator fix |
-| Throttle ratio | 0.41 | `NaN` (no quota) | L1 · use case 2, after the LimitRange default was removed |
-| Live set after GC / max heap | 0.71 | 0.39 | L3 GC log · use case 5, 437 → 238 of 616 MiB |
+| p95, the SLO route | 1.64 s | 0.69 s | L2 histogram · symptom 3, after the rollback |
+| Error rate | 0.4% | 0.0% | L2 counter · symptom 3 |
+| Busy threads / max | 0.98 | 0.41 | L2 gauge · symptom 2, after the partner read timeout |
+| GC pause p99 | 1.84 s | 0.14 s | L2 histogram · symptom 5, after the live set was brought back down |
+| Working-set peak / limit | 0.91 | 0.82 | L1 · symptom 1, after `MaxDirectMemorySize` and the allocator fix |
+| Throttle ratio | 0.41 | `NaN` (no quota) | L1 · symptom 2, after the LimitRange default was removed |
+| Live set after GC / max heap | 0.71 | 0.39 | L3 GC log · symptom 5, 437 → 238 of 616 MiB |
 
 A change without the *after* column is a hypothesis. A change with it is the sentence in the postmortem that ends the discussion — and the derivation comment's date, so the next reviewer knows which load test the number came from.
 
 ## Where next
 
-- **Back to the walk in:** [Three Lenses, Tactically I: Diagnose](/java/lens-playbooks-diagnose/).
+- **Back to the walk in:** [Three Lenses, Tactically II: The Symptoms](/java/lens-playbooks-diagnose/) — and the questions that send you to both, [Tactically I: The Use Cases](/java/lens-playbooks-use-cases/).
 - **The lateral jump:** the whole autoscaling build these numbers feed — [REST API in Front of an External Oracle](/autoscaling/rest-api-oracle/) — and the ledger the request joins, [Capacity and Governance](/autoscaling/capacity-and-governance/).

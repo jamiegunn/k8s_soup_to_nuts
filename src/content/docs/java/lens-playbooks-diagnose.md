@@ -1,5 +1,5 @@
 ---
-title: "Three Lenses, Tactically I: Diagnose"
+title: "Three Lenses, Tactically II: The Symptoms"
 description: Eight production situations — memory climbing, CPU idle but slow, a post-deploy regression, one slow pod, GC, pool exhaustion, thread leaks, missing metrics — each walked lens by lens with the exact commands (kubectl, PromQL, jattach/jcmd, JFR), the console output to expect, the data artifact you end up with, and the decision rule. JRE-only images, no KEDA.
 keywords:
   - jattach commands kubernetes pod thread dump heap dump
@@ -15,18 +15,18 @@ keywords:
   - native memory tracking jattach jcmd
   - jfr dump jattach jfr view
 sidebar:
-  order: 10.1
+  order: 10.2
 ---
 
-You are here if: [The Three Lenses](/start/three-lenses/) told you *which* lens, and you want to know *exactly what to type* through it; or you're mid-incident and need the commands in the right order; or you want a standing toolkit so the next incident starts at step 3 instead of step 0.
+You are here if: [the use cases](/java/lens-playbooks-use-cases/) sent you to a symptom by number; or [The Three Lenses](/start/three-lenses/) told you *which* lens and you want to know *exactly what to type* through it; or you're mid-incident and need the commands in the right order; or you want a standing toolkit so the next incident starts at step 3 instead of step 0.
 
-This page and [its sequel](/java/lens-playbooks-size-and-scale/) are the lenses with the commands filled in. Each use case below is one situation walked in the model's order *from wherever the symptom entered* — lens 1 when the page was a wall (a kill, a limit), lens 2 when it was a latency or a pool number — with the cluster's view naming the pod and the wall, the process's view naming the route or the pool or the heap area, and the inside view naming the threads and the objects, always on a named pod. Each ends with a **data artifact** (the table or file you'll paste into the ticket) and a **decision rule**. Everything is written for the site's cast: `payments-api`, a Spring Boot 3.3 / Java 21 service in namespace `payments`, JRE-only image, HikariCP to an external Oracle, scraped by the platform's kube-prometheus-stack in namespace `monitoring`.
+This page is the symptom library of the tactical trilogy: [the use cases](/java/lens-playbooks-use-cases/) are the questions that send you here, and [the third page](/java/lens-playbooks-size-and-scale/) holds the sizing and scaling procedures the questions end in. A symptom is a number that's wrong; each one below is one situation walked in the model's order *from wherever the symptom entered* — lens 1 when the page was a wall (a kill, a limit), lens 2 when it was a latency or a pool number — with the cluster's view naming the pod and the wall, the process's view naming the route or the pool or the heap area, and the inside view naming the threads and the objects, always on a named pod. Each ends with a **data artifact** (the table or file you'll paste into the ticket) and a **decision rule**. Everything is written for the site's cast: `payments-api`, a Spring Boot 3.3 / Java 21 service in namespace `payments`, JRE-only image, HikariCP to an external Oracle, scraped by the platform's kube-prometheus-stack in namespace `monitoring`.
 
 Two assumptions run through both pages, because they're the constraints most delivery teams actually live under. **The image is JRE-only:** no `jcmd`, no `jmap`, no `jstack` — every inside-lens command goes through [jattach](/java/jattach-deep-dive/). **There is no KEDA:** custom signals reach the HPA through [prometheus-adapter](/autoscaling/getting-the-metrics/#5-the-fork-adapter-or-keda), which the platform runs. Nothing here needs cluster-admin; the few commands that read nodes or the Prometheus CR say so with the site's [seat marker](/disruption/overview/#who-owns-what).
 
 ## The toolkit, set up once
 
-Every use case assumes the six things below are in place. Do them once, on a quiet afternoon; the first three take a minute, the last three are a values-file change.
+Every symptom walk assumes the six things below are in place. Do them once, on a quiet afternoon; the first three take a minute, the last three are a values-file change.
 
 ### 1. Variables, and the JVM's pid
 
@@ -102,7 +102,7 @@ payments-api-7c9d4f6b8-k2xvn	1
 payments-api-7c9d4f6b8-r8pqz	1
 ```
 
-`up == 1` for every pod is the precondition for everything in lens 2; [use case 8](#8-no-data-for-our-pod) is what to do when it isn't.
+`up == 1` for every pod is the precondition for everything in lens 2; [symptom 8](#8-no-data-for-our-pod) is what to do when it isn't.
 
 ### 4. Actuator, from the terminal
 
@@ -131,11 +131,12 @@ jvmFlags:
   - -XX:HeapDumpPath=/dumps                  # a volume, never the writable layer
   - -XX:+ExitOnOutOfMemoryError              # let Kubernetes restart it cleanly after the dump
   - -XX:StartFlightRecording=maxsize=100m,maxage=1h,filename=/dumps/payments-api.jfr,dumponexit=true,settings=default
+  - -XX:FlightRecorderOptions=repository=/dumps/jfr   # the ring buffer's chunk files on the volume: they survive a SIGKILL that dumponexit doesn't
   - -Xlog:gc*:stdout:time,uptime,level,tags  # every pause, timestamped, in kubectl logs
-  # - -XX:NativeMemoryTracking=summary       # ~5% overhead: add (rollout) for use case 1's native branch, remove after
+  # - -XX:NativeMemoryTracking=summary       # ~5% overhead: add (rollout) for symptom 1's native branch, remove after
 ```
 
-The trade: ~1% CPU for JFR, log volume for GC, and a `/dumps` volume sized to the heap — in exchange for an inside lens that has *history* the moment lens 2 says "since 02:40". [Java Observability](/java/java-observability/#the-layered-posture-summarized) argues the case.
+The trade: ~1% CPU for JFR, log volume for GC, and a `/dumps` volume sized to the heap plus the recording — in exchange for an inside lens that has *history* the moment lens 2 says "since 02:40". The repository line is the one people skip: `dumponexit` needs the JVM to *exit*, and an OOMKill is a SIGKILL — nothing exits. With the repository on the volume, the last hour's chunks are still there afterwards, and `jfr assemble /dumps/jfr/<the dated directory> night.jfr` on your laptop turns them back into a recording. [Java Observability](/java/java-observability/#the-layered-posture-summarized) argues the case.
 
 ### 6. Histograms for the four timers you'll quantile
 
@@ -160,9 +161,9 @@ server:
     mbeanregistry.enabled: true                          # tomcat_threads_* exist only with this
 ```
 
-Now the use cases. Each opens with the situation in one breath, then the walk.
+Now the symptoms. Each opens with the situation in one breath, then the walk.
 
-| # | Situation | The walk | The artifact |
+| # | Symptom | The walk | The artifact |
 |---|---|---|---|
 | 1 | [Memory keeps climbing; OOMKilled](#1-memory-keeps-climbing-and-the-pod-gets-oomkilled) | L1 → L2 delta → L3 histogram diff / NMT | the leak table |
 | 2 | [CPU idle, p99 on fire](#2-cpu-looks-idle-but-p99-is-on-fire) | L1 throttle → L2 quadrants + pools → L3 dumps | the quadrant table + dump grouping |
@@ -287,9 +288,9 @@ Total: reserved=2594017KB +14686KB, committed=955337KB +14866KB
 -                 Metaspace (reserved=98304KB, committed=93184KB +180KB)
 ```
 
-`Other +14600KB` in an hour — 14 MiB, which is the working-set slope (85 MiB per six hours) seen from inside — is where direct `ByteBuffer`s land: 256 MiB committed against a gauge reading 254. The fix is `-XX:MaxDirectMemorySize` (so the next leak dies as a diagnosable `OutOfMemoryError: Direct buffer memory` instead of an OOMKill) plus finding the allocator — Netty's pooled allocator holding peak, an `Inflater` never `end()`ed: [the offenders list](/java/memory-leaks-and-oom/#native-memory-the-heap-looks-innocent-because-it-is). `Thread` growing → use case 7. `Metaspace` or `Class` growing → a classloader leak. Total NMT flat while the working set grows → JNI or glibc arenas (`MALLOC_ARENA_MAX=2` as the experiment).
+`Other +14600KB` in an hour — 14 MiB, which is the working-set slope (85 MiB per six hours) seen from inside — is where direct `ByteBuffer`s land: 256 MiB committed against a gauge reading 254. The fix is `-XX:MaxDirectMemorySize` (so the next leak dies as a diagnosable `OutOfMemoryError: Direct buffer memory` instead of an OOMKill) plus finding the allocator — Netty's pooled allocator holding peak, an `Inflater` never `end()`ed: [the offenders list](/java/memory-leaks-and-oom/#native-memory-the-heap-looks-innocent-because-it-is). `Thread` growing → symptom 7. `Metaspace` or `Class` growing → a classloader leak. Total NMT flat while the working set grows → JNI or glibc arenas (`MALLOC_ARENA_MAX=2` as the experiment).
 
-Three things about the shape, because the reference pages show an older one. On JDK 17+ **`Metaspace` is its own line** and `Class` is only the compressed class space (~12 MiB here, not the ~100 MiB of metadata) — a grep without `Metaspace` silently drops the biggest fixed tenant. **`Thread` shows two numbers**: `reserved` is threads × `-Xss` (241 × 1 MiB), `committed` is the stack pages actually touched (38 MiB) — the leak in use case 7 grows both, a deep recursion grows only the second. And the heap's `committed` (420 MiB) sits under its `reserved` (the 614 MiB that `MaxRAMPercentage=60` allows) because G1 grows the heap only as it needs to — the Total committed (933 MiB) is the working set at 0.91 of the limit, seen from inside, and 512 MiB of it is not heap.
+Three things about the shape, because the reference pages show an older one. On JDK 17+ **`Metaspace` is its own line** and `Class` is only the compressed class space (~12 MiB here, not the ~100 MiB of metadata) — a grep without `Metaspace` silently drops the biggest fixed tenant. **`Thread` shows two numbers**: `reserved` is threads × `-Xss` (241 × 1 MiB), `committed` is the stack pages actually touched (38 MiB) — the leak in symptom 7 grows both, a deep recursion grows only the second. And the heap's `committed` (420 MiB) sits under its `reserved` (the 614 MiB that `MaxRAMPercentage=60` allows) because G1 grows the heap only as it needs to — the Total committed (933 MiB) is the working set at 0.91 of the limit, seen from inside, and 512 MiB of it is not heap.
 
 **The artifact — the leak table.** Paste it into the ticket; every row is a command above:
 
@@ -358,7 +359,7 @@ payments-api-7c9d4f6b8-k2xvn	0
 payments-api-7c9d4f6b8-r8pqz	0
 ```
 
-p99 up on the business routes, p50 barely moved, the no-op health route innocent (Micrometer tags every health sub-path as `/actuator/health/**`): the top-right quadrant of [the confirm step](/troubleshooting/its-slow/#the-confirm-step-slow-for-everyone-or-slow-for-some) — a *stall* on those paths, not a systemic slowdown. Busy threads at 98% of Tomcat's max with **zero** connections pending says the threads aren't waiting for the *pool* — with ten connections and 196 busy threads, a pool stall would show ~180 pending (that's use case 6). They're waiting inside their work, on something that isn't pooled. Lens 3 says on what.
+p99 up on the business routes, p50 barely moved, the no-op health route innocent (Micrometer tags every health sub-path as `/actuator/health/**`): the top-right quadrant of [the confirm step](/troubleshooting/its-slow/#the-confirm-step-slow-for-everyone-or-slow-for-some) — a *stall* on those paths, not a systemic slowdown. Busy threads at 98% of Tomcat's max with **zero** connections pending says the threads aren't waiting for the *pool* — with ten connections and 196 busy threads, a pool stall would show ~180 pending (that's symptom 6). They're waiting inside their work, on something that isn't pooled. Lens 3 says on what.
 
 **Lens 3 — three dumps, ten seconds apart, grouped.**
 
@@ -397,7 +398,7 @@ grep -m1 -A40 'SocketDispatcher.read0' td-2.txt | sed '/^$/q' | grep -E '\.read0
 | Hikari pending | 0 | L2 |
 | Dump grouping (3 dumps) | 187 threads in `SocketDispatcher.read0` ← `HttpURLConnection.getInputStream0` ← `RestTemplate.doExecute` ← `PartnerRateClient.quote` | L3 |
 
-**Decide.** Two findings here, in the order you fix them. Throttle ratio high → the quota is a wall, and this one wasn't even yours: get the LimitRange default raised or removed — a LimitRange fills in any limit you leave blank, so "we don't set one" is not the same as "we don't have one" ([the compressible-resource argument](/start/three-doors/#the-asymmetry-that-governs-everything-cpu-is-compressible-memory-is-not)) — and re-measure, because throttling also *masquerades as GC* (use case 5). Threads parked in a socket read on a *client* call → that dependency and its timeout: a read timeout on `PartnerRateClient` sized from [the timeout budget](/tuning/timeout-budget/), so a slow partner costs you a fast error instead of every Tomcat thread ([cause 4](/troubleshooting/its-slow/#cause-4-downstream-slowness--youre-just-the-messenger)); more replicas would only open more connections against it, and that fix — not the quota — is where the 5× came from. The same read inside the JDBC driver, with `pending` climbing, is use case 6. A `cpu=` runaway → the frame; JFR's `hot-methods` (use case 3) confirms it with a sample-based profile.
+**Decide.** Two findings here, in the order you fix them. Throttle ratio high → the quota is a wall, and this one wasn't even yours: get the LimitRange default raised or removed — a LimitRange fills in any limit you leave blank, so "we don't set one" is not the same as "we don't have one" ([the compressible-resource argument](/start/three-doors/#the-asymmetry-that-governs-everything-cpu-is-compressible-memory-is-not)) — and re-measure, because throttling also *masquerades as GC* (symptom 5). Threads parked in a socket read on a *client* call → that dependency and its timeout: a read timeout on `PartnerRateClient` sized from [the timeout budget](/tuning/timeout-budget/), so a slow partner costs you a fast error instead of every Tomcat thread ([cause 4](/troubleshooting/its-slow/#cause-4-downstream-slowness--youre-just-the-messenger)); more replicas would only open more connections against it, and that fix — not the quota — is where the 5× came from. The same read inside the JDBC driver, with `pending` climbing, is symptom 6. A `cpu=` runaway → the frame; JFR's `hot-methods` (symptom 3) confirms it with a sample-based profile.
 
 ## 3. Latency regressed after a deploy
 
@@ -454,7 +455,7 @@ payments-api-7c9d4f6b8-k2xvn	0.03
 payments-api-7c9d4f6b8-r8pqz	0.02
 ```
 
-Same requests, same limits, same flags (the two `JAVA_TOOL_OPTIONS:` lines the grep also prints are long and identical — elided here), no throttling: the image is the only change. (If the resources *had* changed, that's your answer and use case 2 or 5 is the follow-up.)
+Same requests, same limits, same flags (the two `JAVA_TOOL_OPTIONS:` lines the grep also prints are long and identical — elided here), no throttling: the image is the only change. (If the resources *had* changed, that's your answer and symptom 2 or 5 is the follow-up.)
 
 **Lens 3 — the profile, from the ring buffer that was already recording.**
 
@@ -485,7 +486,7 @@ oracle.net.ns.Packet.receive(...)                                            402
 | `/api/checkout` | 0.71 s | 1.64 s | 0.4% | image only | `PriceCalculator.applyPromotions` 38% |
 | `/api/quotes` | 0.39 s | 0.41 s | 0% | image only | — |
 
-**Decide.** One route, no errors, image-only change, a named hot method → roll forward if the fix is a one-liner the developer can ship inside the SLO's error budget, otherwise `kubectl rollout undo` ([Card A](/operations/emergency-playbooks/#card-a-bad-deploy-going-out-right-now)) and fix at leisure. All routes slower with no image change → not a regression: use cases 2 or 4.
+**Decide.** One route, no errors, image-only change, a named hot method → roll forward if the fix is a one-liner the developer can ship inside the SLO's error budget, otherwise `kubectl rollout undo` ([Card A](/operations/emergency-playbooks/#card-a-bad-deploy-going-out-right-now)) and fix at leisure. All routes slower with no image change → not a regression: symptoms 2 or 4.
 
 ## 4. One pod is slower than its siblings
 
@@ -576,7 +577,7 @@ A pod-local cause shows here as a lock convoy (many `BLOCKED … waiting to lock
 | Node CPU busy | — | **0.97**, limits 197% overcommitted | — |
 | Dump | — | nothing pod-local | — |
 
-**Decide.** Node hot, pod innocent → the evidence pack and, immediately, `kubectl delete pod` so the replacement lands elsewhere. A delete is not an eviction: the PDB doesn't gate it, so *you* are the budget check — confirm the other replicas are Ready first ([the budget page](/disruption/pod-disruption-budgets/)) — and the scheduler may well put the replacement back on w07 unless something says otherwise, which is why the durable fix is [soft spread](/workloads/high-availability/#spreading-pods-anti-affinity-and-topologyspreadconstraints), asked for the same day. Node quiet, dump shows a convoy or pinning → pod-local: the lock or the client. Node quiet, dump clean, GC high on this pod only → use case 5 on this pod.
+**Decide.** Node hot, pod innocent → the evidence pack and, immediately, `kubectl delete pod` so the replacement lands elsewhere. A delete is not an eviction: the PDB doesn't gate it, so *you* are the budget check — confirm the other replicas are Ready first ([the budget page](/disruption/pod-disruption-budgets/)) — and the scheduler may well put the replacement back on w07 unless something says otherwise, which is why the durable fix is [soft spread](/workloads/high-availability/#spreading-pods-anti-affinity-and-topologyspreadconstraints), asked for the same day. Node quiet, dump shows a convoy or pinning → pod-local: the lock or the client. Node quiet, dump clean, GC high on this pod only → symptom 5 on this pod.
 
 ## 5. Is GC the problem?
 
@@ -584,7 +585,7 @@ A pod-local cause shows here as a lock convoy (many `BLOCKED … waiting to lock
 
 **The walk.** L1 the throttle ratio *first* — a throttled JVM's GC threads stall too, so nothing GC says is admissible until the quota is ruled out ([its-slow](/troubleshooting/its-slow/#cause-1-cpu-throttling--the-1-and-the-one-your-graphs-hide) and [GC and Performance](/java/gc-and-performance/#cpu-throttling-masquerading-as-gc-problems) both put it first) → L2 the pause histogram, the time fraction, the allocation rate, the live set → L3 the GC log's danger phrases and the exact pauses.
 
-**Lens 1 — is it the costume?** The same query as use case 2; if you ran it there in the last few minutes, that answer stands.
+**Lens 1 — is it the costume?** The same query as symptom 2; if you ran it there in the last few minutes, that answer stands.
 
 ```bash
 # seat: tenant
@@ -596,7 +597,7 @@ payments-api-7c9d4f6b8-k2xvn	0.04
 payments-api-7c9d4f6b8-r8pqz	0.03
 ```
 
-Throttle ratio negligible → whatever GC says next is honest. A ratio of 0.3 with *young* pauses at 400 ms is the costume: G1's parallel threads are being quota-stalled mid-pause, and the fix is the CPU limit, not the heap ([throttling masquerading as GC](/java/gc-and-performance/#cpu-throttling-masquerading-as-gc-problems)) — go back to use case 2 and stop here.
+Throttle ratio negligible → whatever GC says next is honest. A ratio of 0.3 with *young* pauses at 400 ms is the costume: G1's parallel threads are being quota-stalled mid-pause, and the fix is the CPU limit, not the heap ([throttling masquerading as GC](/java/gc-and-performance/#cpu-throttling-masquerading-as-gc-problems)) — go back to symptom 2 and stop here.
 
 **Lens 2 — four numbers.**
 
@@ -655,7 +656,7 @@ kubectl logs $POD -n $NS --since=1h | grep -E 'Pause Full.*ms$' | tail -2
 | `To-space exhausted` / h | 7 | 0 |
 | Verdict | heap too small for the live set | — |
 
-**Decide.** Live set high and full GCs → the heap is undersized for what it keeps: raise `MaxRAMPercentage` inside the same limit only if the [RSS budget](/tuning/jvm-memory-knobs/#the-rss-budget-worked) has room, otherwise the limit *and* the request together, with the derivation written down — or find why the live set grew (use case 1's histogram diff). Allocation rate jumped → `jfr view allocation-by-class` on a dump (use case 3). Throttle ratio high → the CPU limit first, then re-measure GC; it usually vanishes.
+**Decide.** Live set high and full GCs → the heap is undersized for what it keeps: raise `MaxRAMPercentage` inside the same limit only if the [RSS budget](/tuning/jvm-memory-knobs/#the-rss-budget-worked) has room, otherwise the limit *and* the request together, with the derivation written down — or find why the live set grew (symptom 1's histogram diff). Allocation rate jumped → `jfr view allocation-by-class` on a dump (symptom 3). Throttle ratio high → the CPU limit first, then re-measure GC; it usually vanishes.
 
 ## 6. Connection pool exhaustion against Oracle
 
@@ -690,7 +691,7 @@ payments-api-7c9d4f6b8-k2xvn	6.9           ← p95 time a connection is HELD: 6.
 payments-api-7c9d4f6b8-r8pqz	6.7
 ```
 
-Active equals max on every pod, a queue of ~40 each, and — the discriminating number — connections are *held* for 6.9 s at p95. Ten connections held seven seconds each is 1.4 requests per second of DB capacity per pod, against 60 rps. Either the queries got slow (Oracle's side, or a plan change) or something holds connections open across non-DB work. If usage time were normal (tens of ms) and the pool still full, it's a *leak* — connections checked out and never returned. Every pod reading the same is the fleet-wide signature; one pod alone would be use case 4.
+Active equals max on every pod, a queue of ~40 each, and — the discriminating number — connections are *held* for 6.9 s at p95. Ten connections held seven seconds each is 1.4 requests per second of DB capacity per pod, against 60 rps. Either the queries got slow (Oracle's side, or a plan change) or something holds connections open across non-DB work. If usage time were normal (tens of ms) and the pool still full, it's a *leak* — connections checked out and never returned. Every pod reading the same is the fleet-wide signature; one pod alone would be symptom 4.
 
 **Lens 3 — who has them, and what are they doing.**
 
@@ -774,7 +775,7 @@ jfr print --events jdk.ThreadStart --stack-depth 30 $F | grep -A30 'reconcile-sc
 
 388 threads named `reconcile-scheduler-N` from one place: a `ScheduledExecutorService` built inside a method that runs per event, never shut down. The name prefix *is* the diagnosis, and it's what you grep the code for (`grep -rn 'reconcile-scheduler' src/` finds the `ThreadFactory` that names them). What the thread dump can *not* tell you is who created them — an idle executor thread's stack is all JDK frames (`Unsafe.park` … `DelayedWorkQueue.take` … `ThreadPoolExecutor.runWorker`), and a busy one's stack names its *task*, not its creator. The creator is a JFR question: `jdk.ThreadStart` carries the stack of the thread that called `start()`, and the ring buffer from toolkit step 5 has the last hour of them.
 
-**Lens 1 — the cost, in memory and in pids.** With NMT on (use case 1's native branch), the same leak reads on the `Thread` line as `reserved` growing by exactly `-Xss` per thread (388 × 1 MiB) and `committed` by only what each idle thread touched (tens of KB each — the working-set-minus-heap delta from use case 1 climbs slowly, not 388 MiB). Which is why a thread leak usually hits a *count* wall before a memory wall: the pod's pid limit. cAdvisor counts both the threads and the ceiling:
+**Lens 1 — the cost, in memory and in pids.** With NMT on (symptom 1's native branch), the same leak reads on the `Thread` line as `reserved` growing by exactly `-Xss` per thread (388 × 1 MiB) and `committed` by only what each idle thread touched (tens of KB each — the working-set-minus-heap delta from symptom 1 climbs slowly, not 388 MiB). Which is why a thread leak usually hits a *count* wall before a memory wall: the pod's pid limit. cAdvisor counts both the threads and the ceiling:
 
 ```bash
 # seat: tenant — every thread is a pid to the cgroup; the kubelet's podPidsLimit (platform-set) is the wall, and cAdvisor exports it
@@ -852,5 +853,6 @@ The label proves the link; it doesn't keep it. The ServiceMonitor is a Helm-mana
 
 ## Where next
 
-- **Next in the journey:** [Three Lenses, Tactically II: Size and Scale](/java/lens-playbooks-size-and-scale/) — the zoom run the other way: requests and limits from data, a scaling signal proved through prometheus-adapter, and the evidence pack.
+- **Next in the journey:** [Three Lenses, Tactically III: Size and Scale](/java/lens-playbooks-size-and-scale/) — the zoom run the other way: requests and limits from data, a scaling signal proved through prometheus-adapter, and the evidence pack.
+- **Back to the questions:** [Three Lenses, Tactically I: The Use Cases](/java/lens-playbooks-use-cases/) — the twelve questions these symptoms are ruled out under, and the order to rule them out in.
 - **The lateral jump:** the model these commands implement, and why the walk has this order — [The Three Lenses](/start/three-lenses/).

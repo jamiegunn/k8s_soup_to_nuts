@@ -59,7 +59,7 @@ Time estimates assume reading plus trying things against a real (dev) namespace.
 4. [Heap Dumps (JRE-only)](/java/heap-dumps-jre-only/) — the same, for heap dumps; pair with the previous page.
 5. [Getting Dumps Out](/java/getting-dumps-out/) — a dump inside a pod is useless; move it to your laptop.
 6. [Memory Leaks & OOM](/java/memory-leaks-and-oom/) — `OutOfMemoryError` vs. `OOMKilled`, and how to tell which one you have.
-7. [Three Lenses, Tactically I](/java/lens-playbooks-diagnose/) and [II](/java/lens-playbooks-size-and-scale/) — the pages above as a toolkit and eleven walked situations: which command, in which order, and the table you produce. Keep them open during your first incident.
+7. [Three Lenses, Tactically I](/java/lens-playbooks-use-cases/), [II](/java/lens-playbooks-diagnose/), and [III](/java/lens-playbooks-size-and-scale/) — the pages above as twelve questions with the symptoms to rule out under each, eight symptom walks (which command, in which order, and the table you produce), and the sizing and scaling procedures. Keep them open during your first incident.
 8. [JVM Native Crashes & hs_err_pid](/java/jvm-crashes/) — the third failure mode: a native crash with no stack trace, and preserving the fatal error log before the restart eats it.
 8. [Spring Boot](/java/spring-boot/) — probes via [Actuator](/java/actuator/), graceful shutdown, lifecycle wiring.
 9. [JVM–Kubernetes Coupling](/java/jvm-kubernetes-coupling/) — the map of which JVM flag interacts with which Kubernetes knob.

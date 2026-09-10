@@ -171,8 +171,9 @@ kubectl logs <pod-name> --previous
 | Diagnose a JVM that crashed natively — read and preserve `hs_err_pid` | [JVM Native Crashes](/java/jvm-crashes/) |
 | Pick and tune a GC for container-sized heaps | [GC and Performance](/java/gc-and-performance/) |
 | Export JVM metrics, and see GC/heap/threads in Grafana | [Java Observability](/java/java-observability/) |
-| Work an incident with the exact commands — memory climbing, CPU idle but slow, one slow pod, pool exhaustion, GC, thread leak, no data | [Three Lenses, Tactically I](/java/lens-playbooks-diagnose/) |
-| Size heap, limit, and request from a load test, and prove an HPA signal without KEDA | [Three Lenses, Tactically II](/java/lens-playbooks-size-and-scale/) |
+| Start from the question — are customers happy, is the release good, can we take the peak, is it us or the platform, are we leaking, why were we paged — and get the commands plus the symptoms to rule out, in order | [Three Lenses, Tactically I: The Use Cases](/java/lens-playbooks-use-cases/) |
+| Work a symptom with the exact commands — memory climbing, CPU idle but slow, one slow pod, pool exhaustion, GC, thread leak, no data | [Three Lenses, Tactically II: The Symptoms](/java/lens-playbooks-diagnose/) |
+| Size heap, limit, and request from a load test, and prove an HPA signal without KEDA | [Three Lenses, Tactically III: Size and Scale](/java/lens-playbooks-size-and-scale/) |
 | Wire Spring Boot's actuator, probes, and graceful shutdown into Kubernetes | [Spring Boot](/java/spring-boot/) |
 | Change log levels or pull a heap dump over HTTP — no redeploy, no JDK | [Actuator as an Ops Surface](/java/actuator/) |
 | See every point where the JVM and Kubernetes interlock | [The JVM–Kubernetes Coupling Map](/java/jvm-kubernetes-coupling/) |
