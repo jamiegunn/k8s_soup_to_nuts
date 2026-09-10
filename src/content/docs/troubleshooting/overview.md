@@ -21,7 +21,7 @@ You're here because something is broken. This page gets you to the right playboo
 
 ## The 60-second first response
 
-Run these in order, in the affected namespace. Copy the output somewhere — you'll want it later for the ticket or the postmortem.
+Run these in order, in the affected namespace. Copy the output somewhere — you'll want it later for the ticket or the postmortem. (These four are the glance down the vertical road of [The Two Roads](/start/two-roads/), the site's troubleshooting map — which is also why they're in this order, and what to do when all four look fine.)
 
 :::note[Check your namespace first]
 Every command below is namespace-scoped. Ten seconds spent on `kubectl config view --minify | grep namespace` — or just adding an explicit `-n <namespace>` to everything — prevents the classic mid-incident detour of debugging an empty namespace. More kubectl reflexes in [kubectl Survival Kit](/start/kubectl-survival-kit/).

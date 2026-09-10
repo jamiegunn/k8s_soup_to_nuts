@@ -210,6 +210,7 @@ kubectl logs <pod-name> --previous
 | Understand where my logs go after stdout, and why some go missing | [Log Collection](/observability/log-collection/) |
 | Expose metrics and get them scraped by Prometheus | [Metrics](/observability/metrics/) |
 | Understand why `kubectl top`, a JVM gauge, and a thread dump disagree — and which to believe | [The Three Lenses](/start/three-lenses/) |
+| Know where to look first when something is broken — which verb failed (admit, schedule, start, route, kill), which hop, which layer — and tell three `CrashLoopBackOff`s apart in one command | [The Two Roads](/start/two-roads/) |
 | Use events as a debugging timeline (and keep them past the 1-hour TTL) | [Events](/observability/events/) |
 | Trace a request across services to find the slow hop | [Tracing](/observability/tracing/) |
 | Investigate "it's slow" — latency, throttling, saturation | [Performance Analysis](/observability/performance-analysis/) |

@@ -71,7 +71,7 @@ When the error isn't self-explanatory, work through the stack in order and find 
 5. **Service** — do endpoints exist, do ports match? ([Service Unreachable](/troubleshooting/service-unreachable/))
 6. **DNS / network path / ingress** — can clients actually reach it?
 
-Everything below a broken layer is noise. Don't debug DNS when the pod is Pending.
+Everything below a broken layer is noise. Don't debug DNS when the pod is Pending. (This list is the vertical road of [The Two Roads](/start/two-roads/) — five verbs, each with the one place it writes its reason; the request's path is the second road, and the ladder is what you do once you've stopped.)
 
 ### 5. Form a hypothesis, test the cheapest first
 

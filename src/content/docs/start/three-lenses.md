@@ -260,6 +260,8 @@ The commands for every step are the tactical trilogy: [the use cases](/java/lens
 
 **When you're alerting**, the lenses split by intent ([Alerting](/observability/alerting/)): page on lens 2 *symptoms* — error rate and latency against the SLO, because that is what users feel — and ticket on lens 1 *causes* — throttle ratio, working set near the limit, restarts — because those are what the page will turn out to have been.
 
+**When it's broken rather than slow** — the pod isn't there, isn't Ready, keeps restarting, or requests die somewhere between the client and the database — the lenses are the wrong tool until you know *where*: that is [The Two Roads](/start/two-roads/), the site's troubleshooting map, whose sixth question (every verb passed, every hop answered, still wrong) hands back to these lenses.
+
 **When you're scaling**, Door 3 reads lens 1 (CPU utilization, the default) or lens 2 (RPS, busy threads, queue depth — [the signals catalog](/autoscaling/signals-catalog/)) and never lens 3, which is a photograph of one pod and can't drive a fleet.
 
 Cost, report, interrogation. Three lenses, one machine, one zoom. Hold that, and the rest of the site's measurement pages are just the lenses, picked up.

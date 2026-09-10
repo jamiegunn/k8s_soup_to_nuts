@@ -236,4 +236,6 @@ When you're debugging instead of building, run it the same way — the [triage m
 
 And every question a door asks is answered by a *measurement* — usage against the request, a probe's verdict, a scaling signal — which means the loop is only as good as its sensors. Which sensor took the number, what it can and can't see, and why a correct number read through the wrong one is the most common misdiagnosis on the cluster is this page's sibling: [The Three Lenses](/start/three-lenses/).
 
+And when a door's promise breaks — the pod isn't there, or requests to it fail — the map of *where to look first* is the third model, [The Two Roads](/start/two-roads/): the pod's life walked down, the request's path bisected across, and a ladder from wherever you stopped.
+
 Costs, truth, response. Three doors, one loop, one promise. Hold that, and the rest of this site is just the doors, opened.

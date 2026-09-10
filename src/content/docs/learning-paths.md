@@ -34,6 +34,7 @@ Time estimates assume reading plus trying things against a real (dev) namespace.
 2. [How Kubernetes Works](/start/how-kubernetes-works/) — the mental model (desired state, controllers) everything else builds on.
 3. [The Three Doors](/start/three-doors/) — the model for thinking about *any* workload: cost (requests/limits), truth (health checks), and response (scaling) as one loop. The rest of this track is you walking through these three doors.
 4. [The Three Lenses](/start/three-lenses/) — the sibling model for *measuring* any workload: the cluster's view, the process's report, and the inside view as one zoom — so the first time `kubectl top` and a JVM gauge disagree, you know why.
+5. [The Two Roads](/start/two-roads/) — the third model, for the day it breaks: five verbs Kubernetes does to a pod, each with the one place it writes its reason; five hops a request crosses, found by bisecting; and the ladder down from wherever you stopped. Read it before your first incident, not during.
 5. [Working Without Admin](/start/working-without-admin/) — what you can and can't do as a namespace tenant, so nothing later surprises you.
 5. [YAML, Labels & Namespaces](/start/yaml-labels-and-namespaces/) — the grammar every manifest uses.
 6. [kubectl Survival Kit](/start/kubectl-survival-kit/) — the dozen commands you'll run daily.

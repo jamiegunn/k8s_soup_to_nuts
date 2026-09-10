@@ -22,7 +22,7 @@ sidebar:
 
 **Symptom:** clients get connection refused, timeouts, empty responses, or 502/503/504 from the ingress. "The service is down" — except the pods often aren't. Kubernetes networking is a chain: **client → DNS → Service → EndpointSlice → pod IP → containerPort → process**. Something in the chain is broken; your job is to find the first broken hop, not to guess.
 
-Work the hops in this order — it's sorted by likelihood.
+Work the hops in this order — it's sorted by likelihood. (This is the horizontal road of [The Two Roads](/start/two-roads/) at full resolution; hop 1 is where it crosses the pod's life, which is why it comes first.)
 
 ## Hop 1: Are the pods Ready?
 

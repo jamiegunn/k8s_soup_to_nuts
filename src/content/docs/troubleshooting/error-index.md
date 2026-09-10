@@ -23,7 +23,7 @@ You have an error on your screen. This page maps the **literal string** to the p
 
 1. Copy the **exact string** from `kubectl describe`, `kubectl get events`, your logs, or your browser — then search this site for it (press `/`). Error strings here are indexed verbatim, so `Insufficient cpu` finds this row, and this row finds the fix.
 2. Or scan by lifecycle stage below: the pod won't schedule → won't pull → won't start → dies at runtime → is unreachable → storage → permissions → TLS and edge.
-3. Not sure where you are in that lifecycle? Start with [Triage Methodology](/troubleshooting/triage-methodology/) — two commands tell you which table you need.
+3. Not sure where you are in that lifecycle? Start with [Triage Methodology](/troubleshooting/triage-methodology/) — two commands tell you which table you need — or with [The Two Roads](/start/two-roads/), the map these sections are drawn on: the first five are the verbs of a pod's life, the rest are hops on a request's path.
 
 Statuses like `CrashLoopBackOff` come from `kubectl get pods`; the richer strings come from `kubectl describe pod <pod>` (Events section) and `kubectl get events --sort-by=.lastTimestamp`.
 
