@@ -17,17 +17,17 @@ sidebar:
   order: 2.5
 ---
 
-Nearly everything you will configure on a Kubernetes workload comes down to three questions: what does it cost, does it tell the truth about itself, and how does it answer load. Requests and limits. Health checks. Scaling.
+Nearly everything you will configure on a Kubernetes workload comes down to three questions: what does it cost, when should it get traffic, and how does it answer load. Requests and limits. Health checks. Scaling.
 
-You have seen those listed as three things to remember, and the list is the problem: it implies you can set each one correctly and be finished. Teams do exactly that and still ship an outage, because the three are wired to each other. What you decide behind the first door becomes the number the third one divides by. What the second one reports decides whether the third one's new pods count as capacity at all.
+They usually turn up as a checklist: set each one, tick it off, move on. Teams do exactly that and still ship an outage, because the three are wired to each other. What you decide behind the first door becomes the number the third one divides by. What the second one reports decides whether the third one's new pods count as capacity at all.
 
-This page is a map, not a manual — enough structure to tell which door a problem is behind, and where to go next. The depth lives behind the links.
+Treat this as a mental model rather than a manual: enough structure to tell which door a problem is behind and where to go next. The depth lives behind the links.
 
 :::tip[The model in three questions]
 For any workload, any [Helm chart](/architectures/golden-service/), any review:
 
 1. **Cost.** What does it reserve, and what happens when it goes over? So the scheduler can place it, the kernel can bound it, and the node can decide who to sacrifice under pressure.
-2. **Truth.** Does it report its own state honestly, arriving *and* leaving? So the network knows when to send it traffic, and the kubelet knows when to recycle it.
+2. **Truth.** When should it get traffic, and when should it stop getting it? So the network knows where to send requests, and the kubelet knows when to recycle it.
 3. **Response.** How does capacity answer demand? So supply tracks load instead of being a fixed guess.
 
 Ask them in that order. Door 3 is only as good as the answers to 1 and 2.
@@ -37,7 +37,7 @@ Ask them in that order. Door 3 is only as good as the answers to 1 and 2.
 
 Kubernetes is a control system: you declare a desired state and it works to make the cluster match ([How Kubernetes Works](/start/how-kubernetes-works/)). Cost, truth and response are what it needs from one workload in order to do that.
 
-They are not the only things it will ever ask you about. [Disruption budgets](/workloads/high-availability/), storage, [network policy](/networking/network-policies/), [affinity and topology rules](/workloads/scheduling/) all exist and all matter. But they refine or sit beside these three, and they are rarely where a workload goes wrong first. This is a starting frame, not a complete inventory.
+They are not the only things it will ever ask you about. [Disruption budgets](/workloads/high-availability/), storage, [network policy](/networking/network-policies/) and [affinity and topology rules](/workloads/scheduling/) all exist and all matter. But they refine or sit beside these three, and they are rarely where a workload goes wrong first. That trade is what makes this a mental model: small enough to carry, which means deliberately not everything.
 
 The three behave as a loop because each one's output is the next one's input:
 
@@ -73,7 +73,7 @@ The first surprise behind this door is that requests and limits are not two sett
 
 ### CPU is compressible, memory is not
 
-CPU and memory wear the same YAML and obey opposite physics. Miss this and half of Door 1 stays mysterious.
+CPU and memory look identical in YAML and behave nothing alike. Most of the confusion behind this door comes from treating them as one setting.
 
 | | **CPU** | **Memory** |
 |---|---|---|
@@ -88,11 +88,13 @@ A CPU limit costs you latency; a memory limit costs you the process. That asymme
 
 Mechanics: [CPU Scheduling and the CFS](/foundations/cpu-scheduling-and-cfs/) and [Virtual Memory and the Page Cache](/foundations/virtual-memory/), which also covers why "90% memory" is usually reclaimable page cache rather than your heap. Real numbers for a real service: [Requests, Limits, and the Knobs](/tuning/requests-limits-knobs/) and the [Sizing Walkthrough](/tuning/sizing-walkthrough/).
 
-:::note[A limit with no request is not just a ceiling]
-Set a limit and omit the request for the same resource, and the API server copies the limit into the request when the Pod is created. You will not see it on the Deployment, because that defaulting runs on the Pod: `kubectl get deploy -o yaml` still shows a bare limit while `kubectl get pod -o yaml` shows a request equal to it. It also takes precedence over a LimitRange's `defaultRequest`, which only fills in resources you left blank on both sides. So a `cpu: "2"` limit you meant as a ceiling is also a reservation of two whole cores from the scheduler's budget, on every replica.
+:::caution[Don't set a limit without setting the request]
+Leave the request blank and the API server fills it in with the limit when the Pod is created, so the ceiling you wrote is also a reservation. A `cpu: "2"` limit becomes two whole cores held for every replica, used or not.
+
+It hides well: the defaulting happens on the Pod, so `kubectl get deploy -o yaml` still shows a bare limit while `kubectl get pod -o yaml` shows the request. It also beats a LimitRange's `defaultRequest`. Write both numbers, every time.
 :::
 
-### QoS: the class you didn't know you were choosing
+### QoS and the order things die in
 
 The relationship between your requests and limits silently assigns the pod a **Quality of Service class** ([kubernetes.io: Pod QoS](https://kubernetes.io/docs/concepts/workloads/pods/pod-qos/), [Resources & QoS](/workloads/resources-and-qos/)). You never write the class; you imply it.
 
@@ -197,7 +199,7 @@ The payoff behind this door is elasticity, capacity that tracks demand. The catc
 
 ### Scale on what? The SLO is the setpoint
 
-The Horizontal Pod Autoscaler is a control loop with a simple core ([kubernetes.io: HPA algorithm](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/#algorithm-details)):
+The Horizontal Pod Autoscaler is a control loop with a simple core ([kubernetes.io: algorithm details](https://kubernetes.io/docs/concepts/workloads/autoscaling/horizontal-pod-autoscale/#algorithm-details)):
 
 ```text
 desiredReplicas = ceil( currentReplicas × (currentMetricValue / desiredMetricValue) )
@@ -208,6 +210,23 @@ Everything rides on the metric you pick, and the default choice of CPU utilizati
 :::caution[The request is the HPA's denominator]
 CPU utilization in the HPA is `currentCPU ÷ requestedCPU`, summed across pods. It is not a percentage of the node, of the limit, or of anything physical. Set the request wrong and every scaling decision is computed against a wrong number, which is Door 1 reaching straight into Door 3's arithmetic.
 :::
+
+### How long does it have to be true?
+
+The formula runs on every sync, which is every 15 seconds by default, and each run is a fresh calculation from the current metric rather than a trend. Two things keep that from becoming a twitch.
+
+The first is a **tolerance deadband**: if the ratio of current to target is within 10% of 1.0, the HPA does nothing at all. Against a 75% CPU target, nothing happens between roughly 67% and 82%.
+
+The second is the **stabilization window**, and it is deliberately asymmetric:
+
+| | default | what it does |
+|---|---|---|
+| **Scale up** | `0s` | No window. The first sync that clears the deadband acts, though the default policy still caps the step at the larger of +100% or +4 pods per 15s |
+| **Scale down** | `300s` | The HPA takes the *highest* replica count it recommended over the trailing five minutes, so a dip has to hold for the whole window before anything shrinks |
+
+So "CPU went over target" does not mean a pod is coming. It means a pod is coming within about 15 seconds *if* the breach is more than 10% and the step policy allows it, and then the dead time below still runs before that pod serves anything. In the other direction, a quiet five minutes is the price of every scale-down.
+
+Both windows and both step policies live in `spec.behavior` on your own HPA object, so they are yours to change ([configurable scaling behavior](https://kubernetes.io/docs/concepts/workloads/autoscaling/horizontal-pod-autoscale/#configurable-scaling-behavior)). The 15-second sync and the 10% tolerance are kube-controller-manager flags, so on a managed platform they usually are not ([who owns what](/disruption/overview/#who-owns-what)). [Scaling Dynamics](/autoscaling/scaling-dynamics/) works the numbers.
 
 ### Scale what, and should you at all? The archetype
 
