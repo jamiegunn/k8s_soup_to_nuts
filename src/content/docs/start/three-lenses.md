@@ -1,6 +1,6 @@
 ---
 title: "The Three Lenses: A Mental Model for Every Metric"
-description: A way to get your bearings on any number you read about a workload. Every metric came through one of three lenses: the cluster's view of the container, the process's report about itself, or the inside view you get only by stopping and asking. Most misreadings are a number from one lens explained with another lens's physics.
+description: "A way to get your bearings on any number you read about a workload. Every metric came through one of three lenses: the cluster's view of the container, the process's report about itself, or the inside view you get only by stopping and asking. Most misreadings are a number from one lens explained with another lens's physics."
 keywords:
   - how to think about kubernetes metrics
   - prometheus micrometer actuator jvm tools mental model
