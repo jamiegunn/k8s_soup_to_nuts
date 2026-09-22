@@ -126,6 +126,45 @@ resources:
 
 The scheduler reserves 250m CPU and 512Mi. QoS is **Burstable**, because memory matches but CPU has no limit. Under load the app bursts past 250m into spare cores without throttling; if it ever holds more than 512Mi it is OOM-killed at a predictable line. That `250m` is now the number the autoscaler will divide by: Door 1 pricing Door 3 before Door 3 is configured.
 
+### Reading Door 1 off a live workload
+
+```bash
+NS=payments
+POD=$(kubectl get pod -n $NS -l app=payments-api -o name | head -1)
+
+# the whole door in one table: who is BestEffort, what is reserved, where the ceilings are
+COLS='POD:.metadata.name,QOS:.status.qosClass'
+COLS+=',CPU_REQ:.spec.containers[*].resources.requests.cpu'
+COLS+=',MEM_REQ:.spec.containers[*].resources.requests.memory'
+COLS+=',MEM_LIM:.spec.containers[*].resources.limits.memory'
+kubectl get pods -n $NS -o custom-columns="$COLS"
+
+# per container on one pod, exactly as applied
+kubectl get $POD -n $NS -o jsonpath='{range .spec.containers[*]}{.name}{"\t"}{.resources}{"\n"}{end}'
+
+# who is filling in your blanks, and what the node has left after everyone's requests
+kubectl get limitrange,resourcequota -n $NS
+kubectl describe node <node> | sed -n '/Allocated resources/,/^Events/p'
+
+# what is actually being used against those numbers (needs metrics-server)
+kubectl top pod -n $NS --containers
+```
+
+The `QOS` column is the fastest BestEffort hunt there is, and `resources` read off the **pod** is the only place the applied numbers are true. Compare it against what you wrote:
+
+```bash
+kubectl get deploy payments-api -n $NS -o jsonpath='{.spec.template.spec.containers[0].resources}{"\n"}'
+kubectl get $POD               -n $NS -o jsonpath='{.spec.containers[0].resources}{"\n"}'
+```
+
+```console
+{"limits":{"cpu":"2","memory":"512Mi"},"requests":{"memory":"512Mi"}}
+{"limits":{"cpu":"2","memory":"512Mi"},"requests":{"cpu":"2","memory":"512Mi"}}
+```
+
+Nobody wrote that `cpu` request. It is the caution above on a real cluster: two whole cores reserved per replica by a line you meant as a ceiling.
+
+
 ## Door 2 — Truth: health checks and the whole life of a pod
 
 This door is not "add a `/healthz`". It is the pod's contract with the cluster about its own state, from the moment it boots to the moment it is asked to leave. Kubernetes acts on *reported* state, so a pod that lies about being ready, or goes quiet while shutting down, makes the platform take correct actions on false information.
@@ -192,6 +231,47 @@ stateDiagram-v2
 ```
 
 Scaling is only safe because this door is honest at both ends.
+
+### Reading Door 2 off a live workload
+
+```bash
+# the three probes, per container — the blanks are the finding
+JP='{range .spec.containers[*]}{.name}'
+JP+='{"  startup="}{.startupProbe.httpGet.path}'
+JP+='{"  readiness="}{.readinessProbe.httpGet.path}'
+JP+='{"  liveness="}{.livenessProbe.httpGet.path}{"\n"}{end}'
+kubectl get $POD -n $NS -o jsonpath="$JP"
+
+# the leaving half: how long it gets, and whether anything holds the door open
+JP='grace={.spec.terminationGracePeriodSeconds}{"\n"}'
+JP+='{range .spec.containers[*]}{.name}{" preStop="}{.lifecycle.preStop}{"\n"}{end}'
+kubectl get $POD -n $NS -o jsonpath="$JP"
+
+# is it in the Service's endpoints? ready=false is the pod being gated out
+JP='{range .items[*].endpoints[*]}{.targetRef.name}{"\tready="}{.conditions.ready}{"\n"}{end}'
+kubectl get endpointslice -n $NS -l kubernetes.io/service-name=payments-api -o jsonpath="$JP"
+
+# what the probes have actually done
+kubectl get events -n $NS --field-selector reason=Unhealthy
+COLS='POD:.metadata.name,READY:.status.containerStatuses[*].ready'
+COLS+=',RESTARTS:.status.containerStatuses[*].restartCount'
+COLS+=',LASTEXIT:.status.containerStatuses[*].lastState.terminated.exitCode'
+COLS+=',LASTREASON:.status.containerStatuses[*].lastState.terminated.reason'
+kubectl get pods -n $NS -o custom-columns="$COLS"
+```
+
+That last table earns its keep on a namespace that is actually broken:
+
+```console
+POD             READY    RESTARTS   LASTEXIT   LASTREASON
+kill-liveness   false    17         137        Error
+kill-oom        false    12         137        OOMKilled
+start-crash     false    12         1          Error
+route-fail      false    0          <none>     <none>
+```
+
+Same `RESTARTS` column, three different causes. `137 Error` is the kubelet acting on a liveness probe, `137 OOMKilled` is the kernel acting on a memory limit from Door 1, and `1 Error` is the app quitting on its own. `route-fail` never restarted and is still getting no traffic. Pulling those apart is [The Two Roads](/start/two-roads/).
+
 
 ## Door 3 — Response: scaling, and the two questions it can't answer itself
 
@@ -270,6 +350,49 @@ flowchart LR
 ```
 
 Call it 60 to 90 seconds on a warm node, and several minutes if a new node has to be provisioned first. Get the gain wrong and you thrash; ignore the dead time and a spike hurts long before help arrives. Both are worked out with numbers in [Scaling Dynamics](/autoscaling/scaling-dynamics/).
+
+### Reading Door 3 off a live workload
+
+```bash
+# current vs target, and the conditions, which are the part people skip
+kubectl describe hpa payments-api -n $NS
+
+# the timings as this HPA actually has them: the API server fills in every default,
+# so what you read back is what will really be used
+kubectl get hpa payments-api -n $NS -o jsonpath='{.spec.behavior}' | jq .
+
+# the target, and what it is a percentage of
+JP='{range .spec.metrics[*]}{.type}{"\t"}{.resource.name}{"\t"}'
+JP+='{.resource.target.type}{"="}{.resource.target.averageUtilization}{"\n"}{end}'
+kubectl get hpa payments-api -n $NS -o jsonpath="$JP"
+
+# is the metrics pipeline answering at all? nothing here means no decision anywhere
+kubectl get --raw /apis/metrics.k8s.io/v1beta1/namespaces/$NS/pods >/dev/null && echo ok
+```
+
+`describe` prints both halves of this door at once:
+
+```console
+Behavior:
+  Scale Up:
+    Stabilization Window: 0 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Pods     Value: 4    Period: 15 seconds
+      - Type: Percent  Value: 100  Period: 15 seconds
+  Scale Down:
+    Stabilization Window: 600 seconds
+    Select Policy: Max
+    Policies:
+      - Type: Pods  Value: 1  Period: 60 seconds
+Conditions:
+  Type           Status  Reason                   Message
+  AbleToScale    True    SucceededGetScale        the HPA controller was able to get the target's current scale
+  ScalingActive  False   FailedGetResourceMetric  ... unable to fetch metrics from resource metrics API ...
+```
+
+Only `scaleDown` was written on that HPA. Everything under `Scale Up` is the default printed back, which is the quickest way to see the timings you inherited. And `ScalingActive: False` is the whole answer to "why isn't it scaling"; [HPA Not Scaling](/troubleshooting/hpa-not-scaling/) walks the rest.
+
 
 ## When it breaks: the loop in the wild
 
