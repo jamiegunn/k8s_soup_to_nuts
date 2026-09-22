@@ -22,7 +22,7 @@ Every number you will ever read about a workload came through one of three lense
 
 You have seen those listed as a toolbox, and the toolbox is the problem: it makes them sound interchangeable. They stand in different places, and each one's blind spot is what the next one sees. That is how a team reads "memory at 95%" off one instrument, fixes it with a knob belonging to another, and gets paged again next week.
 
-This page is a map for getting your bearings, and the sibling of [The Three Doors](/start/three-doors/). The doors are the control loop, cost and truth and response, and a control loop is only as good as its sensors. These are the sensors. The depth lives behind the links: [Metrics](/observability/metrics/), [PromQL for CPU and Memory](/observability/promql-for-resources/), [Java Observability](/java/java-observability/), [Actuator](/java/actuator/), [jattach](/java/jattach-deep-dive/), [thread dumps](/java/thread-dumps-jre-only/), [heap dumps](/java/heap-dumps-jre-only/), the [signals catalog](/autoscaling/signals-catalog/).
+This page is a map for getting your bearings, and the sibling of [The Three Doors](/start/three-doors/). The doors are the control loop, cost and lifecycle and response, and a control loop is only as good as its sensors. These are the sensors. The depth lives behind the links: [Metrics](/observability/metrics/), [PromQL for CPU and Memory](/observability/promql-for-resources/), [Java Observability](/java/java-observability/), [Actuator](/java/actuator/), [jattach](/java/jattach-deep-dive/), [thread dumps](/java/thread-dumps-jre-only/), [heap dumps](/java/heap-dumps-jre-only/), the [signals catalog](/autoscaling/signals-catalog/).
 
 :::tip[The model in three questions]
 Every measurement you take is one of these three:
@@ -263,7 +263,7 @@ Most of what gets called observability lives inside one of the three rather than
 - **Traces** are lens 2 stitched across process boundaries — the same self-report, with a request ID carried between services ([Tracing](/observability/tracing/)).
 - **An APM agent** like Dynatrace's OneAgent is lenses 2 and 3 held by a vendor who injected itself into the process — the same physics, the same shapes, the same shutter ([Dynatrace as a signal](/autoscaling/dynatrace-signals/)).
 - **Grafana** is a window, not a lens. It shows you lenses 1 and 2; it never sees anything they didn't.
-- **`/actuator/health`** is lens 2 collapsed to a boolean, which is exactly what [Door 2](/start/three-doors/#door-2--truth-health-checks-and-the-whole-life-of-a-pod) needs from it.
+- **`/actuator/health`** is lens 2 collapsed to a boolean, which is exactly what [Door 2](/start/three-doors/#door-2--lifecycle-what-the-platform-is-told-arriving-and-leaving) needs from it.
 - **The SLO** is not a lens. It is what you're looking *for* — the thing that decides which lens and which metric before you open anything, and the same setpoint the Three Doors loop defends.
 
 Three questions, then: what did it cost, what did it say it was doing, what was it actually doing. Every hard measurement conversation turns out to be someone picking up one of the three and turning it.

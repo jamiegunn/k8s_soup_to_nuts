@@ -26,16 +26,16 @@ Treat this as a mental model rather than a manual: enough structure to tell whic
 :::tip[The model in three questions]
 For any workload, any [Helm chart](/architectures/golden-service/), any review:
 
-1. **Cost.** What does it reserve, and what happens when it goes over? So the scheduler can place it, the kernel can bound it, and the node can decide who to sacrifice under pressure.
-2. **Truth.** When should it get traffic, and when should it stop getting it? So the network knows where to send requests, and the kubelet knows when to recycle it.
-3. **Response.** How does capacity answer demand? So supply tracks load instead of being a fixed guess.
+1. **Cost** (`resources.requests`, `resources.limits`, and the QoS class they imply). What does it reserve, and what happens when it goes over? So the scheduler can place it, the kernel can bound it, and the node can decide who to sacrifice under pressure.
+2. **Lifecycle** (`startupProbe`, `readinessProbe`, `livenessProbe`, `preStop`, `terminationGracePeriodSeconds`). When should it get traffic, and when should it stop getting it? So the network knows where to send requests, and the kubelet knows when to recycle it.
+3. **Response** (the HorizontalPodAutoscaler: its metric, `minReplicas`/`maxReplicas`, and `behavior`). How does capacity answer demand? So supply tracks load instead of being a fixed guess.
 
 Ask them in that order. Door 3 is only as good as the answers to 1 and 2.
 :::
 
 ## Why three, and why a loop
 
-Kubernetes is a control system: you declare a desired state and it works to make the cluster match ([How Kubernetes Works](/start/how-kubernetes-works/)). Cost, truth and response are what it needs from one workload in order to do that.
+Kubernetes is a control system: you declare a desired state and it works to make the cluster match ([How Kubernetes Works](/start/how-kubernetes-works/)). Cost, lifecycle and response are what it needs from one workload in order to do that.
 
 They are not the only things it will ever ask you about. [Disruption budgets](/workloads/high-availability/), storage, [network policy](/networking/network-policies/) and [affinity and topology rules](/workloads/scheduling/) all exist and all matter. But they refine or sit beside these three, and they are rarely where a workload goes wrong first. That trade is what makes this a mental model: small enough to carry, which means deliberately not everything.
 
@@ -45,18 +45,18 @@ The three behave as a loop because each one's output is the next one's input:
 flowchart LR
     subgraph loop["The deployment loop"]
         cost["<b>DOOR 1 — COST</b><br/>requests & limits<br/><i>the currency</i>"]
-        truth["<b>DOOR 2 — TRUTH</b><br/>health checks + lifecycle<br/><i>the sensor &amp; gate</i>"]
+        life["<b>DOOR 2 — LIFECYCLE</b><br/>probes + drain path<br/><i>the sensor &amp; gate</i>"]
         resp["<b>DOOR 3 — RESPONSE</b><br/>scaling<br/><i>the actuator</i>"]
         cost -->|"prices the<br/>scaling metric"| resp
-        truth -->|"gates what counts<br/>as real capacity"| resp
+        life -->|"gates what counts<br/>as real capacity"| resp
         resp -->|"more/fewer pods to<br/>schedule &amp; bound"| cost
-        resp -->|"more pods to<br/>probe &amp; drain"| truth
+        resp -->|"more pods to<br/>probe &amp; drain"| life
     end
     slo(["<b>SLO</b><br/>the setpoint<br/>the loop defends"])
     arch(["<b>ARCHETYPE</b><br/>the question that<br/>sets every value"])
     slo -.->|"aims"| resp
     arch -.->|"shapes"| cost
-    arch -.->|"shapes"| truth
+    arch -.->|"shapes"| life
     arch -.->|"shapes"| resp
 ```
 
@@ -165,7 +165,7 @@ kubectl get $POD               -n $NS -o jsonpath='{.spec.containers[0].resource
 Nobody wrote that `cpu` request. It is the caution above on a real cluster: two whole cores reserved per replica by a line you meant as a ceiling.
 
 
-## Door 2 — Truth: health checks and the whole life of a pod
+## Door 2 — Lifecycle: what the platform is told, arriving and leaving
 
 This door is not "add a `/healthz`". It is the pod's contract with the cluster about its own state, from the moment it boots to the moment it is asked to leave. Kubernetes acts on *reported* state, so a pod that lies about being ready, or goes quiet while shutting down, makes the platform take correct actions on false information.
 
@@ -230,7 +230,7 @@ stateDiagram-v2
     Draining --> [*]: clean exit, or SIGKILL at the grace deadline
 ```
 
-Scaling is only safe because this door is honest at both ends.
+Scaling is only safe when this door is correct at both ends.
 
 ### Reading Door 2 off a live workload
 
@@ -403,13 +403,13 @@ If the three doors were independent, a mistake behind one would show up as a sym
 | HPA never scales up; pods overloaded (**Response**) | Request set far too high (**Cost**) | Utilization = usage ÷ request; an inflated request keeps the ratio low, so the HPA sees headroom |
 | HPA flaps, thrashing replicas (**Response**) | Request set too low (**Cost**) | Tiny denominator, so utilization swings wildly on small load changes and [the loop oscillates](/autoscaling/scaling-dynamics/) |
 | "We need to scale, CPU is pegged" (**Response**) | A CPU **limit** causing throttling (**Cost**) | Throttled pods look CPU-bound, so you scale out to escape a wall you built yourself ([throttled-but-idle](/troubleshooting/its-slow/)) |
-| Intermittent 5xx correlated with deploys (**Truth**) | Scaling and rollout churn with no drain (**Response × Truth**) | Every removal sheds in-flight requests when the app doesn't drain |
-| Whole service goes NotReady in an instant (**Truth**) | Readiness checks a shared dependency (**Truth**), and scaling can't help (**Response**) | One blip fails every replica's probe at once; adding replicas just makes more NotReady pods |
-| Cascading restart storm under load (**Truth**) | Liveness too aggressive (**Truth**), amplified by fixed capacity (**Response**) | Slow-but-healthy pods get killed; the survivors take more load and die too |
+| Intermittent 5xx correlated with deploys (**Lifecycle**) | Scaling and rollout churn with no drain (**Response × Lifecycle**) | Every removal sheds in-flight requests when the app doesn't drain |
+| Whole service goes NotReady in an instant (**Lifecycle**) | Readiness checks a shared dependency (**Lifecycle**), and scaling can't help (**Response**) | One blip fails every replica's probe at once; adding replicas just makes more NotReady pods |
+| Cascading restart storm under load (**Lifecycle**) | Liveness too aggressive (**Lifecycle**), amplified by fixed capacity (**Response**) | Slow-but-healthy pods get killed; the survivors take more load and die too |
 | Random pods killed first under pressure (**Cost**) | No requests set, so BestEffort (**Cost**) | With no request there is nothing to be "under", so you sort to the top of the eviction list |
 | Scaled to 20 pods, one takes all the traffic (**Response**) | A long-lived h2/gRPC connection (**network**) defeats distribution | Replicas exist, but the connection pins streams to one backend |
 
-Read the middle column against the first. A scaling problem is usually a cost problem. A truth problem becomes a scaling problem. A cost setting decides who the kernel kills. You cannot tune that away door by door, because the loop is doing what loops do: carrying a disturbance from where it started to somewhere else.
+Read the middle column against the first. A scaling problem is usually a cost problem. A lifecycle problem becomes a scaling problem. A cost setting decides who the kernel kills. You cannot tune that away door by door, because the loop is doing what loops do: carrying a disturbance from where it started to somewhere else.
 
 ## What sits outside the three
 
@@ -424,7 +424,7 @@ Three things get mistaken for a fourth door. Putting each back where it belongs 
 Walk the doors in order and ask each one's question.
 
 1. **Cost.** Are requests set at all, or is this BestEffort and first in line under pressure? Is the memory request equal to its limit? Is the CPU limit buying anything, or just throttling? Is the request a *measured* number, given the HPA is about to divide by it?
-2. **Truth.** A startup probe if the boot is slow. Readiness that gates traffic without checking things a restart can't fix. Liveness that judges only this process. A real drain path: `preStop`, SIGTERM handling, and a grace period long enough to finish the work.
+2. **Lifecycle.** A startup probe if the boot is slow. Readiness that gates traffic without checking things a restart can't fix. Liveness that judges only this process. A real drain path: `preStop`, SIGTERM handling, and a grace period long enough to finish the work.
 3. **Response.** What is the signal, and is it the SLO rather than reflexive CPU? Is the archetype horizontally scalable at all? Are Doors 1 and 2 right first, given scaling amplifies whatever they got wrong?
 
 Debugging runs the same model backwards: name the door the *symptom* is at, then check the other two for the cause, because that is usually where it lives. [Triage methodology](/troubleshooting/triage-methodology/) is this page in reverse.

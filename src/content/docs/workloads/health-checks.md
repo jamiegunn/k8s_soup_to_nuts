@@ -20,7 +20,7 @@ sidebar:
 Probes are the only channel your app has to tell Kubernetes how it's doing, and Kubernetes acts on them with total literal-mindedness. A wrong probe isn't neutral — it's an automated operator that kills healthy pods or routes traffic to broken ones, at machine speed, around the clock. Get the semantics exactly right.
 
 :::note[The bigger picture]
-This is **Door 2 — Truth** of [The Three Doors](/start/three-doors/): a pod's honest contract with the cluster about its own state, from first boot through [graceful shutdown](/workloads/graceful-shutdown/). It's the door that makes scaling and rollouts safe — dishonest here, and every scale event acts on false information.
+This is **Door 2 — Lifecycle** of [The Three Doors](/start/three-doors/): what the platform is told about a pod, from first boot through [graceful shutdown](/workloads/graceful-shutdown/). It's the door that makes scaling and rollouts safe — get it wrong here, and every scale event acts on false information.
 :::
 
 :::tip[Looking for the dials?]

@@ -167,6 +167,6 @@ Half a day of this beats weeks of learning each piece mid-incident.
 
 ## Next
 
-Start with [How Kubernetes Works](/start/how-kubernetes-works/). It's one article, one diagram, and one mental model — reconciliation — and twenty minutes there saves you hours everywhere else on this site. Then read [The Three Doors](/start/three-doors/): where reconciliation explains how the machine *works*, the Three Doors explains how to *think* about any workload you put on it — cost, truth, and response as one loop. Those two models are the lens for everything that follows.
+Start with [How Kubernetes Works](/start/how-kubernetes-works/). It's one article, one diagram, and one mental model — reconciliation — and twenty minutes there saves you hours everywhere else on this site. Then read [The Three Doors](/start/three-doors/): where reconciliation explains how the machine *works*, the Three Doors explains how to *think* about any workload you put on it — cost, lifecycle, and response as one loop. Those two models are the lens for everything that follows.
 
 If you're reading this because something is broken *right now*: skip ahead to the [Troubleshooting overview](/troubleshooting/overview/), follow the triage steps, and come back for the fundamentals when the fire's out. The guide will still be here.

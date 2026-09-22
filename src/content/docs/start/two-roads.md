@@ -38,7 +38,7 @@ The ladder is the third piece. Wherever you stopped, verb or hop, the fault is a
 
 The rule that makes the ladder worth having: **the rung below never lies about the rung above.** Kubernetes says `Ready`; that is the kubelet's opinion of a probe. `netstat` says nothing is listening; that is a fact.
 
-This is the site's third model. [The Three Doors](/start/three-doors/) is what you *set* (cost, truth, response), [The Three Lenses](/start/three-lenses/) is what you *measure*, and this is where you *look* when a door's promise or a lens's number turns out to be wrong. [Triage methodology](/troubleshooting/triage-methodology/) is the procedure that walks these roads; this page is the map it walks on.
+This is the site's third model. [The Three Doors](/start/three-doors/) is what you *set* (cost, lifecycle, response), [The Three Lenses](/start/three-lenses/) is what you *measure*, and this is where you *look* when a door's promise or a lens's number turns out to be wrong. [Triage methodology](/troubleshooting/triage-methodology/) is the procedure that walks these roads; this page is the map it walks on.
 
 ```mermaid
 flowchart LR
