@@ -322,7 +322,7 @@ Horizontal scaling assumes one more identical replica means more capacity. That 
 
 One more trap sits at the boundary with the network. Horizontal scaling only distributes load if the traffic actually spreads. A single long-lived **HTTP/2 or gRPC** connection pins all of its streams to one backend, so you can scale to twenty pods and watch one of them take everything ([HTTP](/networking/http/), [long-lived connections](/networking/long-lived-connections/)). Adding replicas is necessary, not sufficient.
 
-This is why the [autoscaling playbook](/autoscaling/overview/) treats Doors 1 and 2 as prerequisites rather than companions: scaling over a wrong request or a dishonest probe is an amplifier for your own mistake. Read through this model, the [No-Assumptions Checklist](/autoscaling/prerequisites/) is just "is Door 1 correct and Door 2 honest yet?". Applied path: [Classify Your App](/autoscaling/classify-your-app/) → [Load Profile](/autoscaling/load-profile/) → [Capacity & Governance](/autoscaling/capacity-and-governance/); when the loop won't move, [HPA Not Scaling](/troubleshooting/hpa-not-scaling/).
+This is why the [autoscaling playbook](/autoscaling/overview/) treats Doors 1 and 2 as prerequisites rather than companions: scaling over a wrong request or a dishonest probe is an amplifier for your own mistake. Read through this model, the [No-Assumptions Checklist](/autoscaling/prerequisites/) is just "are Doors 1 and 2 right yet?". Applied path: [Classify Your App](/autoscaling/classify-your-app/) → [Load Profile](/autoscaling/load-profile/) → [Capacity & Governance](/autoscaling/capacity-and-governance/); when the loop won't move, [HPA Not Scaling](/troubleshooting/hpa-not-scaling/).
 
 ### Gain and dead time
 

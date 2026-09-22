@@ -121,7 +121,7 @@ blockquote{margin:0;font-family:var(--serif);font-size:33px;line-height:1.22;col
      <div class="cover-in">
        <h1>Kubernetes, from what you already know</h1>
        <p class="sub">You have built servers, sized pools, written health checks and shutdown hooks. Kubernetes asks three questions about all of it — here they are, and here is what to do when the answers go wrong.</p>
-       <p class="phrases"><span>cost</span><i>·</i><span>truth</span><i>·</i><span>response</span></p>
+       <p class="phrases"><span>cost</span><i>·</i><span>lifecycle</span><i>·</i><span>response</span></p>
        <p class="foot">For engineers who write the code · no devops background assumed</p>
      </div>
    </section>
@@ -137,7 +137,7 @@ blockquote{margin:0;font-family:var(--serif);font-size:33px;line-height:1.22;col
      <p class="eyebrow">THE MODEL</p>
      <h2>Kubernetes asks three questions</h2>
      <p class="kicker">Strip it to its job: a control loop that makes the cluster match what you asked for. To run one workload it needs exactly three things — and there is no fourth.</p>
-     <div class="body"><div class="split split-code"><div class="code"><div class="code-cap">one Deployment, three doors</div><div class="cl"><span class="ct">spec:</span></div><div class="cl d3"><span class="ct">  replicas: 2                              </span><span class="cn">← 3 · Response — an HPA can own this</span></div><div class="cl"><span class="ct">  template:</span></div><div class="cl"><span class="ct">    spec:</span></div><div class="cl d2"><span class="ct">      terminationGracePeriodSeconds: 40    </span><span class="cn">← 2 · Truth — leaving</span></div><div class="cl"><span class="ct">      containers:</span></div><div class="cl"><span class="ct">        - name: payments-api</span></div><div class="cl"><span class="ct">          resources:</span></div><div class="cl d1"><span class="ct">            requests:                      </span><span class="cn">← 1 · Cost — what is reserved</span></div><div class="cl d1"><span class="ct">              cpu: 250m</span></div><div class="cl d1"><span class="ct">              memory: 1Gi</span></div><div class="cl d1"><span class="ct">            limits:</span></div><div class="cl d1"><span class="ct">              memory: 1Gi                  </span><span class="cn">← request == limit</span></div><div class="cl d2"><span class="ct">          readinessProbe:                  </span><span class="cn">← 2 · Truth — arriving</span></div><div class="cl d2"><span class="ct">            httpGet: { path: /health/readiness, port: 8081 }</span></div><div class="cl d2"><span class="ct">          lifecycle:</span></div><div class="cl d2"><span class="ct">            preStop:                       </span><span class="cn">← 2 · Truth — the drain</span></div><div class="cl d2"><span class="ct">              exec: { command: ["sh","-c","sleep 5"] }</span></div></div><div class="side"><div class="cards compact">
+     <div class="body"><div class="split split-code"><div class="code"><div class="code-cap">one Deployment, three doors</div><div class="cl"><span class="ct">spec:</span></div><div class="cl d3"><span class="ct">  replicas: 2                              </span><span class="cn">← 3 · Response — an HPA can own this</span></div><div class="cl"><span class="ct">  template:</span></div><div class="cl"><span class="ct">    spec:</span></div><div class="cl d2"><span class="ct">      terminationGracePeriodSeconds: 40    </span><span class="cn">← 2 · Lifecycle — leaving</span></div><div class="cl"><span class="ct">      containers:</span></div><div class="cl"><span class="ct">        - name: payments-api</span></div><div class="cl"><span class="ct">          resources:</span></div><div class="cl d1"><span class="ct">            requests:                      </span><span class="cn">← 1 · Cost — what is reserved</span></div><div class="cl d1"><span class="ct">              cpu: 250m</span></div><div class="cl d1"><span class="ct">              memory: 1Gi</span></div><div class="cl d1"><span class="ct">            limits:</span></div><div class="cl d1"><span class="ct">              memory: 1Gi                  </span><span class="cn">← request == limit</span></div><div class="cl d2"><span class="ct">          readinessProbe:                  </span><span class="cn">← 2 · Lifecycle — arriving</span></div><div class="cl d2"><span class="ct">            httpGet: { path: /health/readiness, port: 8081 }</span></div><div class="cl d2"><span class="ct">          lifecycle:</span></div><div class="cl d2"><span class="ct">            preStop:                       </span><span class="cn">← 2 · Lifecycle — the drain</span></div><div class="cl d2"><span class="ct">              exec: { command: ["sh","-c","sleep 5"] }</span></div></div><div class="side"><div class="cards compact">
       <div class="card">
         <span class="pip">1</span>
         <h3>Cost</h3>
@@ -146,9 +146,9 @@ blockquote{margin:0;font-family:var(--serif);font-size:33px;line-height:1.22;col
       </div>
       <div class="card">
         <span class="pip">2</span>
-        <h3>Truth</h3>
+        <h3>Lifecycle</h3>
         
-        <p>Does it tell the truth about being ready — and about shutting down?</p>
+        <p>When should it get traffic, and when should it stop getting it?</p>
       </div>
       <div class="card">
         <span class="pip">3</span>
@@ -184,7 +184,7 @@ blockquote{margin:0;font-family:var(--serif);font-size:33px;line-height:1.22;col
    </section>
 
    <section class="slide">
-     <p class="eyebrow">DOOR 2 · TRUTH</p>
+     <p class="eyebrow">DOOR 2 · LIFECYCLE</p>
      <h2>Three probes, three different questions</h2>
      
      <div class="body"><div class="cards">
@@ -205,7 +205,7 @@ blockquote{margin:0;font-family:var(--serif);font-size:33px;line-height:1.22;col
         <h3>livenessProbe</h3>
         <p class="sub">“Are you wedged, so only a restart helps?”</p>
         <p>It must judge nothing but itself. If it can fail for a reason a restart cannot fix, it is wired wrong.</p>
-      </div></div><div class="callout"><span class="callout-label">The classic outage</span><p>A readiness probe that checks a downstream dependency. The dependency blips for thirty seconds → every replica reports not-ready → every replica leaves the load balancer at once → a wobble becomes a 100% outage. Readiness answers for you, never for your dependencies.</p></div><p class="lead tail">And leaving is half of truth. When Kubernetes wants a pod gone, it removes the endpoint and sends SIGTERM at the same moment — these race. <code>preStop: sleep 5</code> lets endpoint removal propagate first; your shutdown hook then finishes in-flight work inside the grace period.</p></div>
+      </div></div><div class="callout"><span class="callout-label">The classic outage</span><p>A readiness probe that checks a downstream dependency. The dependency blips for thirty seconds → every replica reports not-ready → every replica leaves the load balancer at once → a wobble becomes a 100% outage. Readiness answers for you, never for your dependencies.</p></div><p class="lead tail">And leaving is half the door. When Kubernetes wants a pod gone, it removes the endpoint and sends SIGTERM at the same moment — these race. <code>preStop: sleep 5</code> lets endpoint removal propagate first; your shutdown hook then finishes in-flight work inside the grace period.</p></div>
    </section>
 
    <section class="slide">

@@ -9,7 +9,7 @@ module.exports = {
     subtitle: "You have built servers, sized pools, written health checks and shutdown hooks. Kubernetes asks three questions about all of it — here they are, and here is what to do when the answers go wrong.",
     footer: "For engineers who write the code · no devops background assumed",
     site: SITE,
-    phrases: ["cost", "truth", "response"],
+    phrases: ["cost", "lifecycle", "response"],
   },
 
   slides: [
@@ -53,7 +53,7 @@ module.exports = {
           ["  replicas: 2                              ", 3, "3 · Response — an HPA can own this"],
           ["  template:", 0],
           ["    spec:", 0],
-          ["      terminationGracePeriodSeconds: 40    ", 2, "2 · Truth — leaving"],
+          ["      terminationGracePeriodSeconds: 40    ", 2, "2 · Lifecycle — leaving"],
           ["      containers:", 0],
           ["        - name: payments-api", 0],
           ["          resources:", 0],
@@ -62,16 +62,16 @@ module.exports = {
           ["              memory: 1Gi", 1],
           ["            limits:", 1],
           ["              memory: 1Gi                  ", 1, "request == limit"],
-          ["          readinessProbe:                  ", 2, "2 · Truth — arriving"],
+          ["          readinessProbe:                  ", 2, "2 · Lifecycle — arriving"],
           ["            httpGet: { path: /health/readiness, port: 8081 }", 2],
           ["          lifecycle:", 2],
-          ["            preStop:                       ", 2, "2 · Truth — the drain"],
+          ["            preStop:                       ", 2, "2 · Lifecycle — the drain"],
           ['              exec: { command: ["sh","-c","sleep 5"] }', 2],
         ],
       },
       cards: [
         { n: "1", head: "Cost", text: "What does it reserve, and what happens when it goes over?" },
-        { n: "2", head: "Truth", text: "Does it tell the truth about being ready — and about shutting down?" },
+        { n: "2", head: "Lifecycle", text: "When should it get traffic, and when should it stop getting it?" },
         { n: "3", head: "Response", text: "How should the number of copies answer load?" },
       ],
       callout: {
@@ -103,8 +103,8 @@ module.exports = {
 
     // ---------------------------------------------------------------- 4
     {
-      id: "door-truth",
-      eyebrow: "DOOR 2 · TRUTH",
+      id: "door-lifecycle",
+      eyebrow: "DOOR 2 · LIFECYCLE",
       title: "Three probes, three different questions",
       layout: "cards-callout",
       cards: [
@@ -116,7 +116,7 @@ module.exports = {
         label: "The classic outage",
         text: "A readiness probe that checks a downstream dependency. The dependency blips for thirty seconds → every replica reports not-ready → every replica leaves the load balancer at once → a wobble becomes a 100% outage. Readiness answers for you, never for your dependencies.",
       },
-      lead: "And leaving is half of truth. When Kubernetes wants a pod gone, it removes the endpoint and sends SIGTERM at the same moment — these race. `preStop: sleep 5` lets endpoint removal propagate first; your shutdown hook then finishes in-flight work inside the grace period.",
+      lead: "And leaving is half the door. When Kubernetes wants a pod gone, it removes the endpoint and sends SIGTERM at the same moment — these race. `preStop: sleep 5` lets endpoint removal propagate first; your shutdown hook then finishes in-flight work inside the grace period.",
       notes: "Ask the room what their liveness probe currently checks. In most Spring Boot services it is /actuator/health, which by default aggregates every health indicator including the database — that is the outage in the callout, waiting to happen, and the fix is one line pointing liveness at the liveness group. The shutdown half gets skipped in most introductions and then shows up as 502s on every deploy, which teams misread as a networking problem.",
     },
 

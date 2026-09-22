@@ -39,9 +39,9 @@ node build-html.js && node build-pptx.js
 ## The arc
 
 1. **You already know most of this** — a translation table from things they have built to Kubernetes names.
-2. **Kubernetes asks three questions** — cost, truth, response, shown on a real annotated Deployment.
+2. **Kubernetes asks three questions** — cost, lifecycle, response, shown on a real annotated Deployment.
 3. **Door 1 · Cost** — CPU is compressible, memory is not, and that decides both knobs.
-4. **Door 2 · Truth** — three probes, three questions, and the readiness probe that causes outages.
+4. **Door 2 · Lifecycle** — three probes, three questions, the readiness probe that causes outages, and the drain on the way out.
 5. **Door 3 · Response** — scale on what saturates; the ceiling is usually someone else's.
 6. **Both numbers are correct** — the throttled app that looked idle, and the three places to stand.
 7. **Five things Kubernetes does to your pod** — where each step writes down why it failed.
