@@ -1,6 +1,6 @@
 ---
 title: "The Three Doors: A Mental Model for Every Deployment"
-description: Requests, health checks, and scaling are not three settings — they are one control loop, priced in a shared currency, aimed at an SLO, and floored on clean shutdown. The model everything else on this site rests on.
+description: A way to get your bearings on a Kubernetes workload. Requests and limits, health checks, and scaling behave as one control loop rather than three independent settings, and what one decides becomes what the next one reads.
 keywords:
   - how to think about a kubernetes deployment
   - requests limits health checks scaling mental model
@@ -17,23 +17,29 @@ sidebar:
   order: 2.5
 ---
 
-Here is a claim, and the rest of this page is its proof: **every decision you will ever make about a workload on Kubernetes walks through one of three doors — how much it costs, whether it tells the truth about itself, and how it answers load.** Requests and limits. Health checks. Scaling. You have seen these listed a hundred times as three things to remember to configure. That framing is not wrong so much as *inert* — it treats them as a checklist of independent boxes, and the checklist is exactly why teams get all three individually "correct" and still ship an outage.
+Nearly everything you will configure on a Kubernetes workload comes down to three questions: what does it cost, does it tell the truth about itself, and how does it answer load. Requests and limits. Health checks. Scaling.
 
-The upgrade is one word. They are not a **list**. They are a **loop**. What one door decides becomes the input the next door reads, and the loop closes back on the first. Get that, and the three stop being trivia you memorize and become a machine you can reason about — one where a symptom showing up at one door is very often a mistake made at another. That coupling is the whole thesis, and it is *mechanical*, not philosophical. We will prove it.
+You have seen those listed as three things to remember, and the list is the problem: it implies you can set each one correctly and be finished. Teams do exactly that and still ship an outage, because the three are wired to each other. What you decide behind the first door becomes the number the third one divides by. What the second one reports decides whether the third one's new pods count as capacity at all.
 
-Everything else on this site — the [tuning knobs](/tuning/overview/), the [autoscaling playbook](/autoscaling/overview/), the [troubleshooting playbooks](/troubleshooting/triage-methodology/), the [Foundations deep dives](/foundations/overview/) into the Linux underneath — is one of these three doors opened and walked through. This page is the map you hold before you open any of them.
+This page is a map, not a manual — enough structure to tell which door a problem is behind, and where to go next. The depth lives behind the links.
+
+:::tip[The model in three questions]
+For any workload, any [Helm chart](/architectures/golden-service/), any review:
+
+1. **Cost.** What does it reserve, and what happens when it goes over? So the scheduler can place it, the kernel can bound it, and the node can decide who to sacrifice under pressure.
+2. **Truth.** Does it report its own state honestly, arriving *and* leaving? So the network knows when to send it traffic, and the kubelet knows when to recycle it.
+3. **Response.** How does capacity answer demand? So supply tracks load instead of being a fixed guess.
+
+Ask them in that order. Door 3 is only as good as the answers to 1 and 2.
+:::
 
 ## Why three, and why a loop
 
-Strip Kubernetes to its job. It is a control system that takes your *desired state* and makes the cluster match it ([How Kubernetes Works](/start/how-kubernetes-works/)). To run one workload well, that system needs to know exactly three things about it, and not one more:
+Kubernetes is a control system: you declare a desired state and it works to make the cluster match ([How Kubernetes Works](/start/how-kubernetes-works/)). Cost, truth and response are what it needs from one workload in order to do that.
 
-1. **What does it cost?** — so the scheduler can place it, the kernel can bound it, and the cluster can decide who to sacrifice under pressure.
-2. **Is it telling the truth about its state?** — so the network knows when to send it traffic, and the kubelet knows when to recycle it.
-3. **How should capacity respond to demand?** — so the amount of it tracks the load instead of being a fixed guess.
+They are not the only things it will ever ask you about. [Disruption budgets](/workloads/high-availability/), storage, [network policy](/networking/network-policies/), [affinity and topology rules](/workloads/scheduling/) all exist and all matter. But they refine or sit beside these three, and they are rarely where a workload goes wrong first. This is a starting frame, not a complete inventory.
 
-Cost, truth, response. There is no fourth thing the platform needs from you to run a workload — everything else is a refinement *inside* one of these. That is why there are three doors and not five.
-
-And they form a loop because each one's output is the next one's input:
+The three behave as a loop because each one's output is the next one's input:
 
 ```mermaid
 flowchart LR
@@ -54,45 +60,55 @@ flowchart LR
     arch -.->|"shapes"| resp
 ```
 
-Read the solid arrows and the coupling is undeniable. The autoscaler computes utilization *as a fraction of the request* — so Door 1 literally denominates Door 3's math. The autoscaler only produces real capacity if new pods pass readiness — so Door 2 gates Door 3. And every scaling action hands more pods back to be scheduled, bounded, probed, and drained — so Door 3 feeds Doors 1 and 2 right back. Turn one knob and the other two move whether you meant them to or not. **That is the definition of a loop, and it is why "in unison" is not advice — it is the stability condition of a control system.**
+The solid arrows are the coupling. The autoscaler computes utilization as a fraction of the request, so Door 1 denominates Door 3's arithmetic. New pods only become real capacity once they pass readiness, so Door 2 gates Door 3. Every scaling action hands more pods back to be scheduled, bounded, probed and drained. Turn one knob and the other two move whether you meant them to.
 
-The two dotted nodes are the things that sit *outside* the three doors but govern them, and they are the most common blind spots. The **SLO** is the setpoint — the number the loop exists to defend (usually latency, error rate, or freshness; almost never raw CPU). Without it, the loop can be perfectly self-consistent and still aimed at nothing. The **archetype** — is this a stateless web app, a queue consumer, a batch job, a stateful service, a leader-elected singleton? — is the question that decides the *correct value* for all three doors. Neither is a fourth pillar. The SLO is what Door 3 aims at; the archetype is the question all three answer. Hold that thought; both pay off at the end.
-
-Now we open each door and go as deep as it goes.
+The dotted nodes govern the loop from outside it, and both are common blind spots. The **SLO** is the *setpoint*, the number the loop exists to defend. The **archetype** decides the correct *value* for all three doors. Both are picked up at the end.
 
 ## Door 1 — Cost: requests, limits, and the currency of the cluster
 
-Pull this door and the first thing you find is that it is not really about "resources." It is about **currency**. A request is the denomination every other decision on the cluster is priced in, and a limit is the ceiling the kernel enforces. Two numbers, two completely different jobs — and conflating them is the single most common Door 1 mistake.
+The first surprise behind this door is that requests and limits are not two settings for the same thing. They have different audiences.
 
-- **The request is a promise the scheduler reads.** It is what the scheduler subtracts from a node's allocatable capacity to decide if your pod fits ([Life of a Deployment](/start/life-of-a-deployment/)). It is *reserved* for you whether or not you use it. Critically, it is also the denominator the [autoscaler divides by](/workloads/autoscaling/) and the number the eviction ranker measures you against. The request is the currency.
-- **The limit is a wall the kernel builds.** It is not scheduling input at all; it is a cgroup ceiling the node enforces at runtime ([cgroups: The Budget](/foundations/cgroups/)). Hit it and what happens depends entirely on *which* resource — and that fork is the deepest, most consequential fact behind this door.
+- **The request is a promise the scheduler reads.** It is subtracted from a node's allocatable capacity to decide whether your pod fits ([Life of a Deployment](/start/life-of-a-deployment/)), and reserved for you whether or not you use it. It is also the denominator the [autoscaler divides by](/workloads/autoscaling/), and the yardstick the eviction ranker measures you against.
+- **The limit is a wall the kernel builds.** It is not scheduling input at all, just a cgroup ceiling enforced at runtime ([cgroups: The Budget](/foundations/cgroups/)). What happens when you hit it depends entirely on which resource.
 
-### The asymmetry that governs everything: CPU is compressible, memory is not
+### CPU is compressible, memory is not
 
-CPU and memory wear the same YAML but obey opposite physics. Miss this and half of Door 1 stays mysterious forever.
+CPU and memory wear the same YAML and obey opposite physics. Miss this and half of Door 1 stays mysterious.
 
 | | **CPU** | **Memory** |
 |---|---|---|
-| Physical nature | **Compressible** — can be given in slices, taken back instantly | **Incompressible** — a byte is held or it isn't |
-| Request means | A *weight*: proportional share under contention ([CFS](/foundations/cpu-scheduling-and-cfs/)) | A scheduling reservation + the eviction/OOM yardstick ([virtual memory](/foundations/virtual-memory/)) |
-| Exceed the **request** | Fine — you borrow idle CPU from neighbors | Fine while free RAM exists; you're a risk under node pressure |
-| Exceed the **limit** | **Throttled** — frozen until the next 100ms window. Latency, never death | **OOM-killed** — the cgroup kills the process. Death, never latency |
+| Physical nature | **Compressible.** Can be given in slices and taken back instantly | **Incompressible.** A byte is held or it isn't |
+| Request means | A *weight*: proportional share under contention ([CFS](/foundations/cpu-scheduling-and-cfs/)) | A scheduling reservation, and the eviction yardstick ([virtual memory](/foundations/virtual-memory/)) |
+| Exceed the **request** | Fine. You borrow idle CPU from neighbours | Fine while the node has free RAM; you are a risk under pressure |
+| Exceed the **limit** | **Throttled.** Frozen until the next 100ms window. Latency, never death | **OOM-killed.** The cgroup kills the process. Death, never latency |
 | Failure signature | p99 spikes while dashboards show "CPU idle" ([It's Slow](/troubleshooting/its-slow/)) | Exit code 137, `OOMKilled` in `describe` ([OOMKilled](/troubleshooting/oomkilled/)) |
-| Practical rule | Set the **request** carefully; the **limit** is often best *omitted* to avoid throttling | Set request **and** limit, usually **equal**, for predictable death |
+| Practical rule | Set the **request** carefully; the **limit** is often best omitted | Set request **and** limit, usually **equal**, for predictable death |
 
-The one sentence to engrave: **a CPU limit costs you latency, a memory limit costs you the process.** Because CPU is compressible, blowing its budget just makes you wait — which is why many teams deliberately set a CPU request and no CPU limit, letting apps burst into idle cores instead of being frozen at their quota. Because memory is incompressible, there is no "wait" — the kernel's only move is to kill — which is why memory request and limit are usually set equal, so the number you reserved is the number you're killed at, with no surprising gap in between. The scheduler mechanics behind the CPU half live in [CPU Scheduling and the CFS](/foundations/cpu-scheduling-and-cfs/); the memory-accounting half (and why "90% memory" is often reclaimable page cache, not your heap) is [Virtual Memory and the Page Cache](/foundations/virtual-memory/). The applied version — turning this into actual numbers for a real service — is [Requests, Limits, and the Knobs](/tuning/requests-limits-knobs/) and the [Sizing Walkthrough](/tuning/sizing-walkthrough/).
+A CPU limit costs you latency; a memory limit costs you the process. That asymmetry is why many teams set a CPU request and no CPU limit, letting an app burst into idle cores rather than freeze at its quota, and why memory request and limit are usually set equal, so the number you reserved is the number you die at with no surprising gap in between.
+
+Mechanics: [CPU Scheduling and the CFS](/foundations/cpu-scheduling-and-cfs/) and [Virtual Memory and the Page Cache](/foundations/virtual-memory/), which also covers why "90% memory" is usually reclaimable page cache rather than your heap. Real numbers for a real service: [Requests, Limits, and the Knobs](/tuning/requests-limits-knobs/) and the [Sizing Walkthrough](/tuning/sizing-walkthrough/).
+
+:::note[A limit with no request is not just a ceiling]
+Set a limit and omit the request for the same resource, and the API server copies the limit into the request when the Pod is created. You will not see it on the Deployment, because that defaulting runs on the Pod: `kubectl get deploy -o yaml` still shows a bare limit while `kubectl get pod -o yaml` shows a request equal to it. It also takes precedence over a LimitRange's `defaultRequest`, which only fills in resources you left blank on both sides. So a `cpu: "2"` limit you meant as a ceiling is also a reservation of two whole cores from the scheduler's budget, on every replica.
+:::
 
 ### QoS: the class you didn't know you were choosing
 
-The *relationship* between your requests and limits silently assigns your pod a **Quality of Service class**, and that class is a life-or-death ranking when a node runs out of memory. You never write the class; you imply it ([kubernetes.io: Pod QoS](https://kubernetes.io/docs/concepts/workloads/pods/pod-qos/), [Resources & QoS](/workloads/resources-and-qos/)):
+The relationship between your requests and limits silently assigns the pod a **Quality of Service class** ([kubernetes.io: Pod QoS](https://kubernetes.io/docs/concepts/workloads/pods/pod-qos/), [Resources & QoS](/workloads/resources-and-qos/)). You never write the class; you imply it.
 
-| QoS class | How you get it | Node-pressure eviction order | Kernel `oom_score_adj` | Use it for |
+| QoS class | How you get it | Kernel `oom_score_adj` | Under node pressure | Use it for |
 |---|---|---|---|---|
-| **Guaranteed** | Every container sets requests **=** limits, for both CPU and memory | Evicted **last** | ≈ −997 (hardest to OOM-kill) | Latency-critical, stateful, singletons |
-| **Burstable** | At least one request or limit set, but not Guaranteed | Evicted **after** BestEffort, by how far over-request | computed between the two | Most real web apps |
-| **BestEffort** | No requests or limits anywhere | Evicted **first** | ≈ 1000 (killed first) | Genuinely nothing important |
+| **Guaranteed** | Every container sets requests **=** limits, for both CPU and memory | ≈ −997 (hardest to OOM-kill) | Evicted last | Latency-critical, stateful, singletons |
+| **Burstable** | At least one request or limit set, but not Guaranteed | computed between the two | Depends on whether you are over your request | Most real web apps |
+| **BestEffort** | No requests or limits anywhere | ≈ 1000 (killed first) | Evicted first | Genuinely nothing important |
 
-This table is a Door 1 setting reaching straight into the kernel: your QoS class becomes your position in the cgroup tree and your `oom_score_adj`, which is *the order in which the OOM killer picks victims* under node memory pressure. **BestEffort is not "flexible," it is "first to die."** A pod with no requests is invisible to the scheduler's math and top of the eviction list — the worst of both ends. The reason this whole ranking exists, read from inside a live pod, is in the [Linux Inside the Pod field guide](/troubleshooting/linux-inside-the-pod/).
+The class becomes your position in the cgroup tree and your `oom_score_adj`: the order the kernel's OOM killer picks victims in when a cgroup runs out of memory.
+
+Node-pressure eviction ranks slightly differently, and the difference is worth knowing. The kubelet sorts by whether the pod is over its request, then by [Pod Priority](https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/), then by how far over it is, so QoS predicts where you land rather than deciding it ([kubernetes.io: pod selection for eviction](https://kubernetes.io/docs/concepts/scheduling-eviction/node-pressure-eviction/#pod-selection-for-kubelet-eviction)). Staying under your request is what protects you.
+
+:::caution[BestEffort is not "flexible", it is first to die]
+A pod with no requests anywhere is invisible to the scheduler's arithmetic *and* at the top of the eviction list: the worst of both ends. It is also what you get by leaving the `resources:` block out of a chart. The ranking read from inside a live pod is in the [Linux Inside the Pod field guide](/troubleshooting/linux-inside-the-pod/).
+:::
 
 ### Worked example
 
@@ -106,27 +122,33 @@ resources:
     # cpu limit deliberately omitted → burst into idle cores, never throttle
 ```
 
-Requests set, memory request == limit, CPU limit omitted. The scheduler reserves 250m CPU and 512Mi. QoS is **Burstable** (memory matches but CPU has no limit). Under load the app bursts past 250m into spare cores with zero throttling; if it ever tries to hold more than 512Mi it is OOM-killed at a predictable line. Every number here is now a currency the other two doors will spend — most immediately, that `250m` is the denominator the autoscaler is about to divide by. **Door 1 doesn't stand alone; it *prices* Doors 2 and 3.**
+The scheduler reserves 250m CPU and 512Mi. QoS is **Burstable**, because memory matches but CPU has no limit. Under load the app bursts past 250m into spare cores without throttling; if it ever holds more than 512Mi it is OOM-killed at a predictable line. That `250m` is now the number the autoscaler will divide by: Door 1 pricing Door 3 before Door 3 is configured.
 
 ## Door 2 — Truth: health checks and the whole life of a pod
 
-Pull this door and you find it is not "add a `/healthz`." It is the **pod's contract with the cluster about its own state, across its entire life** — from the moment it boots to the moment it is asked to leave. Kubernetes is a control loop that acts on *reported* state; if a pod lies about being ready, or stays silent about shutting down, the platform makes correct decisions on false information and you get an outage that looks like anything but a probe bug.
+This door is not "add a `/healthz`". It is the pod's contract with the cluster about its own state, from the moment it boots to the moment it is asked to leave. Kubernetes acts on *reported* state, so a pod that lies about being ready, or goes quiet while shutting down, makes the platform take correct actions on false information.
 
-### The three probes answer three different questions
+### Three probes, three different questions
 
-They are not three ways to do the same thing. Each answers a distinct question and has a distinct blast radius when it fails ([kubernetes.io: probes](https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/), [Health Checks](/workloads/health-checks/)):
+Each probe answers a distinct question and has a distinct blast radius when it fails ([kubernetes.io: probes](https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/), [Health Checks](/workloads/health-checks/)).
 
 | Probe | Question it answers | On failure | Blast radius | The classic mistake |
 |---|---|---|---|---|
-| **startup** | "Am I done booting yet?" | Holds off the other two; kills the pod only after `failureThreshold × period` | Just this pod, during boot | Absent → a slow-booting app gets liveness-killed before it ever starts ([CrashLoopBackOff](/troubleshooting/crashloopbackoff/)) |
-| **readiness** | "Should I receive traffic *right now*?" | Pod removed from Service endpoints. **No restart.** | Traffic routing — reversible | Checking a **shared dependency** → one blip → *every* replica goes NotReady at once |
-| **liveness** | "Am I broken beyond recovery?" | kubelet **restarts** the container | Destructive — a restart | Too aggressive under load → healthy-but-slow pods get killed, *amplifying* the incident |
+| **startup** | "Am I done booting yet?" | Holds off the other two; kills the pod only after `failureThreshold × period` | Just this pod, during boot | Absent, so a slow-booting app is liveness-killed before it ever starts ([CrashLoopBackOff](/troubleshooting/crashloopbackoff/)) |
+| **readiness** | "Should I receive traffic right now?" | Pod removed from Service endpoints. **No restart** | Traffic routing, and reversible | Checking a **shared dependency**, so one blip takes every replica NotReady at once |
+| **liveness** | "Am I broken beyond recovery?" | kubelet **restarts** the container | Destructive: a restart | Too aggressive under load, so healthy-but-slow pods get killed and the incident amplifies |
 
-The load-bearing distinction: **readiness is reversible, liveness is destructive.** Readiness failing just stops traffic for a moment and lets it resume; liveness failing *kills and restarts*. This is why the deadliest Door 2 anti-pattern is a **liveness** probe that checks a downstream dependency: when that dependency hiccups, liveness fails across every replica simultaneously, the kubelet restarts them all at once, and you have converted a brief dependency blip into a full cascading restart storm — the outage that classic war story "the readiness probe that took down prod" is built on. The rule that falls out: **liveness checks only *this process's* own health; readiness may check "can I serve," but never something a restart can't fix.** The design discipline is [Health Check Design](/tuning/health-check-design/); the timing knobs are [Health Check Knobs](/tuning/health-check-knobs/).
+Readiness is reversible and liveness is destructive. Readiness failing stops traffic for a moment and lets it resume; liveness failing kills and restarts. Almost every Door 2 disaster is one of those two behaviours applied to the wrong question.
 
-### The far end of the door: readiness gates traffic *in*, shutdown must gate it *out*
+:::danger[Never put a dependency behind a liveness probe]
+A liveness probe that checks a database, a cache or a downstream API fails on every replica at the same instant when that dependency hiccups. The kubelet restarts them all simultaneously, and a brief blip becomes a cluster-wide restart storm that outlasts the blip itself. Liveness judges only *this* process. Readiness may answer "can I serve", but never on something a restart cannot fix.
+:::
 
-Here is the half of Door 2 that most "add probes" advice never mentions, and it is exactly the half that scaling and rollouts hammer. Probes handle a pod *arriving* and *running*. But **scaling down and rolling updates mean pods are constantly leaving** — termination is the steady state of a healthy deployment, not an exception. And the moment a pod is told to leave, two things happen *concurrently*, which is the trap:
+The design discipline is [Health Check Design](/tuning/health-check-design/); the timing knobs are [Health Check Knobs](/tuning/health-check-knobs/).
+
+### The far end: readiness gates traffic in, shutdown must gate it out
+
+Probes cover a pod arriving and running. But scale-downs and rolling updates mean pods are constantly leaving, so termination is the steady state of a healthy deployment rather than an exception. The moment a pod is told to leave, two things happen concurrently.
 
 ```mermaid
 sequenceDiagram
@@ -146,96 +168,123 @@ sequenceDiagram
     K->>P: SIGKILL if still alive at deadline
 ```
 
-Endpoint removal is **eventually consistent** and races the SIGTERM. If your app hears SIGTERM and exits immediately, it can die *while the Service is still sending it requests* — every scale-down and every rolling update sheds a few connections, surfacing as intermittent, un-reproducible 5xx that correlate suspiciously with deploys. The fixes live entirely in this door: a `preStop` sleep to outlast endpoint propagation, an app that catches SIGTERM and *drains* rather than exits (which requires your app to be [PID 1 and actually receive the signal](/foundations/processes-and-signals/) — a shell-form `ENTRYPOINT` eats it), a `terminationGracePeriodSeconds` long enough to finish in-flight work, and awareness that [long-lived connections](/networking/long-lived-connections/) don't drain themselves. The full sequence and every knob is [Graceful Shutdown](/workloads/graceful-shutdown/) and [Rollout & Shutdown Knobs](/tuning/rollout-shutdown-knobs/); the authoritative source is [kubernetes.io: Pod termination](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-termination).
+:::caution[Endpoint removal races SIGTERM]
+Taking a pod out of a Service's endpoints is *eventually consistent* and waits for nothing. An app that hears `SIGTERM` and exits immediately can die while the Service is still routing requests to it. That is the intermittent 5xx that correlates with deploys and reproduces nowhere else.
+:::
 
-The whole door, then, is one continuous state machine — the same contract at both ends:
+The fixes all live behind this door: a `preStop` sleep that outlasts endpoint propagation, an app that catches SIGTERM and *drains* rather than exits, a `terminationGracePeriodSeconds` long enough to finish in-flight work, and the knowledge that [long-lived connections](/networking/long-lived-connections/) don't drain themselves. Catching the signal at all requires the app to be [PID 1 and actually receive it](/foundations/processes-and-signals/), which a shell-form `ENTRYPOINT` quietly prevents. Every knob: [Graceful Shutdown](/workloads/graceful-shutdown/), [Rollout & Shutdown Knobs](/tuning/rollout-shutdown-knobs/), [kubernetes.io: Pod termination](https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#pod-termination).
+
+Startup, readiness, liveness and drain are one state machine, the same contract at both ends:
 
 ```mermaid
 stateDiagram-v2
     [*] --> Booting
-    Booting --> Ready: startup probe passes
-    Ready --> Serving: readiness passes → in endpoints
-    Serving --> NotReady: readiness fails → out of endpoints (reversible)
-    NotReady --> Serving: readiness passes again
-    Serving --> Restarting: liveness fails → killed (destructive)
+    Booting --> Started: startup probe passes
+    Started --> Ready: readiness passes → added to endpoints
+    Ready --> NotReady: readiness fails → removed from endpoints (reversible)
+    NotReady --> Ready: readiness passes again
+    Ready --> Restarting: liveness fails → container killed (destructive)
     Restarting --> Booting
-    Serving --> Draining: SIGTERM → stop new work, finish in-flight
-    Draining --> [*]: exit clean (or SIGKILL at grace deadline)
+    Ready --> Draining: SIGTERM → stop new work, finish in-flight
+    Draining --> [*]: clean exit, or SIGKILL at the grace deadline
 ```
 
-Startup, readiness, liveness, and drain are not four features. They are one door — the truth a pod tells about itself from first breath to last — and **scaling is only safe because this door is honest at both ends.**
+Scaling is only safe because this door is honest at both ends.
 
-## Door 3 — Response: scaling, the goal the other two exist to make safe
+## Door 3 — Response: scaling, and the two questions it can't answer itself
 
-Pull this door and you find the payoff — elasticity, capacity that tracks demand — and immediately behind it, two questions it forces you to answer that you cannot answer from inside Door 3 at all.
+The payoff behind this door is elasticity, capacity that tracks demand. The catch is that it forces two questions you cannot answer from inside it.
 
-### Question one: *scale on what?* — the SLO is the setpoint
+### Scale on what? The SLO is the setpoint
 
-The Horizontal Pod Autoscaler is a control loop with a beautifully simple core formula ([kubernetes.io: HPA algorithm](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/#algorithm-details)):
+The Horizontal Pod Autoscaler is a control loop with a simple core ([kubernetes.io: HPA algorithm](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/#algorithm-details)):
 
 ```text
 desiredReplicas = ceil( currentReplicas × (currentMetricValue / desiredMetricValue) )
 ```
 
-Everything rides on the metric you choose, and the honest truth is that the default choice — CPU utilization — is usually the *wrong* thing to defend. Users do not feel CPU; they feel latency, errors, and staleness. **The metric is the SLO in numeric form**, which is why you cannot configure Door 3 without having answered "what does 'good' feel like to a user?" first ([SLOs for Scaling](/autoscaling/slos-for-scaling/), [Signals Catalog](/autoscaling/signals-catalog/)). And note *where* the CPU number comes from: utilization is `currentCPU / requestedCPU` — **summed across pods and divided by the request**. That is Door 1 reaching directly into Door 3's arithmetic. Set the request wrong and every scaling decision is computed against a wrong denominator — the loop, made concrete.
+Everything rides on the metric you pick, and the default choice of CPU utilization is usually the wrong thing to defend. Users do not feel CPU. They feel latency, errors and staleness. The metric is your SLO written as a number, which is why Door 3 cannot be configured until someone has answered "what does good feel like to a user?" ([SLOs for Scaling](/autoscaling/slos-for-scaling/), [Signals Catalog](/autoscaling/signals-catalog/)).
 
-### Question two: *scale what, and should you at all?* — the archetype
+:::caution[The request is the HPA's denominator]
+CPU utilization in the HPA is `currentCPU ÷ requestedCPU`, summed across pods. It is not a percentage of the node, of the limit, or of anything physical. Set the request wrong and every scaling decision is computed against a wrong number, which is Door 1 reaching straight into Door 3's arithmetic.
+:::
 
-Horizontal scaling assumes a workload where one more identical replica means more capacity. That assumption is true for a stateless web app and *false* for a great many things. The archetype decides not just the signal but whether Door 3 opens at all:
+### Scale what, and should you at all? The archetype
+
+Horizontal scaling assumes one more identical replica means more capacity. That is true of a stateless web app and false of a great many other things. The archetype decides not just the signal but whether this door opens at all.
 
 | Archetype | Scale on | Horizontal scaling? | Why |
 |---|---|---|---|
-| Stateless web/API | Latency, RPS, or CPU as proxy | Yes, freely | Replicas are interchangeable |
-| Queue / async consumer | **Queue depth or lag**, not CPU | Yes — on the backlog | CPU is flat while the queue floods ([Messaging Consumers](/autoscaling/messaging-consumers/)) |
+| Stateless web/API | Latency, RPS, or CPU as a proxy | Yes, freely | Replicas are interchangeable |
+| Queue / async consumer | **Queue depth or lag**, not CPU | Yes, on the backlog | CPU is flat while the queue floods ([Messaging Consumers](/autoscaling/messaging-consumers/)) |
 | Batch / Job | Parallelism, not an HPA | Via completions/parallelism | It finishes; it doesn't serve |
-| Stateful (DB, cache) | Rarely, and carefully | Usually **no** | Identity and data gravity; scaling ≠ more capacity |
+| Stateful (DB, cache) | Rarely, and carefully | Usually **no** | Identity and data gravity; more replicas is not more capacity |
 | Leader-elected singleton | Never horizontally | **No** | Two active leaders is a bug, not double capacity |
 
-There is also a subtler Door 3 trap that lives at the boundary with the network: horizontal scaling only delivers real distribution if traffic actually spreads across the new replicas. A single long-lived **HTTP/2 or gRPC** connection pins *all* its streams to one backend, so you can scale to twenty pods and watch one of them take all the load — the connection-vs-request load-balancing problem in [HTTP](/networking/http/) and [long-lived connections](/networking/long-lived-connections/). Adding replicas is necessary but not sufficient; the traffic has to be shaped to use them.
+One more trap sits at the boundary with the network. Horizontal scaling only distributes load if the traffic actually spreads. A single long-lived **HTTP/2 or gRPC** connection pins all of its streams to one backend, so you can scale to twenty pods and watch one of them take everything ([HTTP](/networking/http/), [long-lived connections](/networking/long-lived-connections/)). Adding replicas is necessary, not sufficient.
 
-This is why the [autoscaling playbook](/autoscaling/overview/) treats Doors 1 and 2 as **prerequisites** you must pass before enabling Door 3 at all — the [No-Assumptions Checklist](/autoscaling/prerequisites/) is, read through this lens, a list of "is Door 1 correct and Door 2 honest yet?" Because scaling is the *goal*, and the other two are the load-bearing preconditions that make it safe. Kill scaling and you are merely inelastic; plenty of healthy services run fixed replicas. Enable scaling on top of a wrong request or a dishonest probe and you have built an amplifier for your own mistakes. The applied end-to-end path — classify, measure, set the SLO, pick the signal, ship — is [Classify Your App](/autoscaling/classify-your-app/) → [Load Profile](/autoscaling/load-profile/) → [Capacity & Governance](/autoscaling/capacity-and-governance/); when the loop won't move, [HPA Not Scaling](/troubleshooting/hpa-not-scaling/) walks it outward.
+This is why the [autoscaling playbook](/autoscaling/overview/) treats Doors 1 and 2 as prerequisites rather than companions: scaling over a wrong request or a dishonest probe is an amplifier for your own mistake. Read through this model, the [No-Assumptions Checklist](/autoscaling/prerequisites/) is just "is Door 1 correct and Door 2 honest yet?". Applied path: [Classify Your App](/autoscaling/classify-your-app/) → [Load Profile](/autoscaling/load-profile/) → [Capacity & Governance](/autoscaling/capacity-and-governance/); when the loop won't move, [HPA Not Scaling](/troubleshooting/hpa-not-scaling/).
 
-And two facts about this loop deserve their own math, because they're where most autoscaling pain actually lives. The loop has a **gain** — set by Door 1, because utilization is usage ÷ *request*, so a request three times too small makes the loop react three times too hard and it overshoots then hunts. And it has **dead time** — scaling is *not* instant: between a spike and a new pod actually serving traffic sits a metrics delay, the HPA sync period, scheduling, image pull, app startup, and the readiness gate, which adds up to roughly 60–90 seconds on a warm node and several minutes if a new node must be provisioned. Get the gain wrong and you thrash; ignore the dead time and you'll discover a spike hurts long before capacity arrives. Both are worked out with numbers — the missized-request overshoot, the full scale-up latency budget, and how to measure each — in [Scaling Dynamics: Gain, Dead Time, and Why Autoscaling Isn't Instant](/autoscaling/scaling-dynamics/).
+### Gain and dead time
 
-## The proof: the failure gallery
+Two properties of this loop cause most autoscaling pain, and both are borrowed from control theory for a reason.
 
-Here is where the hypothesis is won or lost. If the three doors were truly independent, then a mistake at one door would produce a symptom *at that same door* — you'd tune the thing that's broken and be done. The claim is the opposite: **because it is a loop, a mistake at one door surfaces as a symptom at another.** If that's true, the loop is real. Every row below is a mistake made behind one door showing up as pain behind a different one — and every one of these is a real, common incident:
+**Gain** is how hard the loop reacts to an error. Door 1 sets it, because utilization is usage ÷ request: a request three times too small makes the loop react three times too hard, so it overshoots and then hunts.
+
+**Dead time** is the delay between the spike and capacity actually serving. Scaling is not instant, and the pieces add up:
+
+```mermaid
+flowchart LR
+    s(["<b>spike</b><br/>t = 0s"])
+    subgraph sense["SENSE — before the HPA even decides"]
+        direction LR
+        m["metrics scrape<br/>+ pipeline lag<br/><b>~30s</b>"] --> h["HPA sync<br/>period<br/><b>~15s</b>"]
+    end
+    subgraph supply["SUPPLY — before the new pod serves"]
+        direction LR
+        sc["schedule<br/>+ image pull<br/><b>~15s</b>"] --> b["app startup<br/><b>~10s</b>"] --> r["readiness<br/>gate<br/><b>~5s</b>"]
+    end
+    d(["<b>serving</b><br/>t ≈ 75s"])
+    s --> m
+    h --> sc
+    r --> d
+```
+
+Call it 60 to 90 seconds on a warm node, and several minutes if a new node has to be provisioned first. Get the gain wrong and you thrash; ignore the dead time and a spike hurts long before help arrives. Both are worked out with numbers in [Scaling Dynamics](/autoscaling/scaling-dynamics/).
+
+## When it breaks: the loop in the wild
+
+If the three doors were independent, a mistake behind one would show up as a symptom at the same one, and you would tune the thing that is broken. Mostly it doesn't work that way. Every row below is a common incident where the symptom and the cause sit behind different doors.
 
 | The symptom you see (Door) | The mistake that actually caused it (Door) | Why the loop carried it there |
 |---|---|---|
-| HPA never scales up; pods overloaded (**Response**) | Request set far too high (**Cost**) | Utilization = usage ÷ request; an inflated request keeps the ratio low, so the HPA thinks there's headroom |
-| HPA flaps, thrashing replicas (**Response**) | Request set too low (**Cost**) | Tiny denominator → utilization swings wildly on small load changes → [the loop oscillates](/autoscaling/scaling-dynamics/) |
-| "We need to scale, CPU is pegged" (**Response**) | A CPU **limit** causing throttling (**Cost**) | Throttled pods *look* CPU-bound; you scale out to escape a wall you built yourself ([throttled-but-idle](/troubleshooting/its-slow/)) |
-| Intermittent 5xx correlated with deploys (**Truth**) | Scaling/rollout churn with no drain (**Response × Truth**) | Scale-down removes pods; without graceful shutdown each removal sheds in-flight requests |
-| Whole service goes NotReady in an instant (**Truth**) | Readiness checks a shared dependency (**Truth**), then scaling can't help (**Response**) | One dependency blip fails every replica's probe at once; adding replicas just makes more NotReady pods |
-| Cascading restart storm under load (**Truth**) | Liveness too aggressive (**Truth**) amplified by fixed capacity (**Response**) | Slow-but-healthy pods get killed; the survivors get more load and die too |
-| Random pods killed first under pressure (**Cost**) | No requests set → BestEffort (**Cost**) | QoS class *is* eviction order; "no requests" means "first to die," invisible to the scheduler |
-| Scaled to 20 pods, one takes all traffic (**Response**) | A long-lived h2/gRPC connection (**network**) defeats distribution | Replicas exist but the connection pins streams to one backend |
+| HPA never scales up; pods overloaded (**Response**) | Request set far too high (**Cost**) | Utilization = usage ÷ request; an inflated request keeps the ratio low, so the HPA sees headroom |
+| HPA flaps, thrashing replicas (**Response**) | Request set too low (**Cost**) | Tiny denominator, so utilization swings wildly on small load changes and [the loop oscillates](/autoscaling/scaling-dynamics/) |
+| "We need to scale, CPU is pegged" (**Response**) | A CPU **limit** causing throttling (**Cost**) | Throttled pods look CPU-bound, so you scale out to escape a wall you built yourself ([throttled-but-idle](/troubleshooting/its-slow/)) |
+| Intermittent 5xx correlated with deploys (**Truth**) | Scaling and rollout churn with no drain (**Response × Truth**) | Every removal sheds in-flight requests when the app doesn't drain |
+| Whole service goes NotReady in an instant (**Truth**) | Readiness checks a shared dependency (**Truth**), and scaling can't help (**Response**) | One blip fails every replica's probe at once; adding replicas just makes more NotReady pods |
+| Cascading restart storm under load (**Truth**) | Liveness too aggressive (**Truth**), amplified by fixed capacity (**Response**) | Slow-but-healthy pods get killed; the survivors take more load and die too |
+| Random pods killed first under pressure (**Cost**) | No requests set, so BestEffort (**Cost**) | With no request there is nothing to be "under", so you sort to the top of the eviction list |
+| Scaled to 20 pods, one takes all the traffic (**Response**) | A long-lived h2/gRPC connection (**network**) defeats distribution | Replicas exist, but the connection pins streams to one backend |
 
-Read the middle column against the first. **Not one symptom sits at the same door as its cause.** A scaling problem is a cost problem. A truth problem becomes a scaling problem. A cost setting decides who the kernel kills. That is not a coincidence you can tune around door-by-door — it is the loop doing exactly what a loop does: propagating a disturbance at one node all the way around. The failure gallery *is* the proof of the hypothesis. Three doors, one loop, verified by the way they break.
+Read the middle column against the first. A scaling problem is usually a cost problem. A truth problem becomes a scaling problem. A cost setting decides who the kernel kills. You cannot tune that away door by door, because the loop is doing what loops do: carrying a disturbance from where it started to somewhere else.
 
-## The setpoint, the question, and the far end
+## What sits outside the three
 
-Everything I added to your original three lives *inside* the three, not beside them — that's what makes it a mental model and not a longer list:
+Three things get mistaken for a fourth door. Putting each back where it belongs is most of what the model buys you:
 
-- The **SLO** is not a fourth door. It is what Door 3 *aims at* — the target the loop defends, without which "in unison" points at nothing.
-- The **archetype** is not a fourth door. It is the question that sets the *values* behind all three, answered before you turn a single knob ([Classify Your App](/autoscaling/classify-your-app/)).
-- **Graceful shutdown** is not a fourth door. It is the far end of Door 2 — the last true thing a pod says about itself.
+- The **SLO** is what Door 3 aims at. Without it, "tune them in unison" points at nothing. Usually latency, error rate or freshness; almost never raw CPU.
+- The **archetype** is the question that sets the values behind all three, answered before you turn a single knob ([Classify Your App](/autoscaling/classify-your-app/)).
+- **Graceful shutdown** is the far end of Door 2: the last true thing a pod says about itself.
 
-The depth is bottomless, but the surface is three questions. That is the property of a good model: graspable in one breath, and every hard conversation you'll ever have turns out to be someone opening one of the three and walking further in.
+## Using it on a real chart
 
-## How to use it
+Walk the doors in order and ask each one's question.
 
-For any deployment, any [Helm chart](/architectures/golden-service/), any review, walk the doors in order and ask each door's question:
+1. **Cost.** Are requests set at all, or is this BestEffort and first in line under pressure? Is the memory request equal to its limit? Is the CPU limit buying anything, or just throttling? Is the request a *measured* number, given the HPA is about to divide by it?
+2. **Truth.** A startup probe if the boot is slow. Readiness that gates traffic without checking things a restart can't fix. Liveness that judges only this process. A real drain path: `preStop`, SIGTERM handling, and a grace period long enough to finish the work.
+3. **Response.** What is the signal, and is it the SLO rather than reflexive CPU? Is the archetype horizontally scalable at all? Are Doors 1 and 2 right first, given scaling amplifies whatever they got wrong?
 
-1. **Cost.** What does it reserve, and what happens when it exceeds? Are requests set (or it's BestEffort and top of the kill list)? Is memory request == limit (incompressible → pin it)? Is the CPU limit doing more harm than good? Is the request a *measured* number, since the HPA is about to divide by it?
-2. **Truth.** Does it tell the truth arriving and leaving? Startup probe for a slow boot; readiness that gates traffic without checking things a restart can't fix; liveness that only judges *itself*; and a real drain path — `preStop`, SIGTERM handling, a grace period — so scale-downs and rollouts don't shed requests.
-3. **Response.** How does capacity answer load? What's the *signal* (the SLO, not reflexive CPU)? Is the *archetype* even horizontally scalable? Are Doors 1 and 2 correct first, since scaling amplifies whatever they got wrong?
+Debugging runs the same model backwards: name the door the *symptom* is at, then check the other two for the cause, because that is usually where it lives. [Triage methodology](/troubleshooting/triage-methodology/) is this page in reverse.
 
-When you're debugging instead of building, run it the same way — the [triage methodology](/troubleshooting/triage-methodology/) is this model in reverse: name the door the *symptom* is at, then check the other two doors for the *cause*, because the failure gallery says that's usually where it lives.
-
-And every question a door asks is answered by a *measurement* — usage against the request, a probe's verdict, a scaling signal — which means the loop is only as good as its sensors. Which sensor took the number, what it can and can't see, and why a correct number read through the wrong one is the most common misdiagnosis on the cluster is this page's sibling: [The Three Lenses](/start/three-lenses/).
-
-And when a door's promise breaks — the pod isn't there, or requests to it fail — the map of *where to look first* is the third model, [The Two Roads](/start/two-roads/): the pod's life walked down, the request's path bisected across, and a ladder from wherever you stopped.
-
-Costs, truth, response. Three doors, one loop, one promise. Hold that, and the rest of this site is just the doors, opened.
+Two sibling models finish the set. Every question a door asks is answered by a measurement, so the loop is only as good as its sensors: which instrument took the number, what it can't see, and why a correct number read through the wrong one is the commonest misdiagnosis on a cluster is [The Three Lenses](/start/three-lenses/). And when a door's promise breaks outright, so the pod isn't there or requests to it fail, the map of where to look first is [The Two Roads](/start/two-roads/).

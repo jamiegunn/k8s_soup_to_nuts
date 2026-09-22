@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kubernetes, from what you already know</title>
+<style>
+:root{
+  --navy:#102A43; --navy2:#243B53; --slate:#486581; --mute:#829AB1;
+  --mist:#D9E2EC; --mist2:#F0F4F8; --paper:#fff;
+  --blue:#2680C2; --blueD:#0A558C; --blueL:#4098D7;
+  --serif:"Cambria",Georgia,"Times New Roman",serif;
+  --sans:"Calibri","Segoe UI",system-ui,-apple-system,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#0b1a2b;font-family:var(--sans);overflow:hidden}
+#stage{position:absolute;inset:0;display:grid;place-items:center}
+#deck{width:1280px;height:720px;position:relative;transform-origin:center center;box-shadow:0 24px 80px rgba(0,0,0,.55);border-radius:6px;overflow:hidden}
+.slide{position:absolute;inset:0;background:var(--paper);padding:52px 64px;display:none;flex-direction:column}
+.slide.on{display:flex}
+.eyebrow{margin:0 0 6px;font-size:14px;font-weight:700;letter-spacing:.14em;color:var(--blueD)}
+h2{font-family:var(--serif);font-size:44px;line-height:1.08;margin:0 0 10px;color:var(--navy);font-weight:700}
+.kicker{margin:0 0 18px;font-size:19px;line-height:1.4;color:var(--slate);font-style:italic;max-width:1050px}
+.body{flex:1;min-height:0;display:flex;flex-direction:column;gap:16px}
+p{margin:0}
+code{font-family:"Consolas","SF Mono",ui-monospace,monospace;font-size:.92em;background:var(--mist2);border:1px solid var(--mist);border-radius:4px;padding:1px 5px;color:var(--navy)}
+strong{color:var(--navy)}
+/* cover */
+.cover{background:var(--navy);justify-content:center}
+.cover-in{max-width:1000px}
+.cover h1{font-family:var(--serif);font-size:66px;line-height:1.05;margin:0 0 22px;color:#fff;font-weight:700;letter-spacing:-.5px}
+.cover .sub{font-size:22px;line-height:1.5;color:var(--mist);max-width:880px}
+.cover .phrases{margin:36px 0 0;font-size:20px;font-weight:700;color:var(--blueL);letter-spacing:.02em}
+.cover .phrases i{font-style:normal;opacity:.5;margin:0 14px}
+.cover .foot{position:absolute;left:64px;bottom:52px;font-size:15px;color:var(--mute)}
+/* tables */
+table{width:100%;border-collapse:collapse;font-size:17px}
+th{text-align:left;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--blueD);padding:0 14px 8px;border-bottom:2px solid var(--mist)}
+td{padding:9px 14px;vertical-align:top;border-bottom:1px solid var(--mist2);color:var(--slate);line-height:1.35}
+td:first-child{color:var(--navy);width:44%}
+.t3 td:first-child{width:30%}
+.t3 td:nth-child(2){width:15%;color:var(--blueD);font-weight:700}
+.t3{font-size:16px}
+/* callout */
+.callout{background:var(--mist2);border:1px solid var(--mist);border-radius:8px;padding:14px 18px}
+.callout-label{display:block;font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--blueD);margin-bottom:5px}
+.callout p{font-size:17px;line-height:1.42;color:var(--navy)}
+/* cards */
+.cards{display:flex;gap:16px}
+.cards .card{flex:1;background:var(--mist2);border:1px solid var(--mist);border-radius:8px;padding:16px 18px}
+.cards.compact .card{padding:12px 14px}
+.card h3{margin:0 0 6px;font-size:19px;color:var(--navy);font-family:var(--sans);font-weight:700}
+.cards.compact .card h3{font-size:17px}
+.card .sub{font-size:16px;color:var(--blueD);font-style:italic;margin-bottom:6px}
+.card p{font-size:16px;line-height:1.4;color:var(--slate)}
+.cards.compact .card p{font-size:14.5px;line-height:1.38}
+.pip{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--blue);color:#fff;font-weight:700;font-size:15px;margin-bottom:8px}
+/* split */
+.split{display:flex;gap:22px;flex:1;min-height:0}
+.split .side{flex:1;display:flex;flex-direction:column;gap:14px}
+.split .side .cards{flex-direction:column}
+.split-code .code{flex:0 0 648px}
+.story{flex:0 0 480px;display:flex;flex-direction:column;justify-content:center;gap:14px}
+.story p{font-size:18px;line-height:1.5;color:var(--slate)}
+.story p:first-child{color:var(--navy)}
+/* code */
+.code{background:var(--navy);border-radius:8px;padding:14px 16px;font-family:"Consolas","SF Mono",ui-monospace,monospace;font-size:12.5px;line-height:1.52;overflow:hidden}
+.code-cap{color:var(--mute);font-size:12px;margin-bottom:8px;font-family:var(--sans);letter-spacing:.06em;text-transform:uppercase}
+.cl{white-space:pre;color:#C6D4E1}
+.cl .cn{font-family:var(--sans);font-size:12px;font-style:italic;opacity:.95}
+.cl.d1{color:#9BD1F5}.cl.d1 .cn{color:#9BD1F5}
+.cl.d2{color:#A7E0C4}.cl.d2 .cn{color:#A7E0C4}
+.cl.d3{color:#F3CE8E}.cl.d3 .cn{color:#F3CE8E}
+/* quote */
+blockquote{margin:0;font-family:var(--serif);font-size:33px;line-height:1.22;color:var(--navy);font-weight:700;max-width:1040px}
+.lead{font-size:18px;line-height:1.45;color:var(--slate);max-width:1080px}
+.lead.tail{font-size:17px}
+/* two-col */
+.cols{display:flex;gap:20px;flex:1}
+.col{flex:1;background:var(--mist2);border:1px solid var(--mist);border-radius:8px;padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+.col h3{margin:0;font-size:21px;color:var(--navy)}
+.col p{font-size:17px;line-height:1.42;color:var(--slate)}
+.col .foot{margin-top:auto;font-size:15.5px;color:var(--blueD);font-style:italic}
+/* steps */
+.steps{display:grid;grid-template-columns:1fr 1fr;gap:22px 28px;flex:1;align-content:center}
+.step{display:flex;gap:12px;align-items:flex-start}
+.step .pip{flex:0 0 26px;margin:2px 0 0}
+.step h3{margin:0 0 5px;font-size:19px;color:var(--navy)}
+.step p{font-size:16px;line-height:1.42;color:var(--slate)}
+.next{margin-top:auto;background:var(--mist2);border:1px solid var(--mist);border-radius:8px;padding:14px 18px}
+.links{display:flex;gap:12px;margin-top:8px}
+.links a{flex:1;text-decoration:none;color:var(--navy);border-left:0;display:block}
+.links a strong{display:block;font-size:16px;color:var(--blueD)}
+.links a span{display:block;font-size:14px;color:var(--slate);line-height:1.32;margin-top:2px}
+/* chrome */
+#bar{position:fixed;left:0;top:0;height:3px;background:var(--blueL);width:0;transition:width .18s ease;z-index:5}
+#hud{position:fixed;right:14px;bottom:12px;color:#7e93a8;font-size:13px;z-index:5;user-select:none}
+#hud b{color:#cfe0ee;font-weight:600}
+#hint{position:fixed;left:14px;bottom:12px;color:#5D738A;font-size:12px;z-index:5}
+#notes{position:fixed;left:0;right:0;bottom:0;max-height:38%;overflow:auto;background:#0B1A2B;border-top:1px solid #1D3A55;padding:16px 22px;color:#C8D6E4;font-size:15px;line-height:1.5;display:none;z-index:6}
+#notes.on{display:block}
+#notes h4{margin:0 0 6px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--blueL)}
+#grid{position:fixed;inset:0;background:rgba(8,20,33,.97);display:none;z-index:7;padding:28px;overflow:auto}
+#grid.on{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;align-content:start}
+#grid button{background:#12293f;border:1px solid #1e3a55;border-radius:6px;color:#cfe0ee;text-align:left;padding:14px;font:inherit;font-size:14px;cursor:pointer}
+#grid button:hover{border-color:var(--blueL)}
+#grid button b{display:block;color:#fff;font-size:15px;margin-bottom:4px}
+#grid button span{color:#7e93a8;font-size:12px}
+@media print{
+  html,body{overflow:visible;background:#fff;height:auto}
+  #stage{position:static;display:block}
+  #deck{width:1280px;height:720px;box-shadow:none;page-break-after:always;transform:none!important}
+  .slide{display:flex!important;position:relative;page-break-after:always}
+  #bar,#hud,#hint,#notes,#grid{display:none!important}
+}
+</style>
+</head>
+<body>
+<div id="stage"><div id="deck">
+<section class="slide cover">
+     <div class="cover-in">
+       <h1>Kubernetes, from what you already know</h1>
+       <p class="sub">You have built servers, sized pools, written health checks and shutdown hooks. Kubernetes asks three questions about all of it — here they are, and here is what to do when the answers go wrong.</p>
+       <p class="phrases"><span>cost</span><i>·</i><span>truth</span><i>·</i><span>response</span></p>
+       <p class="foot">For engineers who write the code · no devops background assumed</p>
+     </div>
+   </section>
+
+   <section class="slide">
+     <p class="eyebrow">START HERE</p>
+     <h2>You already know most of this</h2>
+     <p class="kicker">Kubernetes is not new physics. It is a runtime that asks about things you have been doing by hand for years — under unfamiliar names.</p>
+     <div class="body"><table class="t2"><thead><tr><th>What you already do</th><th>What Kubernetes calls it</th></tr></thead><tbody><tr><td>Size a thread pool so one service can’t exhaust the box</td><td><code>resources.requests</code> and <code>resources.limits</code></td></tr><tr><td>Expose <code>/health</code> so the load balancer stops sending to a sick instance</td><td><code>readinessProbe</code> — the only probe that gates traffic</td></tr><tr><td>A watchdog that restarts a process that has wedged</td><td><code>livenessProbe</code> — it restarts you, it does not reroute you</td></tr><tr><td>Finish in-flight work in a shutdown hook before exiting</td><td><code>preStop</code> + SIGTERM + <code>terminationGracePeriodSeconds</code></td></tr><tr><td>Stand v2 next to v1, then move traffic across</td><td>a rolling update — <code>maxSurge</code> / <code>maxUnavailable</code></td></tr><tr><td>instances × <code>maxPoolSize</code> = what the database actually sees</td><td><code>maxReplicas</code> × pool size = your session budget</td></tr><tr><td><code>-Xmx</code> versus how much memory the box really has</td><td>the container memory limit versus the JVM heap</td></tr></tbody></table><div class="callout"><span class="callout-label">The point</span><p>The vocabulary is new; the engineering is not. Where this deck says something surprising, it is almost always because the <em>default</em> differs from the one you would have chosen yourself.</p></div></div>
+   </section>
+
+   <section class="slide">
+     <p class="eyebrow">THE MODEL</p>
+     <h2>Kubernetes asks three questions</h2>
+     <p class="kicker">Strip it to its job: a control loop that makes the cluster match what you asked for. To run one workload it needs exactly three things — and there is no fourth.</p>
+     <div class="body"><div class="split split-code"><div class="code"><div class="code-cap">one Deployment, three doors</div><div class="cl"><span class="ct">spec:</span></div><div class="cl d3"><span class="ct">  replicas: 2                              </span><span class="cn">← 3 · Response — an HPA can own this</span></div><div class="cl"><span class="ct">  template:</span></div><div class="cl"><span class="ct">    spec:</span></div><div class="cl d2"><span class="ct">      terminationGracePeriodSeconds: 40    </span><span class="cn">← 2 · Truth — leaving</span></div><div class="cl"><span class="ct">      containers:</span></div><div class="cl"><span class="ct">        - name: payments-api</span></div><div class="cl"><span class="ct">          resources:</span></div><div class="cl d1"><span class="ct">            requests:                      </span><span class="cn">← 1 · Cost — what is reserved</span></div><div class="cl d1"><span class="ct">              cpu: 250m</span></div><div class="cl d1"><span class="ct">              memory: 1Gi</span></div><div class="cl d1"><span class="ct">            limits:</span></div><div class="cl d1"><span class="ct">              memory: 1Gi                  </span><span class="cn">← request == limit</span></div><div class="cl d2"><span class="ct">          readinessProbe:                  </span><span class="cn">← 2 · Truth — arriving</span></div><div class="cl d2"><span class="ct">            httpGet: { path: /health/readiness, port: 8081 }</span></div><div class="cl d2"><span class="ct">          lifecycle:</span></div><div class="cl d2"><span class="ct">            preStop:                       </span><span class="cn">← 2 · Truth — the drain</span></div><div class="cl d2"><span class="ct">              exec: { command: ["sh","-c","sleep 5"] }</span></div></div><div class="side"><div class="cards compact">
+      <div class="card">
+        <span class="pip">1</span>
+        <h3>Cost</h3>
+        
+        <p>What does it reserve, and what happens when it goes over?</p>
+      </div>
+      <div class="card">
+        <span class="pip">2</span>
+        <h3>Truth</h3>
+        
+        <p>Does it tell the truth about being ready — and about shutting down?</p>
+      </div>
+      <div class="card">
+        <span class="pip">3</span>
+        <h3>Response</h3>
+        
+        <p>How should the number of copies answer load?</p>
+      </div></div><div class="callout"><span class="callout-label">Why it is a loop</span><p>The request you set at Door 1 is the number the autoscaler divides by at Door 3, and Door 2 decides whether either number is believable. Get Door 1 wrong and Door 3 is wrong by the same factor.</p></div></div></div></div>
+   </section>
+
+   <section class="slide">
+     <p class="eyebrow">DOOR 1 · COST</p>
+     <h2>One asymmetry decides everything</h2>
+     
+     <div class="body"><blockquote>A CPU limit costs you latency. A memory limit costs you the process.</blockquote><p class="lead">CPU is compressible: exceed your share and the kernel makes you wait. Memory is not — there is no ‘wait’, so the only move the kernel has is to kill. That single difference is why the two knobs are set in completely different ways.</p><div class="cards">
+      <div class="card">
+        
+        <h3>Memory: request = limit</h3>
+        
+        <p>Pin them together. You are then killed at exactly the number you reserved, with no surprising gap in between — and the scheduler has actually set that much aside for you.</p>
+      </div>
+      <div class="card">
+        
+        <h3>CPU: set a request, think hard about a limit</h3>
+        
+        <p>A quota throttles precisely the tail you are judged on. Plenty of teams deliberately run a CPU request with no CPU limit, and watch the throttle ratio instead.</p>
+      </div>
+      <div class="card">
+        
+        <h3>The kill is not a Java exception</h3>
+        
+        <p><code>OOMKilled</code>, exit 137, is the kernel. Your <code>OutOfMemoryError</code> handling never runs, no stack trace is printed, and nothing in your code could have caught it.</p>
+      </div></div><div class="callout"><span class="callout-label">The JVM twist</span><p>Your heap is only the biggest tenant of the container. Metaspace, thread stacks, the code cache and direct buffers live there too — which is exactly how a pod dies at its memory limit while every heap dump looks healthy.</p></div></div>
+   </section>
+
+   <section class="slide">
+     <p class="eyebrow">DOOR 2 · TRUTH</p>
+     <h2>Three probes, three different questions</h2>
+     
+     <div class="body"><div class="cards">
+      <div class="card">
+        
+        <h3>startupProbe</h3>
+        <p class="sub">“Have you finished booting?”</p>
+        <p>Buys a slow JVM all the time it needs, without making the liveness probe permanently lenient.</p>
+      </div>
+      <div class="card">
+        
+        <h3>readinessProbe</h3>
+        <p class="sub">“Should I send you traffic right now?”</p>
+        <p>The only probe that gates the Service. Failing it removes you from the load balancer — it does not restart you.</p>
+      </div>
+      <div class="card">
+        
+        <h3>livenessProbe</h3>
+        <p class="sub">“Are you wedged, so only a restart helps?”</p>
+        <p>It must judge nothing but itself. If it can fail for a reason a restart cannot fix, it is wired wrong.</p>
+      </div></div><div class="callout"><span class="callout-label">The classic outage</span><p>A readiness probe that checks a downstream dependency. The dependency blips for thirty seconds → every replica reports not-ready → every replica leaves the load balancer at once → a wobble becomes a 100% outage. Readiness answers for you, never for your dependencies.</p></div><p class="lead tail">And leaving is half of truth. When Kubernetes wants a pod gone, it removes the endpoint and sends SIGTERM at the same moment — these race. <code>preStop: sleep 5</code> lets endpoint removal propagate first; your shutdown hook then finishes in-flight work inside the grace period.</p></div>
+   </section>
+
+   <section class="slide">
+     <p class="eyebrow">DOOR 3 · RESPONSE</p>
+     <h2>Scale on the thing that actually runs out</h2>
+     
+     <div class="body"><p class="lead">The autoscaler's arithmetic is <code>usage ÷ request</code>. It divides by the number you set at Door 1 — so a request nobody can defend produces scaling that is confidently wrong.</p><div class="cols">
+        <div class="col"><h3>CPU is the default, not the answer</h3><p>Measured on a service that spends its time waiting on a database: across the point where latency broke its promise, CPU utilisation moved from 0.61 to 0.66. Busy threads moved from 0.58 to 0.94. An autoscaler watching CPU would never have fired.</p><p class="foot">Pick the number that saturates when the promise breaks — and was already moving one step earlier.</p></div>
+        <div class="col"><h3>The ceiling usually isn’t yours</h3><p>16 replicas × a connection pool of 10 = 160 database sessions. Past the budget the database refuses new connections — for everyone sharing it, not just for you. Your scale-out becomes the batch team's outage.</p><p class="foot">Before raising a replica ceiling, do the multiplication and find out whose number you are spending.</p></div></div><div class="callout"><span class="callout-label">Re-check it</span><p>Which number saturates first is a property of what a request <em>does</em>. Any release that adds a call to something slow can move it — so the signal is re-measured after the release, not inherited from last quarter.</p></div></div>
+   </section>
+
+   <section class="slide">
+     <p class="eyebrow">WHEN NUMBERS FIGHT</p>
+     <h2>Both numbers are correct</h2>
+     
+     <div class="body"><div class="split"><div class="story"><p><code>kubectl top</code> says the pod is using 40% of its CPU. The p99 has tripled. Someone says “we have headroom — it must be GC.” A week goes into GC flags, the database, and the network.</p><p>The answer was a third number: the container was <strong>throttled in 41% of its 100-millisecond scheduling periods</strong> while <em>averaging</em> 31% of its limit. Bursty work meeting a quota. An average hides a wall you are hitting ten times a second.</p><p>Neither instrument lied. They answer different questions, because they stand in different places — and there are only three places to stand.</p></div><div class="side"><div class="cards compact">
+      <div class="card">
+        <span class="pip">1</span>
+        <h3>Outside the process</h3>
+        
+        <p>The kernel's accounting for your container: CPU charged, periods throttled, bytes resident, kills delivered. Exact about what it cost; blind to what it was doing.</p>
+      </div>
+      <div class="card">
+        <span class="pip">2</span>
+        <h3>Inside, continuously</h3>
+        
+        <p>Your app measuring itself: requests by route, pool waits, heap by pool, GC pauses. Knows what it was doing — as an average, and as a sample every few seconds.</p>
+      </div>
+      <div class="card">
+        <span class="pip">3</span>
+        <h3>Inside, on demand</h3>
+        
+        <p>Stop it and ask: a thread dump, a heap histogram, a flight recording. Sees everything about one process right now, and only because you asked.</p>
+      </div></div></div></div><div class="callout"><span class="callout-label">The rule</span><p>When two numbers disagree, don’t stare harder at one — change instrument. A number that makes no sense is usually a correct number read from the wrong place.</p></div></div>
+   </section>
+
+   <section class="slide">
+     <p class="eyebrow">WHEN IT BREAKS</p>
+     <h2>Five things Kubernetes does to your pod</h2>
+     <p class="kicker">Admit it, schedule it, start it, route to it, kill it — always in that order. Each step writes down why in exactly one place, and it is rarely the place you were looking.</p>
+     <div class="body"><table class="t3"><thead><tr><th>What you see</th><th>Which step failed</th><th>Where the reason is written</th></tr></thead><tbody><tr><td><code>helm upgrade</code> succeeds, no new pod appears</td><td>Admit</td><td>a <code>FailedCreate</code> event on the <strong>ReplicaSet</strong> — quota, policy, a webhook. No pod ever existed to carry it</td></tr><tr><td><code>Pending</code>, no node assigned</td><td>Schedule</td><td>the <code>FailedScheduling</code> event — one sentence naming every node's reason. Read past the first comma</td></tr><tr><td><code>ImagePullBackOff</code>, <code>CreateContainerConfigError</code></td><td>Start</td><td>the waiting reason and its message — the registry's error, or the missing ConfigMap key</td></tr><tr><td><code>CrashLoopBackOff</code></td><td>Start ↔ Kill</td><td>the last exit code, then <code>kubectl logs --previous</code></td></tr><tr><td><code>Running</code> but <code>0/1</code> for minutes</td><td>Route</td><td>the readiness probe's own failure text, in the pod's events</td></tr><tr><td><code>RESTARTS</code> climbing</td><td>Kill</td><td><code>lastState.terminated.reason</code> — <code>OOMKilled</code>, or <code>Error</code> beside a liveness event, or <code>Unknown</code></td></tr></tbody></table><div class="callout"><span class="callout-label">Three faults, one word</span><p><code>CrashLoopBackOff</code> means three different things. <strong>Exit 1</strong> is your code — <code>logs --previous</code> has its last words. <strong>137 with <code>OOMKilled</code></strong> is the kernel at your memory limit. <strong>137 beside a liveness event</strong> is Kubernetes deciding you were wedged. And an empty log is not evidence about your app: it means the container never started.</p></div></div>
+   </section>
+
+   <section class="slide">
+     <p class="eyebrow">THIS WEEK</p>
+     <h2>Four things to do with your own service</h2>
+     
+     <div class="body"><div class="steps">
+        <div class="step"><span class="pip">1</span><div><h3>Open your values file and read it as three doors</h3><p>For every number in it, can you say where it came from? A request nobody can defend is the number your autoscaler is dividing by.</p></div></div>
+        <div class="step"><span class="pip">2</span><div><h3>Check your readiness probe touches nothing but you</h3><p>Five minutes and one line. It is the most common way a thirty-second blip somewhere else becomes your full outage.</p></div></div>
+        <div class="step"><span class="pip">3</span><div><h3>Read <code>kubectl get pods</code> as the five steps</h3><p>STATUS covers admit, schedule and start; READY is route; RESTARTS is kill — and a young AGE during an old incident means the evidence already died with the last pod.</p></div></div>
+        <div class="step"><span class="pip">4</span><div><h3>Find both views of one of your pods</h3><p>Your app's own metrics endpoint, and the cluster's view of the same container. Know which number comes from where before the day you need to tell them apart.</p></div></div></div>
+        <div class="next"><span class="callout-label">Where to go next, in the order you will need it</span><div class="links"><a href="https://jamiegunn.github.io/k8s_soup_to_nuts/start/three-doors/" target="_blank" rel="noopener"><strong>The Three Doors</strong><span>the model above, in full, with the failure gallery</span></a><a href="https://jamiegunn.github.io/k8s_soup_to_nuts/tuning/sizing-walkthrough/" target="_blank" rel="noopener"><strong>Sizing Walkthrough</strong><span>turning a load test into requests, limits and probes</span></a><a href="https://jamiegunn.github.io/k8s_soup_to_nuts/start/two-roads/" target="_blank" rel="noopener"><strong>The Two Roads</strong><span>the five steps, in full, for the day something breaks</span></a><a href="https://jamiegunn.github.io/k8s_soup_to_nuts/start/three-lenses/" target="_blank" rel="noopener"><strong>The Three Lenses</strong><span>the three places to stand, for the day something is slow</span></a></div></div></div>
+   </section>
+</div></div>
+<div id="bar"></div>
+<div id="hud"><b id="cur">1</b> / 9</div>
+<div id="hint">← → navigate · N notes · O overview · F fullscreen</div>
+<aside id="notes"><h4>Speaker notes</h4><p id="nt"></p></aside>
+<div id="grid"></div>
+<script>
+(function(){
+  var slides=[].slice.call(document.querySelectorAll('.slide'));
+  var NOTES=["Title slide — set the frame: this is not a Kubernetes tour, it is three questions and a way to read failures. Say out loud that no devops background is assumed and that every concept will be anchored to something they have already built.","Open here and the room relaxes. Everyone in the audience has sized a pool and written a health check — the anxiety is that Kubernetes is a separate discipline, and it mostly isn't. Ask the room which row they have done most recently; whichever they name, that is the door you start with. The one row worth dwelling on is the last: the JVM heap and the container limit are two different numbers, and most first OOMKills come from assuming they are the same one.","This is the slide to leave on screen while people ask questions. Everything else in the deck is inside one of these three. The YAML is deliberately a real fragment rather than a diagram — the audience will recognise a values file, and the colours say which door each stanza belongs to. If someone asks 'what about storage, networking, secrets?' — those are refinements inside a door, not a fourth door: a volume is a cost, a Service is downstream of readiness.","The asymmetry is the one sentence to engrave; if the audience remembers nothing else from this slide, that is enough. Expect pushback on 'no CPU limit' — the honest answer is that it depends on whether your platform's admission policy even allows it, and that the measurable consequence is the throttle ratio, which they can go and look at. The JVM twist is the most common first production incident for a Java team new to Kubernetes: heap at 60%, container dead.","Ask the room what their liveness probe currently checks. In most Spring Boot services it is /actuator/health, which by default aggregates every health indicator including the database — that is the outage in the callout, waiting to happen, and the fix is one line pointing liveness at the liveness group. The shutdown half gets skipped in most introductions and then shows up as 502s on every deploy, which teams misread as a networking problem.","This is where a development audience is usually most confident and most wrong, because horizontal scaling feels free. The two columns are the two ways it isn't: the signal can be blind, and the ceiling can belong to someone else. The concrete numbers are from a real load test on the site; if anyone wants the derivation it is on the Oracle page. The transferable habit: whenever you are about to add replicas, ask what each replica multiplies.","Tell this as a story, not as a model — the audience has all lost a week to something like it. The throttle ratio is the specific takeaway: it is one query, most teams have never looked at it, and it explains a whole category of 'slow but the graphs look fine'. The three places generalise to every observability tool they will meet: a dashboard, a trace and an APM agent are all one of these three wearing different clothes.","This is the highest-value slide for a team in its first month — 'my pod won't start' is the universal first experience. The discipline is walking down and stopping at the first failed step, because everything after a failed step also looks failed; people burn hours on Services for a pod that never got a node. If you demo one thing live, demo this: break a pod three different ways and show that the STATUS column is identical while the reason field is not.","End on something they can do without permission from anyone. All four are read-only or one-line changes, and all four produce a question they will bring back — which is the real goal of the session. The reading order matters: do not send a new engineer to the Lenses first, because they have not yet had the experience that makes it necessary."];
+  var i=0, deck=document.getElementById('deck');
+  function fit(){
+    var pad=36, k=Math.min((innerWidth-pad)/1280,(innerHeight-78)/720);
+    var n=document.getElementById('notes');
+    if(n.classList.contains('on')) k=Math.min(k,(innerHeight*0.60-pad)/720);
+    deck.style.transform='scale('+k+')';
+  }
+  function show(n){
+    i=Math.max(0,Math.min(slides.length-1,n));
+    slides.forEach(function(s,x){ s.classList.toggle('on',x===i); });
+    document.getElementById('cur').textContent=i+1;
+    document.getElementById('bar').style.width=((i)/(slides.length-1)*100)+'%';
+    document.getElementById('nt').textContent=NOTES[i]||'';
+    if(location.hash!=='#'+(i+1)) history.replaceState(null,'','#'+(i+1));
+  }
+  addEventListener('keydown',function(e){
+    var k=e.key;
+    if(k==='ArrowRight'||k==='PageDown'||k===' '||k==='Enter'){show(i+1);e.preventDefault();}
+    else if(k==='ArrowLeft'||k==='PageUp'){show(i-1);e.preventDefault();}
+    else if(k==='Home'){show(0);} else if(k==='End'){show(slides.length-1);}
+    else if(k==='n'||k==='N'){document.getElementById('notes').classList.toggle('on');fit();}
+    else if(k==='o'||k==='O'){document.getElementById('grid').classList.toggle('on');}
+    else if(k==='f'||k==='F'){ if(!document.fullscreenElement){document.documentElement.requestFullscreen();} else {document.exitFullscreen();} }
+    else if(k==='Escape'){document.getElementById('grid').classList.remove('on');}
+    else if(/^[0-9]$/.test(k)){show(parseInt(k,10)-1);}
+  });
+  addEventListener('resize',fit);
+  // overview
+  var g=document.getElementById('grid');
+  slides.forEach(function(s,x){
+    var h=s.querySelector('h1,h2');
+    var b=document.createElement('button');
+    b.innerHTML='<b>'+(x+1)+'. '+(h?h.textContent:'Title')+'</b><span>'+((s.querySelector('.eyebrow')||{}).textContent||'')+'</span>';
+    b.onclick=function(){show(x);g.classList.remove('on');};
+    g.appendChild(b);
+  });
+  var start=parseInt((location.hash||'#1').slice(1),10);
+  fit(); show(isNaN(start)?0:start-1);
+})();
+</script>
+</body>
+</html>

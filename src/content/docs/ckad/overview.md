@@ -72,7 +72,7 @@ flowchart TD
     H -->|"fail & you're stuck<br/>(2 min, no plan)"| J["Flag it. Move on.<br/>Return at the end."]
 ```
 
-Two of those boxes fail people more than all the others combined: **skipping the context switch** and **skipping verification**. The exam grades end state — a Deployment that exists but never became Ready, a NetworkPolicy with a selector that matches nothing, both *look* done and score partial or zero. Verification commands per resource type are in the [speed system](/ckad/speed-system/#verify-like-the-grader).
+Two of those boxes fail people more than all the others combined: **skipping the context switch** and **skipping verification**. The exam grades end state — a Deployment that exists but never became Ready, a NetworkPolicy with a selector that matches nothing, both *look* done and score partial or zero. Verification commands per resource type are in the [speed system](/ckad/speed-system/#part-4-verify-like-the-grader).
 
 ## How scoring works (and how to exploit it)
 
